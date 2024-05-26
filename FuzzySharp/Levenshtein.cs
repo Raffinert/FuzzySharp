@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using FuzzySharp.Edits;
 
 namespace FuzzySharp
@@ -10,20 +8,20 @@ namespace FuzzySharp
     {
         private static EditOp[] GetEditOps<T>(T[] arr1, T[] arr2) where T : IEquatable<T>
         {
-            return GetEditOps(arr1.Length, arr1, arr2.Length, arr2);
+            return GetEditOps(arr1.Length, (ReadOnlySpan<T>)arr1, arr2.Length, (ReadOnlySpan<T>)arr2);
         }
 
         // Special Case
         private static EditOp[] GetEditOps(string s1, string s2)
         {
-            return GetEditOps(s1.Length, s1.ToCharArray(), s2.Length, s2.ToCharArray());
+            return GetEditOps(s1.Length, s1.AsSpan(), s2.Length, s2.AsSpan());
         }
 
-        private static EditOp[] GetEditOps<T>(int len1, T[] c1, int len2, T[] c2) where T : IEquatable<T>
+        private static EditOp[] GetEditOps<T>(int len1, ReadOnlySpan<T> c1, int len2, ReadOnlySpan<T> c2) where T : IEquatable<T>
         {
             int i;
 
-            int[] matrix;
+            Span<int> matrix;
 
             int p1 = 0;
             int p2 = 0;
@@ -103,9 +101,9 @@ namespace FuzzySharp
         }
 
 
-        private static EditOp[] EditOpsFromCostMatrix<T>(int len1, T[] c1, int p1, int o1,
-                                                      int len2, T[] c2, int p2, int o2,
-                                                      int[] matrix) 
+        private static EditOp[] EditOpsFromCostMatrix<T>(int len1, ReadOnlySpan<T> c1, int p1, int o1,
+                                                      int len2, ReadOnlySpan<T> c2, int p2, int o2,
+                                                      Span<int> matrix) 
             where T: IEquatable<T>
         {
 
@@ -665,13 +663,7 @@ namespace FuzzySharp
             return opCodes;
         }
 
-        // Special Case
-        public static int EditDistance(string s1, string s2, int xcost = 0)
-        {
-            return EditDistance(s1.ToCharArray(), s2.ToCharArray(), xcost);
-        }
-
-        public static int EditDistance<T>(T[] c1, T[] c2, int xcost = 0) where T:  IEquatable<T>
+        public static int EditDistance<T>(ReadOnlySpan<T> c1, ReadOnlySpan<T> c2, int xcost = 0) where T:  IEquatable<T>
         {
 
             int i;
@@ -720,7 +712,7 @@ namespace FuzzySharp
                 str1 = str2;
                 str2 = temp;
 
-                T[] t = c2;
+                ReadOnlySpan<T> t = c2;
                 c2 = c1;
                 c1 = t;
 
@@ -873,7 +865,7 @@ namespace FuzzySharp
 
         }
 
-        private static int Memchr<T>(T[] haystack, int offset, T needle, int num) where T : IEquatable<T>
+        private static int Memchr<T>(ReadOnlySpan<T> haystack, int offset, T needle, int num) where T : IEquatable<T>
         {
 
             if (num != 0)
@@ -899,20 +891,18 @@ namespace FuzzySharp
             int len2   = input2.Length;
             int lensum = len1 + len2;
 
-            int editDistance = EditDistance(input1, input2, 1);
+            int editDistance = EditDistance<T>(input1.AsSpan(), input2.AsSpan(), 1);
 
             return editDistance == 0 ? 1 : (lensum - editDistance) / (double)lensum;
         }
 
-        public static double GetRatio<T>(IEnumerable<T> input1, IEnumerable<T> input2) where T : IEquatable<T>
+        public static double GetRatio<T>(ReadOnlySpan<T> input1, ReadOnlySpan<T> input2) where T : IEquatable<T>
         {
-            var s1 = input1.ToArray();
-            var s2 = input2.ToArray();
-            int len1 = s1.Length;
-            int len2 = s2.Length;
+            int len1 = input1.Length;
+            int len2 = input2.Length;
             int lensum = len1 + len2;
 
-            int editDistance = EditDistance(s1, s2, 1);
+            int editDistance = EditDistance(input1, input2, 1);
 
             return editDistance == 0 ? 1 : (lensum - editDistance) / (double)lensum;
         }
@@ -920,7 +910,7 @@ namespace FuzzySharp
         // Special Case
         public static double GetRatio(string s1, string s2)
         {
-            return GetRatio(s1.ToCharArray(), s2.ToCharArray());
+            return GetRatio(s1.AsSpan(), s2.AsSpan());
         }
     }
 }
