@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
+using FuzzySharp.Extensions;
 
 namespace FuzzySharp.SimilarityRatio.Scorer.StrategySensitive
 {
@@ -9,12 +8,12 @@ namespace FuzzySharp.SimilarityRatio.Scorer.StrategySensitive
     {
         public override int Score(string input1, string input2)
         {
-            var tokens1 = new HashSet<string>(Regex.Split(input1, @"\s+").Where(s => s.Any()));
-            var tokens2 = new HashSet<string>(Regex.Split(input2, @"\s+").Where(s => s.Any()));
+            var tokens1 = new HashSet<string>(input1.SplitByAnySpace());
+            var tokens2 = new HashSet<string>(input2.SplitByAnySpace());
 
-            var sortedIntersection = String.Join(" ", tokens1.Intersect(tokens2).OrderBy(s => s)).Trim();
-            var sortedDiff1To2     = (sortedIntersection + " " + String.Join(" ", tokens1.Except(tokens2).OrderBy(s => s))).Trim();
-            var sortedDiff2To1     = (sortedIntersection + " " + String.Join(" ", tokens2.Except(tokens1).OrderBy(s => s))).Trim();
+            var sortedIntersection = string.Join(" ", tokens1.Intersect(tokens2).OrderBy(s => s)).Trim();
+            var sortedDiff1To2     = (sortedIntersection + " " + string.Join(" ", tokens1.Except(tokens2).OrderBy(s => s))).Trim();
+            var sortedDiff2To1     = (sortedIntersection + " " + string.Join(" ", tokens2.Except(tokens1).OrderBy(s => s))).Trim();
 
             return new[]
             {

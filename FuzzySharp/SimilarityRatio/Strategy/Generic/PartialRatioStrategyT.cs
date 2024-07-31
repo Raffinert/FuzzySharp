@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using FuzzySharp.Edits;
 
 namespace FuzzySharp.SimilarityRatio.Strategy.Generic
 {
@@ -28,22 +27,22 @@ namespace FuzzySharp.SimilarityRatio.Strategy.Generic
                 longer  = input1;
             }
 
-            MatchingBlock[] matchingBlocks = Levenshtein.GetMatchingBlocks(shorter, longer);
+            var matchingBlocks = Levenshtein.GetMatchingBlocks(shorter, longer);
 
-            List<double> scores = new List<double>();
+            var scores = new List<double>();
 
             foreach (var matchingBlock in matchingBlocks)
             {
-                int dist = matchingBlock.DestPos - matchingBlock.SourcePos;
+                var dist = matchingBlock.DestPos - matchingBlock.SourcePos;
 
-                int longStart = dist > 0 ? dist : 0;
-                int longEnd   = longStart + shorter.Length;
+                var longStart = dist > 0 ? dist : 0;
+                var longEnd   = longStart + shorter.Length;
 
                 if (longEnd > longer.Length) longEnd = longer.Length;
 
-                var longSubstr = longer.AsSpan().Slice(longStart, longEnd - longStart);
+                var longSubstr = longer.AsSpan()[longStart..longEnd];
 
-                double ratio = Levenshtein.GetRatio<T>(shorter.AsSpan(), longSubstr);
+                var ratio = Levenshtein.GetRatio<T>(shorter.AsSpan(), longSubstr);
 
                 if (ratio > .995)
                 {

@@ -21,8 +21,6 @@ namespace FuzzySharp
         {
             int i;
 
-            Span<int> matrix;
-
             int p1 = 0;
             int p2 = 0;
 
@@ -51,7 +49,7 @@ namespace FuzzySharp
             len1++;
             len2++;
 
-            matrix = new int[len2 * len1];
+            Span<int> matrix = new int[len2 * len1];
 
             for (i = 0; i < len2; i++)
                 matrix[i] = i;
@@ -95,7 +93,6 @@ namespace FuzzySharp
                 }
 
             }
-
 
             return EditOpsFromCostMatrix(len1, c1, p1, len1o, len2, c2, p2, len2o, matrix);
         }
@@ -248,7 +245,7 @@ namespace FuzzySharp
 
             noOfMB = 0;
 
-            for (i = n; i-- != 0; o++)
+            for (i = n; i != 0;  i--, o++)
             {
                 if (ops[o].EditType == EditType.KEEP)
                 {
@@ -298,7 +295,7 @@ namespace FuzzySharp
 
             Debug.Assert(mb != noOfMB);
 
-            MatchingBlock finalBlock = new MatchingBlock
+            var finalBlock = new MatchingBlock
             {
                 SourcePos = len1,
                 DestPos   = len2,
@@ -326,7 +323,9 @@ namespace FuzzySharp
 
             EditType type;
 
-            for (i = n; i != 0;)
+            i = n;
+
+            while (i > 0)
             {
 
 
@@ -381,9 +380,6 @@ namespace FuzzySharp
                         } while (i != 0 && ops[o].EditType == type &&
                                 SourcePos == ops[o].SourcePos && DestPos == ops[o].DestPos);
                         break;
-
-                    default:
-                        break;
                 }
             }
 
@@ -398,8 +394,9 @@ namespace FuzzySharp
             SourcePos = DestPos = 0;
             int mbIndex = 0;
 
+            i = n;
 
-            for (i = n; i != 0;)
+            while (i > 0)
             {
 
                 while (ops[o].EditType == EditType.KEEP && --i != 0)
@@ -410,11 +407,13 @@ namespace FuzzySharp
 
                 if (SourcePos < ops[o].SourcePos || DestPos < ops[o].DestPos)
                 {
-                    MatchingBlock mb = new MatchingBlock();
+                    var mb = new MatchingBlock
+                    {
+                        SourcePos = SourcePos,
+                        DestPos = DestPos,
+                        Length = ops[o].SourcePos - SourcePos
+                    };
 
-                    mb.SourcePos = SourcePos;
-                    mb.DestPos = DestPos;
-                    mb.Length = ops[o].SourcePos - SourcePos;
                     SourcePos = ops[o].SourcePos;
                     DestPos = ops[o].DestPos;
 
@@ -456,9 +455,6 @@ namespace FuzzySharp
                         } while (i != 0 && ops[o].EditType == type &&
                                 SourcePos == ops[o].SourcePos && DestPos == ops[o].DestPos);
                         break;
-
-                    default:
-                        break;
                 }
             }
 
@@ -466,20 +462,24 @@ namespace FuzzySharp
             {
                 Debug.Assert(len1 -SourcePos == len2 - DestPos);
 
-                MatchingBlock mb = new MatchingBlock();
-                mb.SourcePos = SourcePos;
-                mb.DestPos = DestPos;
-                mb.Length = len1 - SourcePos;
+                var mb = new MatchingBlock
+                {
+                    SourcePos = SourcePos,
+                    DestPos = DestPos,
+                    Length = len1 - SourcePos
+                };
 
                 matchingBlocks[mbIndex++] = mb;
             }
 
             Debug.Assert(numberOfMatchingBlocks == mbIndex);
 
-            MatchingBlock finalBlock = new MatchingBlock();
-            finalBlock.SourcePos = len1;
-            finalBlock.DestPos = len2;
-            finalBlock.Length = 0;
+            var finalBlock = new MatchingBlock
+            {
+                SourcePos = len1,
+                DestPos = len2,
+                Length = 0
+            };
 
             matchingBlocks[mbIndex] = finalBlock;
 
@@ -497,7 +497,9 @@ namespace FuzzySharp
             noOfBlocks = 0;
             SourcePos = DestPos = 0;
 
-            for (i = n; i != 0;)
+            i = n;
+
+            while (i > 0)
             {
 
                 while (ops[o].EditType == EditType.KEEP && --i != 0)
@@ -553,9 +555,6 @@ namespace FuzzySharp
                         } while (i != 0 && ops[o].EditType == type &&
                                 SourcePos == ops[o].SourcePos && DestPos == ops[o].DestPos);
                         break;
-
-                    default:
-                        break;
                 }
             }
 
@@ -568,7 +567,9 @@ namespace FuzzySharp
             SourcePos = DestPos = 0;
             int oIndex = 0;
 
-            for (i = n; i != 0;)
+            i = n;
+
+            while (i > 0)
             {
 
                 while (ops[o].EditType == EditType.KEEP && --i != 0)
@@ -646,16 +647,15 @@ namespace FuzzySharp
             {
 
                 Debug.Assert(len1 - SourcePos == len2 - DestPos);
-                if (opCodes[oIndex] == null)
-                    opCodes[oIndex] = new OpCode();
-                opCodes[oIndex].EditType = EditType.KEEP;
-                opCodes[oIndex].SourceBegin = SourcePos;
-                opCodes[oIndex].DestBegin = DestPos;
-                opCodes[oIndex].SourceEnd = len1;
-                opCodes[oIndex].DestEnd = len2;
+
+                var opcode = opCodes[oIndex] ?? (opCodes[oIndex] = new OpCode());
+                opcode.EditType = EditType.KEEP;
+                opcode.SourceBegin = SourcePos;
+                opcode.DestBegin = DestPos;
+                opcode.SourceEnd = len1;
+                opcode.DestEnd = len2;
 
                 oIndex++;
-
             }
 
             Debug.Assert(oIndex == noOfBlocks);
@@ -765,7 +765,7 @@ namespace FuzzySharp
 
                         if (ch1.Equals(c2[c2p++]))
                         {
-                            x = --D;
+                            x = D-1;
                         }
                         else
                         {
@@ -831,7 +831,7 @@ namespace FuzzySharp
                     /* main */
                     while (p <= end)
                     {
-                        int c3 = --D + (!ch1.Equals(c2[c2p++]) ? 1 : 0);
+                        int c3 = D-1 + (!ch1.Equals(c2[c2p++]) ? 1 : 0);
                         x++;
                         if (x > c3)
                         {
@@ -848,7 +848,7 @@ namespace FuzzySharp
                     /* lower triangle sentinel */
                     if (i <= half)
                     {
-                        int c3 = --D + (!ch1.Equals(c2[c2p]) ? 1 : 0);
+                        int c3 = D - 1 + (!ch1.Equals(c2[c2p]) ? 1 : 0);
                         x++;
                         if (x > c3)
                         {

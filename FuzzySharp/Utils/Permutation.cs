@@ -122,9 +122,7 @@ namespace FuzzySharp.Utils
 
         private static void Swap<T>(List<T> set, int a, int b)
         {
-            var temp = set[a];
-            set[a] = set[b];
-            set[b] = temp;
+            (set[a], set[b]) = (set[b], set[a]);
         }
 
         public static IEnumerable<List<T>> Cycles<T>(IEnumerable<T> seed)

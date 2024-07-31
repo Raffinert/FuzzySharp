@@ -1,18 +1,25 @@
 ﻿using System;
-using System.Text.RegularExpressions;
 
 namespace FuzzySharp.PreProcess
 {
-    internal class StringPreprocessorFactory
+    internal static class StringPreprocessorFactory
     {
-        private static string pattern = "[^ a-zA-Z0-9]";
-
         private static string Default(string input)
         {
-            input = Regex.Replace(input, pattern, " ");
-            input = input.ToLower();
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return string.Empty;
+            }
 
-            return input.Trim();
+            var result = new char[input.Length].AsSpan();
+
+            for (var i = 0; i < input.Length; i++)
+            {
+                var c = input[i];
+                result[i] = char.IsLetterOrDigit(c) ? char.ToLower(c) : ' ';
+            }
+
+            return result.ToString().Trim();
         }
 
         public static Func<string, string> GetPreprocessor(PreprocessMode mode)
