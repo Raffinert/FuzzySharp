@@ -14,22 +14,21 @@ namespace FuzzySharp.Extensions
 
             var span = input.AsSpan();
 
-            int start = 0;
+            var start = 0;
             for (var i = 0; i < span.Length; i++)
             {
-                if (!char.IsLetter(span[i]))
-                {
-                    if (i - start > 0)
-                    {
-                        result.Add(span.Slice(start, i - start).ToString());
-                    }
+                if (char.IsLetter(span[i])) continue;
 
-                    start = i+1;
+                if (i - start > 0)
+                {
+                    result.Add(span[start..i].ToString());
                 }
+
+                start = i+1;
             }
 
             if (span.Length - start > 0)
-                result.Add(span.Slice(start, span.Length - start).ToString());
+                result.Add(span[start..].ToString());
 
             return result;
         }
