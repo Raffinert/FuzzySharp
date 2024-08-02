@@ -5,7 +5,7 @@ namespace FuzzySharp.Extensions
 {
     internal static class StringExtensions
     {
-        public static List<string> ExtractLetterOnlyWords(this string input)
+        public static List<string> ExtractTokens(this string input)
         {
             var result = new List<string>();
 

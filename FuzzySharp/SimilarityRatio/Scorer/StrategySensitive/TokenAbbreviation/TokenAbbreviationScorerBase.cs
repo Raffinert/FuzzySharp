@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using FuzzySharp.Extensions;
 using FuzzySharp.Utils;
@@ -29,8 +30,8 @@ namespace FuzzySharp.SimilarityRatio.Scorer.StrategySensitive
             if (lenRatio < 1.5) return 0;
 
             // numbers can't be abbreviations for other numbers, though that would be hilarious. "Yes, 4 - as in 4,238"
-            var tokensLonger = longer.ExtractLetterOnlyWords();
-            var tokensShorter = shorter.ExtractLetterOnlyWords();
+            var tokensLonger = longer.ExtractTokens();
+            var tokensShorter = shorter.ExtractTokens();
 
             // more than 4 tokens and it's probably not an abbreviation (and could get costly)
             if (tokensShorter.Count > 4)
@@ -80,7 +81,7 @@ namespace FuzzySharp.SimilarityRatio.Scorer.StrategySensitive
         /// <param name="s1"></param>
         /// <param name="s2"></param>
         /// <returns></returns>
-        private bool StringContainsInOrder(string s1, string s2)
+        private static bool StringContainsInOrder(ReadOnlySpan<char> s1, ReadOnlySpan<char> s2)
         {
             if (s1.Length < s2.Length) return false;
             int s2_idx = 0;

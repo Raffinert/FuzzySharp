@@ -26,9 +26,9 @@ namespace FuzzySharp.SimilarityRatio.Scorer.StrategySensitive
             // if longer isn't at least 3 times longer than the other, then it's probably not an initialism
             if (lenRatio < 3) return 0;
 
-            var initials = longer.SplitByAnySpace().Select(s => s[0]);
+            var initials = longer.SplitByAnySpace().Select(s => s[0]).ToArray();
 
-            return Scorer(string.Join("", initials), shorter);
+            return Scorer(new string(initials), shorter);
         }
     }
 }
