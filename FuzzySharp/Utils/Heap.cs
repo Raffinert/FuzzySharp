@@ -24,7 +24,7 @@ namespace FuzzySharp.Utils
         {
         }
 
-        protected Heap(Comparer<T> comparer) : this(Enumerable.Empty<T>(), comparer)
+        protected Heap(Comparer<T> comparer) : this([], comparer)
         {
         }
 
@@ -35,9 +35,10 @@ namespace FuzzySharp.Utils
 
         protected Heap(IEnumerable<T> collection, Comparer<T> comparer)
         {
-            if (collection == null) throw new ArgumentNullException(nameof(collection));
+            ArgumentNullException.ThrowIfNull(collection);
+            ArgumentNullException.ThrowIfNull(comparer);
 
-            Comparer = comparer ?? throw new ArgumentNullException(nameof(comparer));
+            Comparer = comparer;
 
             foreach (var item in collection)
             {

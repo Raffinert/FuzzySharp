@@ -725,10 +725,8 @@ namespace FuzzySharp
                 {
                     return len2 + 1 - 2 * Memchr(c2, str2, c1[str1], len2);
                 }
-                else
-                {
-                    return len2 - Memchr(c2, str2, c1[str1], len2);
-                }
+
+                return len2 - Memchr(c2, str2, c1[str1], len2);
             }
 
             len1++;

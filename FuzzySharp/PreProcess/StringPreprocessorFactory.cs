@@ -19,20 +19,17 @@ namespace FuzzySharp.PreProcess
                 result[i] = char.IsLetterOrDigit(c) ? char.ToLower(c) : ' ';
             }
 
-            return result.ToString().Trim();
+            return result.Trim().ToString();
         }
 
         public static Func<string, string> GetPreprocessor(PreprocessMode mode)
         {
-            switch (mode)
+            return mode switch
             {
-                case PreprocessMode.Full:
-                    return Default;
-                case PreprocessMode.None:
-                    return s => s;
-                default:
-                    throw new InvalidOperationException($"Invalid string preprocessor mode: {mode}");
-            }
+                PreprocessMode.Full => Default,
+                PreprocessMode.None => s => s,
+                _ => throw new InvalidOperationException($"Invalid string preprocessor mode: {mode}")
+            };
         }
     }
 }

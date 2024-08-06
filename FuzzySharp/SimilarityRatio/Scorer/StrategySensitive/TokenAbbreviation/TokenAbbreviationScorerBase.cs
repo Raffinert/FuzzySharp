@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using FuzzySharp.Extensions;
 using FuzzySharp.Utils;
 
@@ -55,7 +54,8 @@ namespace FuzzySharp.SimilarityRatio.Scorer.StrategySensitive
 
             var allPermutations = moreTokens.PermutationsOfSize(fewerTokens.Count);
 
-            List<int> allScores = new List<int>();
+            int maxScore = 0;
+
             foreach (var permutation in allPermutations)
             {
                 double sum = 0;
@@ -69,10 +69,14 @@ namespace FuzzySharp.SimilarityRatio.Scorer.StrategySensitive
                         sum += score;
                     }
                 }
-                allScores.Add((int) (sum / fewerTokens.Count));
+                var avgScore = (int) (sum / fewerTokens.Count);
+                if(avgScore > maxScore)
+                {
+                    maxScore = avgScore;
+                }
             }
             
-            return allScores.Count==0?0:allScores.Max();
+            return maxScore;
         }
 
         /// <summary>

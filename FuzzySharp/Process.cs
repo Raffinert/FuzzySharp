@@ -31,8 +31,8 @@ namespace FuzzySharp
             IRatioScorer scorer = null,
             int cutoff = 0)
         {
-            if (processor == null) processor = s_defaultStringProcessor;
-            if (scorer == null) scorer = s_defaultScorer;
+            processor ??= s_defaultStringProcessor;
+            scorer ??= s_defaultScorer;
             return ResultExtractor.ExtractWithoutOrder(query, choices, processor, scorer, cutoff);
         }
 
@@ -53,7 +53,7 @@ namespace FuzzySharp
             IRatioScorer scorer = null,
             int cutoff = 0)
         {
-            if (scorer == null) scorer = s_defaultScorer;
+            scorer ??= s_defaultScorer;
             return ResultExtractor.ExtractWithoutOrder(query, choices, processor, scorer, cutoff);
         }
         #endregion
@@ -78,8 +78,8 @@ namespace FuzzySharp
             int limit = 5,
             int cutoff = 0)
         {
-            if (processor == null) processor = s_defaultStringProcessor;
-            if (scorer == null) scorer = s_defaultScorer;
+            processor ??= s_defaultStringProcessor;
+            scorer ??= s_defaultScorer;
             return ResultExtractor.ExtractTop(query, choices, processor, scorer, limit, cutoff);
         }
 
@@ -103,7 +103,7 @@ namespace FuzzySharp
             int limit = 5, 
             int cutoff = 0)
         {
-            if (scorer == null) scorer = s_defaultScorer;
+            scorer ??= s_defaultScorer;
             return ResultExtractor.ExtractTop(query, choices, processor, scorer, limit, cutoff);
         }
         #endregion
@@ -125,8 +125,8 @@ namespace FuzzySharp
             IRatioScorer scorer = null,
             int cutoff = 0)
         {
-            if (processor == null) processor = s_defaultStringProcessor;
-            if (scorer == null) scorer       = s_defaultScorer;
+            processor ??= s_defaultStringProcessor;
+            scorer ??= s_defaultScorer;
             return ResultExtractor.ExtractSorted(query, choices, processor, scorer, cutoff);
         }
 
@@ -146,7 +146,7 @@ namespace FuzzySharp
             IRatioScorer scorer = null,
             int cutoff = 0)
         {
-            if (scorer == null) scorer = s_defaultScorer;
+            scorer ??= s_defaultScorer;
             return ResultExtractor.ExtractSorted(query, choices, processor, scorer, cutoff);
         }
         #endregion
@@ -168,8 +168,8 @@ namespace FuzzySharp
             IRatioScorer scorer = null,
             int cutoff = 0)
         {
-            if (processor == null) processor = s_defaultStringProcessor;
-            if (scorer == null) scorer       = s_defaultScorer;
+            processor ??= s_defaultStringProcessor;
+            scorer ??= s_defaultScorer;
             return ResultExtractor.ExtractOne(query, choices, processor, scorer, cutoff);
         }
 
@@ -189,7 +189,7 @@ namespace FuzzySharp
             IRatioScorer scorer = null,
             int cutoff = 0)
         {
-            if (scorer == null) scorer       = s_defaultScorer;
+            scorer ??= s_defaultScorer;
             return ResultExtractor.ExtractOne(query, choices, processor, scorer, cutoff);
         }
 

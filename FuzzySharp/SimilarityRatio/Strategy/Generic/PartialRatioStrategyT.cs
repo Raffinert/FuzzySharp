@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace FuzzySharp.SimilarityRatio.Strategy.Generic
 {
-    internal class PartialRatioStrategy<T> where T : IEquatable<T>
+    internal static class PartialRatioStrategy<T> where T : IEquatable<T>
     {
         public static int Calculate(T[] input1, T[] input2)
         {
