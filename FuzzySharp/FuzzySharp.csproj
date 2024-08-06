@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>NET8.0</TargetFramework>
+        <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Authors>Jacob Bayer</Authors>
         <Description>Fuzzy string matcher based on FuzzyWuzzy algorithm from SeatGeek</Description>
@@ -21,9 +21,12 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <LangVersion>12.0</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Condition="'$(TargetFramework)' == 'netstandard2.0'" Include="IndexRange" Version="1.0.3" />
+	<PackageReference Condition="'$(TargetFramework)' == 'netstandard2.0'"  Include="System.Memory" Version="4.5.5" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
   </ItemGroup>
 

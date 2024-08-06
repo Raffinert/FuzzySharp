@@ -36,7 +36,7 @@ namespace FuzzySharp.Extensions
         public static string[] SplitByAnySpace(this string input)
         {
             if (string.IsNullOrWhiteSpace(input))
-                return Array.Empty<string>();
+                return [];
 
             var words = input.Split(Array.Empty<char>(), StringSplitOptions.RemoveEmptyEntries);
 
@@ -56,7 +56,7 @@ namespace FuzzySharp.Extensions
         {
             var words = GetSortedWords(input);
 
-            return string.Join(' ', words);
+            return string.Join(" ", words);
         }
     }
 }

@@ -40,7 +40,7 @@ namespace FuzzySharp.SimilarityRatio.Strategy
 
                 var longSubstr = longer.AsSpan()[longStart..longEnd];
 
-                var ratio = Levenshtein.GetRatio(shorter, longSubstr);
+                var ratio = Levenshtein.GetRatio(shorter.AsSpan(), longSubstr);
 
                 if (ratio > .995)
                 {

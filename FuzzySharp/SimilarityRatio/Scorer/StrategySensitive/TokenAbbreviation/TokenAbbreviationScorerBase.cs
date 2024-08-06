@@ -63,7 +63,7 @@ namespace FuzzySharp.SimilarityRatio.Scorer.StrategySensitive
                 {
                     var i1 = permutation[i];
                     var i2 = fewerTokens[i];
-                    if (StringContainsInOrder(i1, i2)) // must be at least twice as long
+                    if (StringContainsInOrder(i1.AsSpan(), i2.AsSpan())) // must be at least twice as long
                     {
                         var score = Scorer(i1, i2);
                         sum += score;

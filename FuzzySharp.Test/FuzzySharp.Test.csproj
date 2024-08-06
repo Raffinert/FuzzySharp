@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>NET8.0</TargetFramework>
-
+    <TargetFrameworks>NET8.0;netcoreapp3.1;netframework4.7.2</TargetFrameworks>
     <IsPackable>false</IsPackable>
+	<LangVersion>12.0</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

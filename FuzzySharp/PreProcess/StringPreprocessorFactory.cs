@@ -19,7 +19,7 @@ namespace FuzzySharp.PreProcess
                 result[i] = char.IsLetterOrDigit(c) ? char.ToLower(c) : ' ';
             }
 
-            return result.Trim().ToString();
+            return ((ReadOnlySpan<char>)result).Trim().ToString();
         }
 
         public static Func<string, string> GetPreprocessor(PreprocessMode mode)

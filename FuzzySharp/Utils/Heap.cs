@@ -35,12 +35,9 @@ namespace FuzzySharp.Utils
 
         protected Heap(IEnumerable<T> collection, Comparer<T> comparer)
         {
-            ArgumentNullException.ThrowIfNull(collection);
-            ArgumentNullException.ThrowIfNull(comparer);
+            Comparer = comparer ?? throw new ArgumentNullException(nameof(comparer));
 
-            Comparer = comparer;
-
-            foreach (var item in collection)
+            foreach (var item in collection ?? throw new ArgumentNullException(nameof(collection)))
             {
                 if (Count == Capacity)
                     Grow();
