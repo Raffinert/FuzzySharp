@@ -10,16 +10,17 @@ namespace FuzzySharp.SimilarityRatio.Scorer.StrategySensitive
         public override int Score(string input1, string input2)
         {
             var tokens1 = new HashSet<string>(input1.SplitByAnySpace());
-            var tokens1Copy = new HashSet<string>(tokens1);
             var tokens2 = new HashSet<string>(input2.SplitByAnySpace());
 
-            tokens1Copy.IntersectWith(tokens2);
-            tokens1.ExceptWith(tokens1Copy);
-            tokens2.ExceptWith(tokens1Copy);
+            var intersection = new HashSet<string>(tokens1);
+            intersection.IntersectWith(tokens2);
 
-            var sortedIntersection = string.Join(" ", tokens1Copy.OrderBy(s => s));
-            var sortedDiff1To2     = (sortedIntersection + " " + string.Join(" ", tokens1.OrderBy(s => s)));
-            var sortedDiff2To1     = (sortedIntersection + " " + string.Join(" ", tokens2.OrderBy(s => s)));
+            tokens1.ExceptWith(intersection);
+            tokens2.ExceptWith(intersection);
+
+            var sortedIntersection = string.Join(" ", intersection.OrderBy(s => s));
+            var sortedDiff1To2     = sortedIntersection + " " + string.Join(" ", tokens1.OrderBy(s => s));
+            var sortedDiff2To1     = sortedIntersection + " " + string.Join(" ", tokens2.OrderBy(s => s));
 
             var score1 = Scorer(sortedIntersection, sortedDiff1To2);
             var score2 = Scorer(sortedIntersection, sortedDiff2To1);
