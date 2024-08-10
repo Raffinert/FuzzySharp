@@ -49,7 +49,7 @@ namespace FuzzySharp
             len1++;
             len2++;
 
-            Span<int> matrix = new int[len2 * len1];
+            int[] matrix = new int[len2 * len1];
 
             for (i = 0; i < len2; i++)
                 matrix[i] = i;
@@ -100,7 +100,7 @@ namespace FuzzySharp
 
         private static EditOp[] EditOpsFromCostMatrix<T>(int len1, ReadOnlySpan<T> c1, int p1, int o1,
                                                       int len2, ReadOnlySpan<T> c2, int p2, int o2,
-                                                      Span<int> matrix) 
+                                                      int[] matrix) 
             where T: IEquatable<T>
         {
 
