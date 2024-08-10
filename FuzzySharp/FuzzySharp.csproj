@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
+        <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp3.1;net45;net46;net461;net472;net48;net6;net8</TargetFrameworks>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Authors>Jacob Bayer</Authors>
         <Description>Fuzzy string matcher based on FuzzyWuzzy algorithm from SeatGeek</Description>
@@ -11,12 +11,12 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <RepositoryType>git</RepositoryType>
         <Company />
-        <Version>2.0.2</Version>
+        <Version>2.0.3</Version>
         <PackageReleaseNotes>Include source link</PackageReleaseNotes>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <PackageProjectUrl>https://github.com/JakeBayer/FuzzySharp</PackageProjectUrl>
-        <AssemblyVersion>1.0.4.0</AssemblyVersion>
-        <FileVersion>1.0.4.0</FileVersion>
+        <AssemblyVersion>1.0.5.0</AssemblyVersion>
+        <FileVersion>1.0.5.0</FileVersion>
     
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
@@ -24,15 +24,22 @@
     <LangVersion>12.0</LangVersion>
   </PropertyGroup>
 
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'
+			 OR '$(TargetFramework)' == 'netcoreapp3.1'
+			 OR '$(TargetFramework)' == 'net45'
+			 OR '$(TargetFramework)' == 'net46'
+			 OR '$(TargetFramework)' == 'net461'
+			 OR '$(TargetFramework)' == 'net472'
+			 OR '$(TargetFramework)' == 'net48'">
+		<PackageReference Include="IndexRange" Version="1.0.3" />
+		<PackageReference Include="System.Memory" Version="4.5.5" />
+  </ItemGroup>
   <ItemGroup>
-    <PackageReference Condition="'$(TargetFramework)' == 'netstandard2.0'" Include="IndexRange" Version="1.0.3" />
-	<PackageReference Condition="'$(TargetFramework)' == 'netstandard2.0'"  Include="System.Memory" Version="4.5.5" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
   </ItemGroup>
 
-
-    <ItemGroup>
-		<None Include="README.md" pack="true" PackagePath="." />
-    </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" pack="true" PackagePath="." />
+  </ItemGroup>
 
 </Project>
