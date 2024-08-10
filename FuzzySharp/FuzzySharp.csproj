@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp3.1;net45;net46;net461;net472;net48;net6;net8</TargetFrameworks>
+        <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp3.1;net45;net46;net461;net472;net48;NET60;NET80</TargetFrameworks>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Authors>Jacob Bayer</Authors>
         <Description>Fuzzy string matcher based on FuzzyWuzzy algorithm from SeatGeek</Description>

@@ -12,11 +12,7 @@ namespace FuzzySharp.SimilarityRatio.Scorer.StrategySensitive
             var tokens1 = new HashSet<string>(input1.SplitByAnySpace());
             var tokens2 = new HashSet<string>(input2.SplitByAnySpace());
 
-            var intersection = new HashSet<string>(tokens1);
-            intersection.IntersectWith(tokens2);
-
-            tokens1.ExceptWith(intersection);
-            tokens2.ExceptWith(intersection);
+            var intersection = GetIntersectionAndExcept(tokens1, tokens2);
 
             var sortedIntersection = string.Join(" ", intersection.OrderBy(s => s));
             var sortedDiff1To2     = (sortedIntersection + " " + string.Join(" ", tokens1.OrderBy(s => s))).Trim();
@@ -27,6 +23,22 @@ namespace FuzzySharp.SimilarityRatio.Scorer.StrategySensitive
             var score3 = Scorer(sortedDiff1To2, sortedDiff2To1);
             
             return Math.Max(score1, Math.Max(score2, score3));
+        }
+
+        private static List<T> GetIntersectionAndExcept<T>(HashSet<T> first, HashSet<T> second)
+        {
+            List<T> intersection = [];
+
+            foreach (var item in first.ToArray())
+            {
+                if (second.Remove(item))
+                {
+                    first.Remove(item);
+                    intersection.Add(item);
+                }
+            }
+
+            return intersection;
         }
     }
 }
