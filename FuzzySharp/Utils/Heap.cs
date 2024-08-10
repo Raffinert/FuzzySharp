@@ -36,8 +36,9 @@ namespace FuzzySharp.Utils
         protected Heap(IEnumerable<T> collection, Comparer<T> comparer)
         {
             Comparer = comparer ?? throw new ArgumentNullException(nameof(comparer));
+            _ = collection ?? throw new ArgumentNullException(nameof(collection));
 
-            foreach (var item in collection ?? throw new ArgumentNullException(nameof(collection)))
+            foreach (var item in collection)
             {
                 if (Count == Capacity)
                     Grow();
@@ -45,7 +46,7 @@ namespace FuzzySharp.Utils
                 _heap[Count++] = item;
             }
 
-            for (var i = Parent(Count - 1); i >= 0; i--)
+            for (int i = Parent(Count - 1); i >= 0; i--)
                 BubbleDown(i);
         }
 
@@ -78,7 +79,7 @@ namespace FuzzySharp.Utils
         public T ExtractDominating()
         {
             if (Count == 0) throw new InvalidOperationException("Heap is empty");
-            var ret = _heap[0];
+            T ret = _heap[0];
             Count--;
             Swap(Count, 0);
             BubbleDown(0);
@@ -98,7 +99,7 @@ namespace FuzzySharp.Utils
 
         private int Dominating(int i)
         {
-            var dominatingNode = i;
+            int dominatingNode = i;
             dominatingNode = GetDominating(YoungChild(i), dominatingNode);
             dominatingNode = GetDominating(OldChild(i),   dominatingNode);
 
@@ -135,7 +136,7 @@ namespace FuzzySharp.Utils
 
         private void Grow()
         {
-            var newCapacity = Capacity * GrowFactor + MinGrow;
+            int newCapacity = Capacity * GrowFactor + MinGrow;
             var newHeap     = new T[newCapacity];
             Array.Copy(_heap, newHeap, Capacity);
             _heap     = newHeap;
