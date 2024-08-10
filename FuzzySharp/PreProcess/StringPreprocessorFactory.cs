@@ -27,7 +27,7 @@ namespace FuzzySharp.PreProcess
             return mode switch
             {
                 PreprocessMode.Full => Default,
-                PreprocessMode.None => s => s,
+                PreprocessMode.None => static s => s,
                 _ => throw new InvalidOperationException($"Invalid string preprocessor mode: {mode}")
             };
         }
