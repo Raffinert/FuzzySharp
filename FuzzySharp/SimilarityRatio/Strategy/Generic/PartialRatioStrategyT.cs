@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace FuzzySharp.SimilarityRatio.Strategy.Generic
 {
@@ -29,7 +27,7 @@ namespace FuzzySharp.SimilarityRatio.Strategy.Generic
 
             var matchingBlocks = Levenshtein.GetMatchingBlocks(shorter, longer);
 
-            var scores = new List<double>();
+            double maxScore = 0;
 
             foreach (var matchingBlock in matchingBlocks)
             {
@@ -49,11 +47,13 @@ namespace FuzzySharp.SimilarityRatio.Strategy.Generic
                     return 100;
                 }
 
-                scores.Add(ratio);
-
+                if (ratio > maxScore)
+                {
+                    maxScore = ratio;
+                }
             }
 
-            return (int)Math.Round(100 * scores.Max());
+            return (int)Math.Round(100 * maxScore);
         }
     }
 }
