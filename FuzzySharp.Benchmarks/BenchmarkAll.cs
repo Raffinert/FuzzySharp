@@ -29,7 +29,7 @@ public class BenchmarkAll
     {
         return Fuzz.TokenSortRatio("order words out of", "  words out of order");
     }
-    
+
     [Benchmark]
     public int PartialTokenSortRatio()
     {
