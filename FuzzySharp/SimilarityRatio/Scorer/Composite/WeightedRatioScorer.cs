@@ -2,7 +2,7 @@
 
 namespace FuzzySharp.SimilarityRatio.Scorer.Composite
 {
-    public sealed class WeightedRatioScorer : ScorerBase
+    public class WeightedRatioScorer : ScorerBase
     {
         private static double UNBASE_SCALE  = .95;
         private static double PARTIAL_SCALE = .90;

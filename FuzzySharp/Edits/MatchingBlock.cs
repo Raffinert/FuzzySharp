@@ -1,6 +1,6 @@
 ﻿namespace FuzzySharp.Edits
 {
-    public sealed class MatchingBlock
+    public class MatchingBlock
     {
         public int SourcePos { get; set; }
         public int DestPos { get; set; }
