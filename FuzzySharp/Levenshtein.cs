@@ -12,9 +12,9 @@ namespace FuzzySharp
         }
 
         // Special Case
-        private static EditOp[] GetEditOps(string s1, string s2)
+        private static EditOp[] GetEditOps(ReadOnlySpan<char> s1, ReadOnlySpan<char> s2)
         {
-            return GetEditOps(s1.Length, s1.AsSpan(), s2.Length, s2.AsSpan());
+            return GetEditOps(s1.Length, s1, s2.Length, s2);
         }
 
         private static EditOp[] GetEditOps<T>(int len1, ReadOnlySpan<T> c1, int len2, ReadOnlySpan<T> c2) where T : IEquatable<T>
@@ -227,7 +227,7 @@ namespace FuzzySharp
         }
 
         // Special Case
-        public static MatchingBlock[] GetMatchingBlocks(string s1, string s2)
+        public static MatchingBlock[] GetMatchingBlocks(ReadOnlySpan<char> s1, ReadOnlySpan<char> s2)
         {
 
             return GetMatchingBlocks(s1.Length, s2.Length, GetEditOps(s1, s2));

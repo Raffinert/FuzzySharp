@@ -7,23 +7,23 @@ namespace FuzzySharp.SimilarityRatio.Strategy
     {
         public static int Calculate(string input1, string input2)
         {
-            string shorter;
-            string longer;
-
             if (input1.Length == 0 || input2.Length == 0)
             {
                 return 0;
             }
 
+            ReadOnlySpan<char> shorter;
+            ReadOnlySpan<char> longer;
+
             if (input1.Length < input2.Length)
             {
-                shorter = input1;
-                longer  = input2;
+                shorter = input1.AsSpan();
+                longer  = input2.AsSpan();
             }
             else
             {
-                shorter = input2;
-                longer  = input1;
+                shorter = input2.AsSpan();
+                longer  = input1.AsSpan();
             }
 
             MatchingBlock[] matchingBlocks = Levenshtein.GetMatchingBlocks(shorter, longer);
@@ -39,9 +39,9 @@ namespace FuzzySharp.SimilarityRatio.Strategy
 
                 if (longEnd > longer.Length) longEnd = longer.Length;
 
-                var longSubstr = longer.AsSpan()[longStart..longEnd];
+                var longSubstr = longer[longStart..longEnd];
 
-                double ratio = Levenshtein.GetRatio(shorter.AsSpan(), longSubstr);
+                double ratio = Levenshtein.GetRatio(shorter, longSubstr);
 
                 if (ratio > .995)
                 {
