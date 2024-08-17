@@ -1,7 +1,7 @@
 ﻿using BenchmarkDotNet.Attributes;
-using FuzzySharp.PreProcess;
+using Raffinert.FuzzySharp.PreProcess;
 
-namespace FuzzySharp.Benchmarks;
+namespace Raffinert.FuzzySharp.Benchmarks;
 
 [MemoryDiagnoser]
 public class BenchmarkAll

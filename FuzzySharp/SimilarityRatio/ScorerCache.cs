@@ -1,7 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
-using FuzzySharp.SimilarityRatio.Scorer;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
 
-namespace FuzzySharp.SimilarityRatio
+namespace Raffinert.FuzzySharp.SimilarityRatio
 {
     public static class ScorerCache
     {

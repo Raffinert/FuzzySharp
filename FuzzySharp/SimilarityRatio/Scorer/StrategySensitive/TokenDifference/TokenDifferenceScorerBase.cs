@@ -1,8 +1,8 @@
-﻿using FuzzySharp.Extensions;
-using FuzzySharp.PreProcess;
-using FuzzySharp.SimilarityRatio.Scorer.StrategySensitive.Generic;
+﻿using Raffinert.FuzzySharp.Extensions;
+using Raffinert.FuzzySharp.PreProcess;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive.Generic;
 
-namespace FuzzySharp.SimilarityRatio.Scorer.StrategySensitive
+namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive
 {
     public abstract class TokenDifferenceScorerBase : StrategySensitiveScorerBase<string>, IRatioScorer
     {

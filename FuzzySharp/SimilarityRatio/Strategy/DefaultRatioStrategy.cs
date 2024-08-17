@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace FuzzySharp.SimilarityRatio.Strategy
+namespace Raffinert.FuzzySharp.SimilarityRatio.Strategy
 {
     internal static class DefaultRatioStrategy
     {

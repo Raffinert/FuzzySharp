@@ -1,5 +1,5 @@
 ﻿using BenchmarkDotNet.Running;
-using FuzzySharp;
+using Raffinert.FuzzySharp;
 
 BenchmarkRunner.Run(typeof(Program).Assembly);
 

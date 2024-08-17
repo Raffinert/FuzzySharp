@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace FuzzySharp.Utils
+namespace Raffinert.FuzzySharp.Utils
 {
     public class Permutor<T> where T : IComparable<T>
     {

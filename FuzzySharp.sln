@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FuzzySharp", "FuzzySharp\Fu
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FuzzySharp.Test", "FuzzySharp.Test\FuzzySharp.Test.csproj", "{48F4C7CB-E669-410C-A455-DE3330347807}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FuzzySharp.Benchmarks", "FuzzySharp.Benchmarks\FuzzySharp.Benchmarks.csproj", "{480CAE39-ACA7-411A-BF6B-72E61ED6E129}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FuzzySharp.Benchmarks", "FuzzySharp.Benchmarks\FuzzySharp.Benchmarks.csproj", "{480CAE39-ACA7-411A-BF6B-72E61ED6E129}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

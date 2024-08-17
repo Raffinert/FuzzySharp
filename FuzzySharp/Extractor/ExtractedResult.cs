@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace FuzzySharp.Extractor
+namespace Raffinert.FuzzySharp.Extractor
 {
     public class ExtractedResult<T> : IComparable<ExtractedResult<T>> 
     {

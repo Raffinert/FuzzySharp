@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace FuzzySharp.PreProcess
+namespace Raffinert.FuzzySharp.PreProcess
 {
     internal static class StringPreprocessorFactory
     {

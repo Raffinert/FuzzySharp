@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace FuzzySharp.SimilarityRatio.Scorer.Composite
+namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite
 {
     public class WeightedRatioScorer : ScorerBase
     {

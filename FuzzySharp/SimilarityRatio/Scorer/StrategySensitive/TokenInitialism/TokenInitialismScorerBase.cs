@@ -1,7 +1,7 @@
 ﻿using System.Linq;
-using FuzzySharp.Extensions;
+using Raffinert.FuzzySharp.Extensions;
 
-namespace FuzzySharp.SimilarityRatio.Scorer.StrategySensitive
+namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive
 {
     public abstract class TokenInitialismScorerBase : StrategySensitiveScorerBase
     {

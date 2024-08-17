@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using FuzzySharp.Extractor;
-using FuzzySharp.PreProcess;
-using FuzzySharp.SimilarityRatio;
-using FuzzySharp.SimilarityRatio.Scorer;
-using FuzzySharp.SimilarityRatio.Scorer.Composite;
+using Raffinert.FuzzySharp.Extractor;
+using Raffinert.FuzzySharp.PreProcess;
+using Raffinert.FuzzySharp.SimilarityRatio;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
 
-namespace FuzzySharp
+namespace Raffinert.FuzzySharp
 {
     public static class Process
     {

@@ -1,12 +1,11 @@
-﻿
-using FuzzySharp.SimilarityRatio;
-using FuzzySharp.SimilarityRatio.Scorer;
-using NUnit.Framework;
-using System;
+﻿using System;
 using System.Linq;
 using System.Reflection;
+using NUnit.Framework;
+using Raffinert.FuzzySharp.SimilarityRatio;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
 
-namespace FuzzySharp.Test.FuzzyTests
+namespace Raffinert.FuzzySharp.Test.FuzzyTests
 {
     [TestFixture]
     public class RegressionTests
@@ -31,7 +30,7 @@ namespace FuzzySharp.Test.FuzzyTests
             }).ToList();
             var scorerTypes = types.Where(t => scorerType.IsAssignableFrom(t) && !t.IsAbstract && t.IsClass).ToList();
             
-            string nullString = null;  //Null doesnt seem to be handled by any scorer
+            string nullString = null;  //Null doesn't seem to be handled by any scorer
             string emptyString = "";
             string whitespaceString = " ";
 

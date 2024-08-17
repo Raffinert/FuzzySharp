@@ -2,7 +2,7 @@
 
   <PropertyGroup>
 	  <AssemblyVersion>1.0.5.0</AssemblyVersion>
-	  <Authors>Jacob Bayer</Authors>
+	  <Authors>Jacob Bayer;Yevhen Cherkes</Authors>
 	  <Company />
 	  <Description>Fuzzy string matcher based on FuzzyWuzzy algorithm from SeatGeek</Description>
 	  <FileVersion>1.0.5.0</FileVersion>
@@ -20,15 +20,11 @@
 	  <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	  <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp3.1;net45;net46;net461;net472;net48;NET60;NET80</TargetFrameworks>
 	  <Version>2.0.3</Version>
+	  <AssemblyName>Raffinert.$(MSBuildProjectName)</AssemblyName>
+	  <RootNamespace>Raffinert.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'
-			 OR '$(TargetFramework)' == 'netcoreapp3.1'
-			 OR '$(TargetFramework)' == 'net45'
-			 OR '$(TargetFramework)' == 'net46'
-			 OR '$(TargetFramework)' == 'net461'
-			 OR '$(TargetFramework)' == 'net472'
-			 OR '$(TargetFramework)' == 'net48'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netcoreapp3.1' OR '$(TargetFramework)' == 'net45' OR '$(TargetFramework)' == 'net46' OR '$(TargetFramework)' == 'net461' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48'">
 		<PackageReference Include="IndexRange" Version="1.0.3" />
 		<PackageReference Include="System.Memory" Version="4.5.5" />
   </ItemGroup>

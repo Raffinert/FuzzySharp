@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using FuzzySharp.SimilarityRatio;
-using FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 using NUnit.Framework;
+using Raffinert.FuzzySharp.SimilarityRatio;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 
-namespace FuzzySharp.Test.FuzzyTests
+namespace Raffinert.FuzzySharp.Test.FuzzyTests
 {
     [TestFixture]
     public class ProcessTests

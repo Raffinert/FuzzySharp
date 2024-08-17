@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using FuzzySharp.Extensions;
-using FuzzySharp.SimilarityRatio.Scorer;
+using Raffinert.FuzzySharp.Extensions;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
 
-namespace FuzzySharp.Extractor
+namespace Raffinert.FuzzySharp.Extractor
 {
     public static class ResultExtractor
     {

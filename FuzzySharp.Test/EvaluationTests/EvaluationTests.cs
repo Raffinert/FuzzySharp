@@ -1,10 +1,10 @@
-﻿using FuzzySharp.PreProcess;
-using FuzzySharp.SimilarityRatio;
-using FuzzySharp.SimilarityRatio.Scorer.Composite;
-using FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
-using NUnit.Framework;
+﻿using NUnit.Framework;
+using Raffinert.FuzzySharp.PreProcess;
+using Raffinert.FuzzySharp.SimilarityRatio;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 
-namespace FuzzySharp.Test.EvaluationTests
+namespace Raffinert.FuzzySharp.Test.EvaluationTests
 {
     [TestFixture]
     public class EvaluationTests

@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace FuzzySharp.Utils
+namespace Raffinert.FuzzySharp.Utils
 {
     public abstract class Heap<T> : IEnumerable<T>
     {

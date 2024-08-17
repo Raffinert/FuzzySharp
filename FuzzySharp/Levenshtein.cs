@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
-using FuzzySharp.Edits;
+using Raffinert.FuzzySharp.Edits;
 
-namespace FuzzySharp
+namespace Raffinert.FuzzySharp
 {
     public static class Levenshtein
     {

@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using FuzzySharp.Extensions;
-using FuzzySharp.Utils;
+using Raffinert.FuzzySharp.Extensions;
+using Raffinert.FuzzySharp.Utils;
 
-namespace FuzzySharp.SimilarityRatio.Scorer.StrategySensitive
+namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive
 {
     public abstract class TokenAbbreviationScorerBase : StrategySensitiveScorerBase
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace FuzzySharp.Extensions
+namespace Raffinert.FuzzySharp.Extensions
 {
     internal static class StringExtensions
     {

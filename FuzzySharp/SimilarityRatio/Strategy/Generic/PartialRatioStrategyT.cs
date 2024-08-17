@@ -1,7 +1,7 @@
 ﻿using System;
-using FuzzySharp.Edits;
+using Raffinert.FuzzySharp.Edits;
 
-namespace FuzzySharp.SimilarityRatio.Strategy.Generic
+namespace Raffinert.FuzzySharp.SimilarityRatio.Strategy.Generic
 {
     internal static class PartialRatioStrategy<T> where T : IEquatable<T>
     {

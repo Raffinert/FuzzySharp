@@ -1,4 +1,4 @@
-﻿namespace FuzzySharp.Edits
+﻿namespace Raffinert.FuzzySharp.Edits
 {
     public class MatchingBlock
     {
