@@ -2,7 +2,7 @@
 
 C# .NET fuzzy string matching implementation of Seat Geek's well known python FuzzyWuzzy algorithm. 
 
-A refined version of original [FuzzySharp](https://github.com/JakeBayer/FuzzySharp). The original one looks abandoned.
+Refined version of original [FuzzySharp](https://github.com/JakeBayer/FuzzySharp). The original one looks abandoned.
 
 # Release Notes:
 v.2.0.3
