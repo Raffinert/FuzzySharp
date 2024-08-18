@@ -1,7 +1,18 @@
-# FuzzySharp
+# Raffinert.FuzzySharp
+
 C# .NET fuzzy string matching implementation of Seat Geek's well known python FuzzyWuzzy algorithm. 
 
+A refined version of original [FuzzySharp](https://github.com/JakeBayer/FuzzySharp). The original one looks abandoned.
+
 # Release Notes:
+v.2.0.3
+
+Accent to performantce and allocations.
+Fixed some problems with local languages caused by Regex("a-zA-Z"). All regexps were replaced with string manipulations (it also fixes https://github.com/JakeBayer/FuzzySharp/pull/7)
+Remove unnecessary ConcurrentDictionary: reused approach [Dmitry Sushchevsky](https://github.com/blowin) - see [PR!42](https://github.com/JakeBayer/FuzzySharp/pull/42)
+Remove support of outdated/vulnerable platforms netcoreapp2.0;netcoreapp2.1;netstandard1.6
+Closed [Issue!46 - Extract method with (string query, IEnumerable<T> choices) signature]!(https://github.com/JakeBayer/FuzzySharp/issues/46)
+
 v.2.0.0
 
 As of 2.0.0, all empty strings will return a score of 0. Prior, the partial scoring system would return a score of 100, regardless if the other input had correct value or not. This was a result of the partial scoring system returning an empty set for the matching blocks As a result, this led to incorrrect values in the composite scores; several of them (token set, token sort), relied on the prior value of empty strings.
@@ -11,7 +22,7 @@ As a result, many 1.X.X unit test may be broken with the 2.X.X upgrade, but it i
 
 ## Usage
 
-Install-Package FuzzySharp
+Install-Package Raffinert.FuzzySharp
 
 #### Simple Ratio
 ```csharp
