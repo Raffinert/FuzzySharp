@@ -22,6 +22,7 @@
     <Version>2.0.3</Version>
     <AssemblyName>Raffinert.$(MSBuildProjectName)</AssemblyName>
     <RootNamespace>Raffinert.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netcoreapp3.1' OR '$(TargetFramework)' == 'net45' OR '$(TargetFramework)' == 'net46' OR '$(TargetFramework)' == 'net461' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48'">
@@ -32,8 +33,8 @@
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Include="README.md" pack="true" PackagePath="." />
-  </ItemGroup>
+	<ItemGroup>
+		<None Include="../README.md" pack="true" PackagePath="." />
+	</ItemGroup>
 
 </Project>
