@@ -196,4 +196,16 @@ public class BenchmarkAll
     {
         return Classic.Process.ExtractOne(Query, Events, static strings => strings[0]);
     }
+
+    [Benchmark]
+    public int LevenshteinDistance()
+    {
+        return Levenshtein.EditDistance("chicago cubs vs new york mets".AsSpan(), "new york mets vs chicago cubs".AsSpan());
+    }
+
+    [Benchmark]
+    public int FastenshteinDistance()
+    {
+        return Fastenshtein.Levenshtein.Distance("chicago cubs vs new york mets", "new york mets vs chicago cubs");
+    }
 }

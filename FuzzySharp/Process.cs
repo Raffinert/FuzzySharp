@@ -56,6 +56,27 @@ namespace Raffinert.FuzzySharp
             scorer ??= s_defaultScorer;
             return ResultExtractor.ExtractWithoutOrder(query, choices, processor, scorer, cutoff);
         }
+
+        /// <summary>
+        /// Creates a list of ExtractedResult which contain all the choices with
+        /// their corresponding score where higher is more similar
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="choices"></param>
+        /// <param name="processor"></param>
+        /// <param name="scorer"></param>
+        /// <param name="cutoff"></param>
+        /// <returns></returns>
+        public static IEnumerable<ExtractedResult<T>> ExtractAll<T>(
+            string query,
+            IEnumerable<T> choices,
+            Func<T, string> processor,
+            IRatioScorer scorer = null,
+            int cutoff = 0)
+        {
+            scorer ??= s_defaultScorer;
+            return ResultExtractor.ExtractWithoutOrder(query, choices, processor, scorer, cutoff);
+        }
         #endregion
 
         #region ExtractTop
