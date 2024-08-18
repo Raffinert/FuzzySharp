@@ -7,7 +7,7 @@ A refined version of original [FuzzySharp](https://github.com/JakeBayer/FuzzySha
 # Release Notes:
 v.2.0.3
 
-Accent to performantce and allocations. See [Benchmark](https://github.com/Raffinert/FuzzySharp/blob/dc2b858dc4cc56d8cdf26411904e255a019b0549/FuzzySharp.Benchmarks/BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.BenchmarkAll-report-github.md).
+Accent to performance and allocations. See [Benchmark](https://github.com/Raffinert/FuzzySharp/blob/dc2b858dc4cc56d8cdf26411904e255a019b0549/FuzzySharp.Benchmarks/BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.BenchmarkAll-report-github.md).
 Support local languages more naturally (removed regexps "a-zA-Z"). All regexps were replaced with string manipulations (fixes [PR!7](https://github.com/JakeBayer/FuzzySharp/pull/7)).
 Extra performance improvement, reused approach [Dmitry Sushchevsky](https://github.com/blowin) - see [PR!42](https://github.com/JakeBayer/FuzzySharp/pull/42).
 Implemented new Process.ExtractAll method, see [Issue!46](https://github.com/JakeBayer/FuzzySharp/issues/46).
