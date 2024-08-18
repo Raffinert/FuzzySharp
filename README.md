@@ -1,7 +1,18 @@
-# FuzzySharp
+# Raffinert.FuzzySharp
+
 C# .NET fuzzy string matching implementation of Seat Geek's well known python FuzzyWuzzy algorithm. 
 
+A refined version of original [FuzzySharp](https://github.com/JakeBayer/FuzzySharp). The original one looks abandoned.
+
 # Release Notes:
+v.2.0.3
+
+Accent to performance and allocations. See [Benchmark](https://github.com/Raffinert/FuzzySharp/blob/dc2b858dc4cc56d8cdf26411904e255a019b0549/FuzzySharp.Benchmarks/BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.BenchmarkAll-report-github.md).
+Support local languages more naturally (removed regexps "a-zA-Z"). All regexps were replaced with string manipulations (fixes [PR!7](https://github.com/JakeBayer/FuzzySharp/pull/7)).
+Extra performance improvement, reused approach [Dmitry Sushchevsky](https://github.com/blowin) - see [PR!42](https://github.com/JakeBayer/FuzzySharp/pull/42).
+Implemented new Process.ExtractAll method, see [Issue!46](https://github.com/JakeBayer/FuzzySharp/issues/46).
+Remove support of outdated/vulnerable platforms netcoreapp2.0;netcoreapp2.1;netstandard1.6.
+
 v.2.0.0
 
 As of 2.0.0, all empty strings will return a score of 0. Prior, the partial scoring system would return a score of 100, regardless if the other input had correct value or not. This was a result of the partial scoring system returning an empty set for the matching blocks As a result, this led to incorrrect values in the composite scores; several of them (token set, token sort), relied on the prior value of empty strings.
@@ -11,7 +22,7 @@ As a result, many 1.X.X unit test may be broken with the 2.X.X upgrade, but it i
 
 ## Usage
 
-Install-Package FuzzySharp
+Install-Package Raffinert.FuzzySharp
 
 #### Simple Ratio
 ```csharp
@@ -112,18 +123,6 @@ var best = Process.ExtractOne(query, events, strings => strings[0]);
 
 best: (value: { "chicago cubs vs new york mets", "CitiField", "2011-05-11", "8pm" }, score: 95, index: 0)
 ```
-
-### FuzzySharp in Different Languages
-FuzzySharp was written with English in mind, and as such the Default string preprocessor only looks at English alphanumeric characters in the input strings, and will strip all others out. However, the `Extract` methods in the `Process` class do provide the option to specify your own string preprocessor. If this parameter is omitted, the Default will be used. However if you provide your own, the provided one will be used, so you are free to provide your own criteria for whatever character set you want to admit. For instance, using the parameter `(s) => s` will prevent the string from being altered at all before being run through the similarity algorithms.
-
-E.g.,
-
-```csharp
-var query = "strng";
-var choices = new [] { "stríng", "stráng", "stréng" };
-var results = Process.ExtractAll(query, choices, (s) => s);
-```
-The above will run the similarity algorithm on all the choices without stripping out the accented characters.
 
 ### Using Different Scorers
 Scoring strategies are stateless, and as such should be static. However, in order to get them to share all the code they have in common via inheritance, making them static was not possible.

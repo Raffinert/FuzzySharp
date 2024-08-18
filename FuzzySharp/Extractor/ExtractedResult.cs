@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace FuzzySharp.Extractor
+namespace Raffinert.FuzzySharp.Extractor
 {
     public class ExtractedResult<T> : IComparable<ExtractedResult<T>> 
     {
@@ -34,7 +34,7 @@ namespace FuzzySharp.Extractor
             {
                 return $"(string: {Value}, score: {Score}, index: {Index})";
             }
-            return $"(value: {Value.ToString()}, score: {Score}, index: {Index})";
+            return $"(value: {Value}, score: {Score}, index: {Index})";
         }
     }
 }

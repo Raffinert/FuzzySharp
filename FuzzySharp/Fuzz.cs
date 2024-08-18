@@ -1,9 +1,9 @@
-﻿using FuzzySharp.PreProcess;
-using FuzzySharp.SimilarityRatio;
-using FuzzySharp.SimilarityRatio.Scorer.Composite;
-using FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
+﻿using Raffinert.FuzzySharp.PreProcess;
+using Raffinert.FuzzySharp.SimilarityRatio;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 
-namespace FuzzySharp
+namespace Raffinert.FuzzySharp
 {
     public static class Fuzz
     {

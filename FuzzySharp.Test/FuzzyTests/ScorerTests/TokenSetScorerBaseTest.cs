@@ -1,12 +1,9 @@
-﻿using FuzzySharp.SimilarityRatio;
-using FuzzySharp.SimilarityRatio.Scorer;
-using FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
-using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using NUnit.Framework;
+using Raffinert.FuzzySharp.SimilarityRatio;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 
-namespace FuzzySharp.Test.FuzzyTests.ScorerTests
+namespace Raffinert.FuzzySharp.Test.FuzzyTests.ScorerTests
 {
     [TestFixture]
     public class TokenSetScorerBaseTest

@@ -1,7 +1,7 @@
 ﻿using System;
-using FuzzySharp.SimilarityRatio.Strategy;
+using Raffinert.FuzzySharp.SimilarityRatio.Strategy;
 
-namespace FuzzySharp.SimilarityRatio.Scorer.StrategySensitive
+namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive
 {
     public class PartialTokenInitialismScorer : TokenInitialismScorerBase
     {

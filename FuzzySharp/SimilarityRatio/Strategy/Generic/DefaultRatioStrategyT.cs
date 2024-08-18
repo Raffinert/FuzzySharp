@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace FuzzySharp.SimilarityRatio.Strategy.Generic
+namespace Raffinert.FuzzySharp.SimilarityRatio.Strategy.Generic
 {
-    internal class DefaultRatioStrategy<T> where T : IEquatable<T>
+    internal static class DefaultRatioStrategy<T> where T : IEquatable<T>
     {
         public static int Calculate(T[] input1, T[] input2)
         {

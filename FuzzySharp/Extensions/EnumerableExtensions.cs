@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using FuzzySharp.Utils;
+using Raffinert.FuzzySharp.Utils;
 
-namespace FuzzySharp.Extensions
+namespace Raffinert.FuzzySharp.Extensions
 {
     public static class EnumerableExtensions
     {

@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace FuzzySharp.SimilarityRatio.Strategy
+namespace Raffinert.FuzzySharp.SimilarityRatio.Strategy
 {
-    internal class DefaultRatioStrategy
+    internal static class DefaultRatioStrategy
     {
         public static int Calculate(string input1, string input2)
         {

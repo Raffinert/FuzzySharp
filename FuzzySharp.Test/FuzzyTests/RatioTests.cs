@@ -1,7 +1,7 @@
-using FuzzySharp.PreProcess;
 using NUnit.Framework;
+using Raffinert.FuzzySharp.PreProcess;
 
-namespace FuzzySharp.Test.FuzzyTests
+namespace Raffinert.FuzzySharp.Test.FuzzyTests
 {
     [TestFixture]
     public class RatioTests

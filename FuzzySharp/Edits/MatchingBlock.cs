@@ -1,4 +1,4 @@
-﻿namespace FuzzySharp.Edits
+﻿namespace Raffinert.FuzzySharp.Edits
 {
     public class MatchingBlock
     {
@@ -6,9 +6,6 @@
         public int DestPos { get; set; }
         public int Length { get; set; }
 
-        public override string ToString()
-        {
-            return $"({SourcePos},{DestPos},{Length})";
-        }
+        public override string ToString() => $"({SourcePos},{DestPos},{Length})";
     }
 }
