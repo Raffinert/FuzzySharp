@@ -3,6 +3,7 @@
 using FuzzLevenshtein = Raffinert.FuzzySharp.Levenshtein;
 using QuickLevenshtein = Quickenshtein.Levenshtein;
 using FastLevenshtein = Fastenshtein.Levenshtein;
+using FuzzLevenshteinClassic = FuzzySharp.Levenshtein;
 
 
 namespace Raffinert.FuzzySharp.Benchmarks.LevenshteinDistance;
@@ -15,17 +16,29 @@ public class LevenshteinNormal
     [GlobalSetup]
     public void SetUp()
     {
-        _words = RandomWords.Create(50, 128);
+        _words = RandomWords.Create(20, 128);
     }
 
     [Benchmark(Baseline = true)]
-    public void BaseLine()
+    public void NaiveDp()
     {
         for (var i = 0; i < _words.Length; i++)
         {
             for (int j = 0; j < _words.Length; j++)
             {
                 LevenshteinBaseline.GetDistance(_words[i], _words[j]);
+            }
+        }
+    }
+
+    [Benchmark]
+    public void FuzzySharpClassic()
+    {
+        for (var i = 0; i < _words.Length; i++)
+        {
+            for (int j = 0; j < _words.Length; j++)
+            {
+                FuzzLevenshteinClassic.EditDistance(_words[i], _words[j]);
             }
         }
     }
