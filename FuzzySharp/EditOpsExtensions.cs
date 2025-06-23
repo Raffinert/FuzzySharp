@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Raffinert.FuzzySharp;
 
-internal static class EditOpsExtensions
+public static class EditOpsExtensions
 {
     public static List<OpCode> AsOpCodes(this IEnumerable<EditOp> editOps, int srcLen, int destLen)
     {
@@ -16,18 +16,18 @@ internal static class EditOpsExtensions
             int j = op.DestPos;
             // equal segment
             if (prevI < i && prevJ < j)
-                opcodes.Add(new OpCode{ EditType = EditType.KEEP, SourceBegin = prevI , SourceEnd = i, DestBegin = prevJ, DestEnd = j});
+                opcodes.Add(new OpCode { EditType = EditType.KEEP, SourceBegin = prevI, SourceEnd = i, DestBegin = prevJ, DestEnd = j });
             // delete
             if (op.EditType == EditType.DELETE)
             {
-                opcodes.Add(new OpCode { EditType = EditType.DELETE, SourceBegin = i, SourceEnd = i+1, DestBegin = j, DestEnd = j });
+                opcodes.Add(new OpCode { EditType = EditType.DELETE, SourceBegin = i, SourceEnd = i + 1, DestBegin = j, DestEnd = j });
                 prevI = i + 1;
                 prevJ = j;
             }
             // insert
             else if (op.EditType == EditType.INSERT)
             {
-                opcodes.Add(new OpCode { EditType = EditType.INSERT, SourceBegin = i, SourceEnd = i, DestBegin = j, DestEnd = j + 1});
+                opcodes.Add(new OpCode { EditType = EditType.INSERT, SourceBegin = i, SourceEnd = i, DestBegin = j, DestEnd = j + 1 });
                 prevI = i;
                 prevJ = j + 1;
             }

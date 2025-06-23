@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using System.Linq;
 
 namespace Raffinert.FuzzySharp.Test;
 
@@ -7,8 +8,8 @@ public class LevenshteinTests
 {
     [Test]
     [TestCase(
-    "I had two heart attacks, an abortion, did crack... while I was pregnant. Other than that, I'm fine.", 
-    "You couldn't even be a vegetable - even artichokes have a heart.", 
+    "I had two heart attacks, an abortion, did crack... while I was pregnant. Other than that, I'm fine.",
+    "You couldn't even be a vegetable - even artichokes have a heart.",
     76)]
     [TestCase("", "", 0)]
     [TestCase("a", "", 1)]
@@ -29,7 +30,7 @@ public class LevenshteinTests
         int distance = Levenshtein.Distance(s1, s2);
         Assert.AreEqual(expectedDistance, distance);
     }
-    
+
     [Test]
     public void TestLevenshteinDistance()
     {
@@ -46,8 +47,25 @@ public class LevenshteinTests
     {
         var fd = Levenshtein.Distance(s1, s2);
         var eo = Levenshtein.GetEditOps(s1, s2);
+        var mb = eo.AsMatchingBlocks(s1.Length, s2.Length);
+        var cd = global::FuzzySharp.Levenshtein.GetMatchingBlocks(s1, s2);
         var qd = Quickenshtein.Levenshtein.GetDistance(s1, s2);
-       
+
+        Assert.That(fd, Is.EqualTo(qd));
+        Assert.That(eo.Length, Is.EqualTo(qd));
+    }
+
+    [Test]
+    public void Levenshtein_ShouldBeEqual1()
+    {
+        var s1 = string.Join("", Enumerable.Range(0, 255).Select(_ => '1').Concat(['隣']));
+        var s2 = string.Join("", Enumerable.Range(0, 258).Select(_ => '2').Concat(['隣'])); ;
+        var fd = Levenshtein.Distance(s1, s2);
+        var eo = Levenshtein.GetEditOps(s1, s2);
+        var mb = eo.AsMatchingBlocks(s1.Length, s2.Length);
+        var cd = global::FuzzySharp.Levenshtein.GetMatchingBlocks(s1, s2);
+        var qd = Quickenshtein.Levenshtein.GetDistance(s1, s2);
+
         Assert.That(fd, Is.EqualTo(qd));
         Assert.That(eo.Length, Is.EqualTo(qd));
     }

@@ -1,9 +1,13 @@
-namespace Raffinert.FuzzySharp.Benchmarks.Utils;
+﻿namespace Raffinert.FuzzySharp.Benchmarks.Utils;
 
 // original https://github.com/DanHarltey/Fastenshtein/blob/master/benchmarks/Fastenshtein.Benchmarking/RandomWords.cs
 public static class RandomWords
 {
-    private static readonly char[] Letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+    private static readonly char[] Chars = Enumerable.Range(char.MinValue, char.MaxValue + 1)
+        .Select(c => (char)c)
+        .Where(char.IsLetterOrDigit)
+        .ToArray();
+
 
     public static string[] Create(int count, int maxWordSize)
     {
@@ -20,8 +24,8 @@ public static class RandomWords
             {
                 for (var j = 0; j < word.Length; j++)
                 {
-                    var index = r.Next(0, Letters.Length);
-                    word[j] = Letters[index];
+                    var index = r.Next(0, Chars.Length);
+                    word[j] = Chars[index];
                 }
             });
         }
