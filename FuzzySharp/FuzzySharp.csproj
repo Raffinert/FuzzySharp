@@ -22,16 +22,21 @@
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/Raffinert/FuzzySharp</RepositoryUrl>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <TargetFrameworks>netstandard2.1;netcoreapp3.1;net45;net46;net461;net472;net48;NET60;NET80;NET90</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;netcoreapp3.1;net45;net46;net462;net472;net48;NET60;NET80;NET90</TargetFrameworks>
     <AssemblyName>Raffinert.$(MSBuildProjectName)</AssemblyName>
     <RootNamespace>Raffinert.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netcoreapp3.1' OR '$(TargetFramework)' == 'net45' OR '$(TargetFramework)' == 'net46' OR '$(TargetFramework)' == 'net461' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netcoreapp3.1' OR '$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48'">
     <PackageReference Include="IndexRange" Version="1.0.3" />
-    <PackageReference Include="System.Memory" Version="4.5.5" />
+    <PackageReference Include="System.Memory" Version="4.6.3" />
   </ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net45' OR '$(TargetFramework)' == 'net46'">
+		<PackageReference Include="IndexRange" Version="1.0.3" />
+		<PackageReference Include="System.Memory" Version="4.5.5" />
+	</ItemGroup>
   
 	<ItemGroup>
 		<None Include="../README.md" pack="true" PackagePath="." />
@@ -54,5 +59,9 @@
 	<PropertyGroup>
 		<MeziantouPolyfill_IncludedPolyfills>M:System.Collections.Generic.CollectionExtensions.GetValueOrDefault</MeziantouPolyfill_IncludedPolyfills>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="Raffinert.FuzzySharp.Test" />
+	</ItemGroup>
 
 </Project>
