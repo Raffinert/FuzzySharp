@@ -34,6 +34,8 @@ Random words of 3 to 1024 random chars (LevenshteinLarge.cs):
 
 
 # Release Notes:
+v3.0.1 – Fix critical issue with strings that contain more than 64 unique characters. The issue was introduced in v3.0.0.
+
 v3.0.0 – *Partial Ratio Accuracy and Performance Update*  
 
 - **Fixes multiple bugs in the Partial Ratio implementation** In earlier versions, `Fuzz.PartialRatio` could return suboptimal scores in certain cases (for example, when a short string appeared multiple times in a longer string, it didn’t always pick the highest scoring match).
