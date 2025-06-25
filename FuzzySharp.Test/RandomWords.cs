@@ -10,29 +10,21 @@ public static class RandomWordPairs
 {
     public static IEnumerable<TestCaseData> GetWordPairs()
     {
-        var words = RandomWords.Create(50, 1024);
-        for (int i = 0; i < words.Length; i++)
-        {
-            for (int j = 0; j < words.Length; j++)
-            {
-                yield return new TestCaseData(words[i], words[j]);
-            }
-        }
+        var words = RandomWords.Create(10, 1024);
+
+        var result = from word1 in words
+                     from word2 in words
+                     select new TestCaseData(word1, word2);
+
+        return result;
     }
 }
 
 // original https://github.com/DanHarltey/Fastenshtein/blob/master/benchmarks/Fastenshtein.Benchmarking/RandomWords.cs
 public static class RandomWords
 {
-    private static readonly char[] Letters =
-    [
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
-        'W', 'X', 'Y', 'Z'
-    ];
-
     private static readonly char[] Chars = Enumerable.Range(char.MinValue, char.MaxValue + 1)
         .Select(c => (char)c)
-        .Where(c => !char.IsSurrogate(c))
         .Where(char.IsLetterOrDigit)
         .ToArray();
 

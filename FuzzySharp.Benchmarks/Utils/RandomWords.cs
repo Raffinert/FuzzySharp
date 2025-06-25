@@ -8,7 +8,6 @@ public static class RandomWords
         .Where(char.IsLetterOrDigit)
         .ToArray();
 
-
     public static string[] Create(int count, int maxWordSize)
     {
         var words = new string[count];
