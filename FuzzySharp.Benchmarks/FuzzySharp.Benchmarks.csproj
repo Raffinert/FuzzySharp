@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.15.1" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.2" />
     <PackageReference Include="Fastenshtein" Version="1.0.10" />
     <PackageReference Include="FuzzySharp" Version="2.0.2" />
     <PackageReference Include="Quickenshtein" Version="1.5.1" />
