@@ -8,7 +8,7 @@ namespace Raffinert.FuzzySharp.Test;
 public class DictionarySlimTests
 {
     [Test, TestCaseSource(typeof(RandomWordPairs), nameof(RandomWordPairs.GetWordPairs))]
-    public void DictionarySlim_ShouldHaveEqualResults(string s1, string s2)
+    public void DictionarySlim_And_Dictionary_ShouldHaveEqualResults(string s1, string s2)
     {
         var ds1 = new DictionarySlimPooled<char, int>(64);
         var d1 = new Dictionary<char, int>(64);
