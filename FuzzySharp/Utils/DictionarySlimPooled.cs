@@ -132,7 +132,7 @@ internal sealed class DictionarySlimPooled<TKey, TValue> : IDisposable, IReadOnl
             if (key.Equals(entries[i].key))
                 return true;
 
-            if (collisionCount == entries.Length)
+            if (collisionCount == _size)
                 ThrowHelper.ThrowInvalidOperationException_ConcurrentOperationsNotSupported();
 
             collisionCount++;
@@ -218,7 +218,7 @@ internal sealed class DictionarySlimPooled<TKey, TValue> : IDisposable, IReadOnl
             last = i;
             i = candidate.next;
 
-            if (collisionCount == entries.Length)
+            if (collisionCount == _size)
                 ThrowHelper.ThrowInvalidOperationException_ConcurrentOperationsNotSupported();
 
             collisionCount++;
@@ -310,7 +310,7 @@ internal sealed class DictionarySlimPooled<TKey, TValue> : IDisposable, IReadOnl
         // Recompute buckets
         while (count-- > 0)
         {
-            int bucketIndex = newEntries[count].key.GetHashCode() & (newBuckets.Length - 1);
+            int bucketIndex = newEntries[count].key.GetHashCode() & (newSize - 1);
             newEntries[count].next = newBuckets[bucketIndex] - 1;
             newBuckets[bucketIndex] = count + 1;
         }

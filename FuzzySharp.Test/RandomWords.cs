@@ -10,7 +10,7 @@ public static class RandomWordPairs
 {
     public static IEnumerable<TestCaseData> GetWordPairs()
     {
-        var words = RandomWords.Create(10, 1024);
+        var words = RandomWords.Create(50, 1024);
 
         var result = from word1 in words
                      from word2 in words

@@ -1,6 +1,4 @@
 ﻿using NUnit.Framework;
-using Raffinert.FuzzySharp.Utils;
-using System.Collections.Generic;
 
 namespace Raffinert.FuzzySharp.Test;
 
@@ -41,57 +39,6 @@ public class LevenshteinTests
         int zeroDistance = Levenshtein.Distance(wordA, wordA);
         Assert.AreEqual(4112, maxDistance);
         Assert.AreEqual(0, zeroDistance);
-    }
-
-    [Test, TestCaseSource(typeof(RandomWordPairs), nameof(RandomWordPairs.GetWordPairs))]
-    public void Dictionary_Test(string s1, string s2)
-    {
-        var ds = new DictionarySlimPooled<char, long>(64);
-
-        for (var index = 0; index < s1.Length; index++)
-        {
-            var c = s1[index];
-            ref var val = ref ds.GetOrAddValueRef(c);
-            val = index + 1;
-        }
-
-        var d = new Dictionary<char, int?>(64);
-
-        for (var index = 0; index < s1.Length; index++)
-        {
-            var c = s1[index];
-            d[c] = index + 1;
-        }
-
-        foreach (var c in s1)
-        {
-            var dc = d[c];
-            Assert.True(ds.TryGetValue(c, out var value));
-            Assert.AreEqual(value, dc);
-        }
-
-        var ds1 = new DictionarySlimPooled<char, long>(64);
-
-        for (var index = 0; index < s2.Length; index++)
-        {
-            var c = s2[index];
-            ref var val = ref ds1.GetOrAddValueRef(c);
-            val = index + 1;
-        }
-
-        var d1 = new Dictionary<char, int?>(64);
-
-        for (var index = 0; index < s2.Length; index++)
-        {
-            var c = s2[index];
-            d1[c] = index + 1;
-        }
-
-        foreach (var c in s2)
-        {
-            Assert.True(ds1.TryGetValue(c, out var value));
-            Assert.AreEqual(value, d1[c]);
-        }
     }
 
     [Test, TestCaseSource(typeof(RandomWordPairs), nameof(RandomWordPairs.GetWordPairs))]

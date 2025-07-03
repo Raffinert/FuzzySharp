@@ -1,4 +1,4 @@
-[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://stand-with-ukraine.pp.ua)
+﻿[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://stand-with-ukraine.pp.ua)
 
 ## Terms of use<sup>[?](https://github.com/Tyrrrz/.github/blob/master/docs/why-so-political.md)</sup>
 
@@ -34,7 +34,7 @@ Random words of 3 to 1024 random chars (LevenshteinLarge.cs):
 
 
 # Release Notes:
-v3.0.1 – Fix critical issue with strings that contain more than 64 unique characters. The issue was introduced in v3.0.0.
+v3.0.1, 3.0.2  – Fix critical issue with strings that contain more than 64 unique characters. The issue was introduced in v3.0.0.
 
 v3.0.0 – *Partial Ratio Accuracy and Performance Update*  
 
