@@ -12,7 +12,7 @@
 	</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>
-    <LangVersion>12.0</LangVersion>
+    <LangVersion>Latest</LangVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Raffinert/FuzzySharp</PackageProjectUrl>
     <PackageReleaseNotes>Performance, allocations</PackageReleaseNotes>
@@ -22,7 +22,7 @@
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/Raffinert/FuzzySharp</RepositoryUrl>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <TargetFrameworks>netstandard2.1;netcoreapp3.1;net45;net46;net462;net472;net48;NET60;NET80;NET90</TargetFrameworks>
+    <TargetFrameworks>NET80;NET90</TargetFrameworks>
     <AssemblyName>Raffinert.$(MSBuildProjectName)</AssemblyName>
     <RootNamespace>Raffinert.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -35,13 +35,6 @@
 
 	<ItemGroup>
 		<None Include="../README.md" pack="true" PackagePath="." />
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="Meziantou.Polyfill" Version="1.0.49">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">

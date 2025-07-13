@@ -4,9 +4,9 @@ namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
 
 public class WeightedRatioScorer : ScorerBase
 {
-    private static double UNBASE_SCALE  = .95;
-    private static double PARTIAL_SCALE = .90;
-    private static bool TRY_PARTIALS = true;
+    private static readonly double UNBASE_SCALE  = .95;
+    private static readonly double PARTIAL_SCALE = .90;
+    private static readonly bool TRY_PARTIALS = true;
 
     public override int Score(string input1, string input2)
     {

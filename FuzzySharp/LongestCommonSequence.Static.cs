@@ -2,6 +2,7 @@
 using Raffinert.FuzzySharp.Utils;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace Raffinert.FuzzySharp;
@@ -434,7 +435,7 @@ public sealed partial class LongestCommonSequence
     {
         // invert and mask
         ulong inv = ~x & (length == 64 ? ulong.MaxValue : (1UL << length) - 1UL);
-        return NumericsPolyfill.PopCount(inv);
+        return BitOperations.PopCount(inv);
     }
 
     private static int CountZeroBits(ulong[] S, int length)
@@ -445,13 +446,13 @@ public sealed partial class LongestCommonSequence
 
         // all full blocks
         for (int i = 0; i < fullBlocks; i++)
-            zeros += NumericsPolyfill.PopCount(~S[i]);
+            zeros += BitOperations.PopCount(~S[i]);
 
         // last partial block
         if (remBits > 0)
         {
             ulong mask = (1UL << remBits) - 1;
-            zeros += NumericsPolyfill.PopCount(~S[fullBlocks] & mask);
+            zeros += BitOperations.PopCount(~S[fullBlocks] & mask);
         }
 
         return zeros;
