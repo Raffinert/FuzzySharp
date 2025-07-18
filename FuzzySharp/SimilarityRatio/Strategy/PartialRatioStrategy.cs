@@ -1,6 +1,6 @@
-﻿using Raffinert.FuzzySharp.Utils;
+﻿using Raffinert.FuzzySharp.SimilarityRatio.Strategy.Generic;
+using Raffinert.FuzzySharp.Utils;
 using System;
-using Raffinert.FuzzySharp.SimilarityRatio.Strategy.Generic;
 
 namespace Raffinert.FuzzySharp.SimilarityRatio.Strategy;
 
@@ -16,15 +16,14 @@ internal static class PartialRatioStrategy
         {
             return 0;
         }
-            
+
         var shorter = input1.AsSpan();
         var longer = input2.AsSpan();
 
         SequenceUtils.SwapIfSourceIsLonger(ref shorter, ref longer);
 
         var alignment = PartialRatioStrategy<char>.PartialRatioAlignment(shorter, longer);
-        var ratio = alignment?.Score ?? 0.0;
-        
-        return (int)Math.Round(ratio);
+
+        return (int)Math.Round(alignment.Score);
     }
 }

@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Raffinert.FuzzySharp.Utils;
 
-public static class SequenceUtils
+internal static class SequenceUtils
 {
     public static int CommonPrefix<T>(ReadOnlySpan<T> s1, ReadOnlySpan<T> s2) where T : IEquatable<T>
     {
@@ -20,6 +20,7 @@ public static class SequenceUtils
         }
         return prefixLength;
     }
+
     public static int CommonSuffix<T>(ReadOnlySpan<T> s1, ReadOnlySpan<T> s2) where T : IEquatable<T>
     {
         int suffixLength = 0;
@@ -34,7 +35,7 @@ public static class SequenceUtils
         }
         return suffixLength;
     }
-    
+
     public static (int PrefixLength, int SuffixLength) CommonAffix<T>(ReadOnlySpan<T> s1, ReadOnlySpan<T> s2) where T : IEquatable<T>
     {
         int prefixLength = CommonPrefix(s1, s2);
@@ -77,15 +78,43 @@ public static class SequenceUtils
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void SwapIfSourceIsLonger<T>(ref ReadOnlySpan<T> source, ref ReadOnlySpan<T> target)
+    public static bool SwapIfSourceIsLonger<T>(ref ReadOnlySpan<T> source, ref ReadOnlySpan<T> target)
     {
         if (source.Length <= target.Length)
         {
-            return;
+            return false;
         }
 
         var temp = source;
         source = target;
         target = temp;
+
+        return true;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool SwapIfSourceIsLonger(ref string source, ref string target)
+    {
+        if (source.Length <= target.Length)
+        {
+            return false;
+        }
+
+        (source, target) = (target, source);
+
+        return true;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool SwapIfSourceIsLonger<T>(ref List<T> collection1, ref List<T> collection2)
+    {
+        if (collection1.Count <= collection2.Count)
+        {
+            return false;
+        }
+
+        (collection1, collection2) = (collection2, collection1);
+
+        return true;
     }
 }

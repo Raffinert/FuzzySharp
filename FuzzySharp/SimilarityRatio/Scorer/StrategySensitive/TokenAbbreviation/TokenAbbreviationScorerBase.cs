@@ -1,27 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using Raffinert.FuzzySharp.Extensions;
+﻿using Raffinert.FuzzySharp.Extensions;
 using Raffinert.FuzzySharp.Utils;
+using System;
 
 namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 
 public abstract class TokenAbbreviationScorerBase : StrategySensitiveScorerBase
 {
-    public override int Score(string input1, string input2)
+    public override int Score(string shorter, string longer)
     {
-        string shorter;
-        string longer;
-
-        if (input1.Length < input2.Length)
-        {
-            shorter = input1;
-            longer  = input2;
-        }
-        else
-        {
-            shorter = input2;
-            longer  = input1;
-        }
+        SequenceUtils.SwapIfSourceIsLonger(ref shorter, ref longer);
 
         double lenRatio = (double)longer.Length / shorter.Length;
 
@@ -32,50 +19,38 @@ public abstract class TokenAbbreviationScorerBase : StrategySensitiveScorerBase
         var tokensLonger = longer.ExtractTokens();
         var tokensShorter = shorter.ExtractTokens();
 
+        SequenceUtils.SwapIfSourceIsLonger(ref tokensShorter, ref tokensLonger);
+
         // more than 4 tokens and it's probably not an abbreviation (and could get costly)
         if (tokensShorter.Count > 4)
         {
             return 0;
         }
 
-        List<string> moreTokens;
-        List<string> fewerTokens;
-
-        if (tokensLonger.Count > tokensShorter.Count)
-        {
-            moreTokens = tokensLonger;
-            fewerTokens = tokensShorter;
-        }
-        else
-        {
-            moreTokens = tokensShorter;
-            fewerTokens = tokensLonger;
-        }
-
-        var allPermutations = moreTokens.PermutationsOfSize(fewerTokens.Count);
+        var allPermutations = tokensLonger.PermutationsOfSize(tokensShorter.Count);
 
         int maxScore = 0;
 
         foreach (var permutation in allPermutations)
         {
             double sum = 0;
-            for (int i = 0; i < fewerTokens.Count; i++)
+            for (int i = 0; i < tokensShorter.Count; i++)
             {
                 var i1 = permutation[i];
-                var i2 = fewerTokens[i];
+                var i2 = tokensShorter[i];
                 if (StringContainsInOrder(i1.AsSpan(), i2.AsSpan())) // must be at least twice as long
                 {
                     var score = Scorer(i1, i2);
                     sum += score;
                 }
             }
-            var avgScore = (int) (sum / fewerTokens.Count);
-            if(avgScore > maxScore)
+            var avgScore = (int)(sum / tokensShorter.Count);
+            if (avgScore > maxScore)
             {
                 maxScore = avgScore;
             }
         }
-            
+
         return maxScore;
     }
 

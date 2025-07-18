@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Raffinert.FuzzySharp.Utils;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Raffinert.FuzzySharp.Utils;
 
 namespace Raffinert.FuzzySharp.SimilarityRatio.Strategy.Generic;
 
@@ -24,16 +24,15 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
         SequenceUtils.SwapIfSourceIsLonger(ref shorter, ref longer);
 
         var alignment = PartialRatioAlignment(shorter, longer);
-        var ratio = alignment?.Score ?? 0.0;
 
-        return (int)Math.Round(ratio);
+        return (int)Math.Round(alignment.Score);
     }
 
     /// <summary>
     /// Searches for the optimal alignment of the shorter span in the longer span
     /// and returns a ScoreAlignment (with a score in [0…100]) or null if below cutoff.
     /// </summary>
-    internal static ScoreAlignment? PartialRatioAlignment(
+    internal static ScoreAlignment PartialRatioAlignment(
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
         Processor<T> processor = null,
@@ -57,18 +56,11 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
         }
 
         // 4) Determine shorter/longer
-        ReadOnlySpan<T> shorter = s1, longer = s2;
-        bool swapped = false;
-        if (s1.Length > s2.Length)
-        {
-            shorter = s2;
-            longer = s1;
-            swapped = true;
-        }
+        var swapped = SequenceUtils.SwapIfSourceIsLonger(ref s1, ref s2);
 
         // 5) Call the core PartialRatioImpl with cutoff in [0..1]
         double fracCutoff = cutoff100 / 100.0;
-        var res = PartialRatioImpl(shorter, longer, fracCutoff);
+        var res = PartialRatioImpl(s1, s2, fracCutoff);
 
         // 6) If same-length inputs and not perfect, try the other direction
         if (res.Score < 100.0 && s1.Length == s2.Length)
@@ -77,7 +69,7 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
             double newCutoff100 = Math.Max(cutoff100, res.Score);
             double newFracCutoff = newCutoff100 / 100.0;
 
-            var res2 = PartialRatioImpl(longer, shorter, newFracCutoff);
+            var res2 = PartialRatioImpl(s1, s2, newFracCutoff);
             if (res2.Score > res.Score)
             {
                 // swap src/dest
@@ -93,7 +85,7 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
 
         // 7) If below cutoff, return null
         if (res.Score < cutoff100)
-            return null;
+            return res with { Score = 0 };
 
         // 8) If we swapped at step 4, swap back the src/dest in the result
         if (swapped)
@@ -155,6 +147,9 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
 
         // Initial best covers s2[0..len1)
         var res = new ScoreAlignment(0, 0, len1, 0, len1);
+
+        if (len1 == 0 || len2 == 0)
+            return res;
 
         // Precompute s1’s character set for fast Contains
         var charSet = new HashSet<T>(s1.ToArray());
