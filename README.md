@@ -34,7 +34,9 @@ Random words of 3 to 1024 random chars (LevenshteinLarge.cs):
 
 
 # Release Notes:
-v3.0.4  – Remove unnecessary dependency.
+v3.0.5  – Return netstandard20 support, small code cleanup.
+
+v3.0.4  – Remove unnecessary dependency, thanks to @laicasaane.
 
 v3.0.3  – Fix partial ratio issue with empty strings, more tests.
 

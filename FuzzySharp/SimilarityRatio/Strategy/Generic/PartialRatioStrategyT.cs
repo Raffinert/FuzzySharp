@@ -117,15 +117,7 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
         if (len1 > len2)
             throw new ArgumentException("Requires s1.Length <= s2.Length");
 
-        // Build bit-mask dictionary for s1
-        int segCount = (len1 + 63) / 64;
-        using var charMask = new CharMaskBuffer<T>(64, segCount);
-
-        for (int i = 0; i < len1; i++)
-        {
-            charMask.AddBit(s1[i], i);
-        }
-
+        using var charMask = CharMask.Create(s1);
         return PartialRatioImpl(s1, s2, charMask, scoreCutoff);
     }
 

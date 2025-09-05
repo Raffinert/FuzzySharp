@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Raffinert.FuzzySharp;
+namespace Raffinert.FuzzySharp.Extensions;
 
 public static class EditOpsExtensions
 {

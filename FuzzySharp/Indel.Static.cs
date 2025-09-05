@@ -116,12 +116,7 @@ public sealed partial class Indel
     {
         var blocks = (s1.Length + 63) >> 6;
 
-        using var charMask = new CharMaskBuffer<T>(64, blocks);
-        for (var i = 0; i < s1.Length; i++)
-        {
-            charMask.AddBit(s1[i], i);
-        }
-
+        using var charMask = CharMask.Create(s1);
         return DistanceImpl(s1, s2, charMask, scoreCutoff);
     }
 

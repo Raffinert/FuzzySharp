@@ -3,23 +3,10 @@ using System;
 
 namespace Raffinert.FuzzySharp;
 
-public sealed partial class Levenshtein : IDisposable
+public sealed partial class Levenshtein(string source) : IDisposable
 {
-    private readonly string _source;
-    private readonly CharMaskBuffer<char> _charMask;
-
-    public Levenshtein(string source)
-    {
-        _source = source ?? throw new ArgumentNullException(nameof(source));
-
-        var blocks = (_source.Length + 63) >> 6;
-
-        _charMask = new CharMaskBuffer<char>(64, blocks);
-        for (var i = 0; i < _source.Length; i++)
-        {
-            _charMask.AddBit(source[i], i);
-        }
-    }
+    private readonly string _source = source ?? throw new ArgumentNullException(nameof(source));
+    private readonly CharMaskBuffer<char> _charMask = CharMask.Create(source.AsSpan());
 
     public int DistanceFrom(string value)
     {
