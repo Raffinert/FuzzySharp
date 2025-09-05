@@ -1,4 +1,5 @@
 ﻿using Raffinert.FuzzySharp.Edits;
+using Raffinert.FuzzySharp.Extensions;
 using Raffinert.FuzzySharp.Utils;
 using System;
 using System.Buffers;
@@ -53,14 +54,7 @@ public sealed partial class Levenshtein
             GenericDistance(source, target, insertCost, deleteCost, replaceCost, scoreCutoff);
         }
 
-        var blocks = (source.Length + 63) >> 6;
-
-        using var charMask = new CharMaskBuffer<T>(64, blocks);
-
-        for (var i = 0; i < source.Length; i++)
-        {
-            charMask.AddBit(source[i], i);
-        }
+        using var charMask = CharMask.Create(source);
 
         if (replaceCost == 1)
         {
@@ -334,11 +328,7 @@ public sealed partial class Levenshtein
         var topBitMask = 1UL << topBitPos;
 
         // Build the “block” table: for each character, which bit(s) in each block it sets
-        using var blockTable = new CharMaskBuffer<T>(64, blocks);
-        for (var i = 0; i < m; i++)
-        {
-            blockTable.AddBit(pattern[i], i);
-        }
+        using var blockTable = CharMask.Create(pattern);
 
         var currDist = m;
         var matrixVP = new List<ulong[]>();
@@ -438,11 +428,7 @@ public sealed partial class Levenshtein
         var mask = 1UL << (s1.Length - 1);
 
         // Build the “block” table: for each character in s1, which bit(s) it sets
-        using var blockTable = new CharMaskBuffer<T>(64, 1);
-        for (var i = 0; i < s1.Length; i++)
-        {
-            blockTable.AddBit(s1[i], i);
-        }
+        using var blockTable = CharMask.Create(s1);
 
         var matrixVP = new List<ulong[]>();
         var matrixVN = new List<ulong[]>();

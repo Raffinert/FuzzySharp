@@ -1,4 +1,5 @@
 ﻿using Raffinert.FuzzySharp.Edits;
+using Raffinert.FuzzySharp.Extensions;
 using Raffinert.FuzzySharp.Utils;
 using System;
 using System.Collections.Generic;
@@ -33,14 +34,7 @@ public sealed partial class LongestCommonSequence
             processor(ref s2);
         }
 
-        var blocks = (s1.Length + 63) >> 6;
-
-        using var charMask = new CharMaskBuffer<T>(64, blocks);
-
-        for (var i = 0; i < s1.Length; i++)
-        {
-            charMask.AddBit(s1[i], i);
-        }
+        using var charMask = CharMask.Create(s1);
 
         return DistanceImpl(s1, s2, charMask, scoreCutoff);
     }
@@ -323,14 +317,7 @@ public sealed partial class LongestCommonSequence
             processor(ref s2);
         }
 
-        var blocks = (s1.Length + 63) >> 6;
-
-        using var charMask = new CharMaskBuffer<T>(64, blocks);
-
-        for (var i = 0; i < s1.Length; i++)
-        {
-            charMask.AddBit(s1[i], i);
-        }
+        using var charMask = CharMask.Create(s1);
 
         return SimilarityImpl(s1, s2, charMask, scoreCutoff);
     }
@@ -477,11 +464,7 @@ public sealed partial class LongestCommonSequence
         }
 
         // build blockTable: element → bit-mask array
-        using var blockTable = new CharMaskBuffer<T>(64, blocks);
-        for (int i = 0; i < m; i++)
-        {
-            blockTable.AddBit(s1[i], i);
-        }
+        using var blockTable = CharMask.Create(s1);
 
         var matrix = new List<ulong[]>(s2.Length);
         var Sum = new ulong[blocks];
@@ -541,11 +524,7 @@ public sealed partial class LongestCommonSequence
         ulong S = m == 64 ? ulong.MaxValue : (1UL << m) - 1UL;
 
         // build bit-mask
-        using var block = new CharMaskBuffer<T>(64, 1);
-        for (int i = 0; i < m; i++)
-        {
-            block.AddBit(s1[i], i);
-        }
+        using var block = CharMask.Create(s1);
 
         var matrix = new List<ulong[]>(s2.Length);
         foreach (var y in s2)
