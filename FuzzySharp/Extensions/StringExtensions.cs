@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace Raffinert.FuzzySharp.Extensions;
 
@@ -32,6 +33,35 @@ internal static class StringExtensions
             result.Add(span[start..].ToString());
 
         return result;
+    }
+
+    public static string GetInitials(this string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return string.Empty;
+
+        var span = input.AsSpan();
+
+        var sb = new StringBuilder(span.Length);
+
+        var takeNext = true;
+
+        for (var i = 0; i < span.Length; i++)
+        {
+            var c = span[i];
+
+            if (char.IsWhiteSpace(c))
+            {
+                takeNext = true;
+            }
+            else if (takeNext)
+            {
+                sb.Append(c);
+                takeNext = false;
+            }
+        }
+
+        return sb.ToString();
     }
 
     public static string[] SplitByAnySpace(this string input)

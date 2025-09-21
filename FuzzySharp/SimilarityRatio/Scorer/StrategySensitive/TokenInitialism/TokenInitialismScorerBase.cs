@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using Raffinert.FuzzySharp.Extensions;
+﻿using Raffinert.FuzzySharp.Extensions;
 
 namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 
@@ -26,8 +25,8 @@ public abstract class TokenInitialismScorerBase : StrategySensitiveScorerBase
         // if longer isn't at least 3 times longer than the other, then it's probably not an initialism
         if (lenRatio < 3) return 0;
 
-        var initials = longer.SplitByAnySpace().Select(s => s[0]).ToArray();
+        var initials = longer.GetInitials();
 
-        return Scorer(new string(initials), shorter);
+        return Scorer(initials, shorter);
     }
 }
