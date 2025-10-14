@@ -1,0 +1,30 @@
+﻿services:
+  fuzzysharp-benchmark:
+    build:
+      context: ..
+      dockerfile: FuzzySharp.Benchmarks.Docker/Dockerfile
+    container_name: fuzzysharp-benchmark-runner
+    privileged: true  # Required for BenchmarkDotNet in containers
+    environment:
+      - DOTNET_gcServer=1
+      - DOTNET_gcConcurrent=0
+      - DOTNET_GCRetainVM=1
+      - DOTNET_ReadyToRun=1
+      - DOTNET_TieredCompilation=1
+      - DOTNET_TieredPGO=1
+      - DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR=1  # Enable colored output
+      - DOTNET_LOGGING_CONSOLE_DISABLECOLORS=false
+    volumes:
+      - ./results:/app/BenchmarkDotNet.Artifacts:rw
+    cpu_count: 8
+    mem_limit: 8g
+    mem_reservation: 4g
+    restart: "no"
+    tty: true
+    stdin_open: true
+    # Ensure proper logging and output handling
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

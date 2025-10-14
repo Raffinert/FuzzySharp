@@ -1,0 +1,70 @@
+﻿# .dockerignore for FuzzySharp Docker Benchmarks
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+!FuzzySharp.Benchmarks.Docker/README.md
+
+# IDEs and editors
+.vs/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Build artifacts
+**/bin/
+**/obj/
+**/out/
+
+# Benchmark results
+**/BenchmarkDotNet.Artifacts/
+**/results/
+**/results-*/
+
+# Test results
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Runtime and temporary files
+*.tmp
+*.temp
+*.cache
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Scripts (they are needed in the final image context but not during build)
+*.sh
+*.ps1
+
+# Exclude non-essential projects from context (they are copied in Dockerfile as needed)
+# Keep the main library and Docker benchmark project
+!FuzzySharp/
+!FuzzySharp.Benchmarks.Docker/

@@ -1,4 +1,4 @@
-﻿namespace Raffinert.FuzzySharp.Benchmarks.Utils;
+﻿namespace Raffinert.FuzzySharp.Benchmarks.Docker.Utils;
 
 public static class LevenshteinBaseline
 {

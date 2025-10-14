@@ -31,6 +31,18 @@ public class LevenshteinLarge
     }
 
     [Benchmark]
+    public void NewMatchEngineEditDistance()
+    {
+        for (var i = 0; i < _words.Length; i++)
+        {
+            for (int j = 0; j < _words.Length; j++)
+            {
+                LevenshteinBaseline.NewMatchEngineEditDistance(_words[i], _words[j]);
+            }
+        }
+    }
+
+    [Benchmark]
     public void FuzzySharpClassic()
     {
         for (var i = 0; i < _words.Length; i++)
@@ -72,10 +84,11 @@ public class LevenshteinLarge
     {
         for (var i = 0; i < _words.Length; i++)
         {
-            using var lev = new FuzzLevenshtein(_words[i]);
+            //using var lev = new FuzzLevenshtein(_words[i]);
             for (int j = 0; j < _words.Length; j++)
             {
-                lev.DistanceFrom(_words[j]);
+                FuzzLevenshtein.Distance(_words[i], _words[j]);
+                //lev.DistanceFrom(_words[j]);
             }
         }
     }
