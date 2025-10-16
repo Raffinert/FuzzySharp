@@ -33,7 +33,7 @@ public class Program
             Console.WriteLine("This may take several minutes to complete.");
             Console.WriteLine();
 
-            var config = ManualConfig.CreateMinimumViable()
+            var config = ManualConfig.Create(DefaultConfig.Instance)
                                      .AddJob(Job.ShortRun);
 
             var summary = BenchmarkRunner.Run(typeof(LevenshteinLargeDocker), config);

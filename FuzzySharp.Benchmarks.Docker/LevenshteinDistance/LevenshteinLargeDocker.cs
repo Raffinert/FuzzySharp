@@ -23,57 +23,6 @@ public class LevenshteinLargeDocker
     public void SetUp()
     {
         _words = RandomWords.Create(20, 1024);
-
-        // Pre-warm the JIT in Docker environment
-        Console.WriteLine("Pre-warming JIT compiler...");
-        for (int i = 0; i < 3; i++)
-        {
-            LevenshteinBaseline.GetDistance(_words[0], _words[1]);
-            FuzzLevenshtein.Distance(_words[0], _words[1]);
-        }
-        Console.WriteLine("JIT pre-warming completed.");
-        Console.Out.Flush();
-
-        // Display container information
-        Console.WriteLine($"Running in container. Word count: {_words.Length}");
-        Console.WriteLine($"Max word length: {_words.Max(w => w.Length)}");
-        Console.WriteLine($"Environment: {Environment.OSVersion}");
-        Console.WriteLine($"Processor count: {Environment.ProcessorCount}");
-        Console.WriteLine($"Working set: {Environment.WorkingSet / 1024 / 1024} MB");
-        Console.WriteLine($"GC settings - Server: {System.Runtime.GCSettings.IsServerGC}, Concurrent: {System.Runtime.GCSettings.LatencyMode}");
-        Console.Out.Flush();
-
-        // Test that all benchmark methods work
-        Console.WriteLine("Testing benchmark methods...");
-        try
-        {
-            NaiveDp();
-            Console.WriteLine("✓ NaiveDp working");
-
-            NewMatchEngineEditDistance();
-            Console.WriteLine("✓ NewMatchEngineEditDistance working");
-
-            FuzzySharpClassic();
-            Console.WriteLine("✓ FuzzySharpClassic working");
-
-            Fastenshtein();
-            Console.WriteLine("✓ Fastenshtein working");
-
-            Quickenshtein();
-            Console.WriteLine("✓ Quickenshtein working");
-
-            FuzzySharp();
-            Console.WriteLine("✓ FuzzySharp working");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ Error in benchmark method: {ex.Message}");
-            throw;
-        }
-
-        Console.WriteLine("All benchmark methods tested successfully.");
-        Console.WriteLine("Starting benchmark execution...");
-        Console.Out.Flush();
     }
 
     [Benchmark(Baseline = true)]
@@ -137,8 +86,8 @@ public class LevenshteinLargeDocker
         }
     }
 
-    [Benchmark]
-    public void FuzzySharp()
+    [Benchmark(Description = "Raffinert.FuzzySharp(this library)")]
+    public void RaffinertFuzzySharp()
     {
         for (var i = 0; i < _words.Length; i++)
         {

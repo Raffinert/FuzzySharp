@@ -79,8 +79,8 @@ public class LevenshteinLarge
         }
     }
 
-    [Benchmark]
-    public void FuzzySharp()
+    [Benchmark(Description = "Raffinert.FuzzySharp(this library)")]
+    public void RaffinertFuzzySharp()
     {
         for (var i = 0; i < _words.Length; i++)
         {
