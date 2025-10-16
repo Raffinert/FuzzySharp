@@ -1,4 +1,6 @@
-﻿using BenchmarkDotNet.Running;
+﻿using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Jobs;
+using BenchmarkDotNet.Running;
 using Raffinert.FuzzySharp.Benchmarks.Docker.LevenshteinDistance;
 
 namespace Raffinert.FuzzySharp.Benchmarks.Docker;
@@ -31,7 +33,10 @@ public class Program
             Console.WriteLine("This may take several minutes to complete.");
             Console.WriteLine();
 
-            var summary = BenchmarkRunner.Run<LevenshteinLargeDocker>();
+            var config = ManualConfig.CreateMinimumViable()
+                                     .AddJob(Job.ShortRun);
+
+            var summary = BenchmarkRunner.Run(typeof(LevenshteinLargeDocker), config);
 
             Console.WriteLine();
             Console.WriteLine("=== Benchmark Completed ===");

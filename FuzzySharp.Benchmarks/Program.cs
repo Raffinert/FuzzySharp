@@ -8,8 +8,8 @@ using Raffinert.FuzzySharp.Benchmarks.LevenshteinDistance;
 //using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
 //using Classic = FuzzySharp;
 
-var config = ManualConfig.Create(DefaultConfig.Instance)
-    .AddJob(Job.ShortRun);  // ← built-in short run
+var config = ManualConfig.CreateMinimumViable()
+    .AddJob(Job.ShortRun);
 
 BenchmarkRunner.Run(typeof(LevenshteinLarge), config);
 
