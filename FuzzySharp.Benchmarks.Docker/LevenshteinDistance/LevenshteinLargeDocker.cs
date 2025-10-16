@@ -22,9 +22,8 @@ public class LevenshteinLargeDocker
     [GlobalSetup]
     public void SetUp()
     {
-        // Reduce word count for Docker environment to ensure benchmarks complete
-        _words = RandomWords.Create(10, 100);
-        
+        _words = RandomWords.Create(20, 1024);
+
         // Pre-warm the JIT in Docker environment
         Console.WriteLine("Pre-warming JIT compiler...");
         for (int i = 0; i < 3; i++)
@@ -34,7 +33,7 @@ public class LevenshteinLargeDocker
         }
         Console.WriteLine("JIT pre-warming completed.");
         Console.Out.Flush();
-        
+
         // Display container information
         Console.WriteLine($"Running in container. Word count: {_words.Length}");
         Console.WriteLine($"Max word length: {_words.Max(w => w.Length)}");
@@ -43,26 +42,26 @@ public class LevenshteinLargeDocker
         Console.WriteLine($"Working set: {Environment.WorkingSet / 1024 / 1024} MB");
         Console.WriteLine($"GC settings - Server: {System.Runtime.GCSettings.IsServerGC}, Concurrent: {System.Runtime.GCSettings.LatencyMode}");
         Console.Out.Flush();
-        
+
         // Test that all benchmark methods work
         Console.WriteLine("Testing benchmark methods...");
         try
         {
             NaiveDp();
             Console.WriteLine("✓ NaiveDp working");
-            
+
             NewMatchEngineEditDistance();
             Console.WriteLine("✓ NewMatchEngineEditDistance working");
-            
+
             FuzzySharpClassic();
             Console.WriteLine("✓ FuzzySharpClassic working");
-            
+
             Fastenshtein();
             Console.WriteLine("✓ Fastenshtein working");
-            
+
             Quickenshtein();
             Console.WriteLine("✓ Quickenshtein working");
-            
+
             FuzzySharp();
             Console.WriteLine("✓ FuzzySharp working");
         }
@@ -71,7 +70,7 @@ public class LevenshteinLargeDocker
             Console.WriteLine($"❌ Error in benchmark method: {ex.Message}");
             throw;
         }
-        
+
         Console.WriteLine("All benchmark methods tested successfully.");
         Console.WriteLine("Starting benchmark execution...");
         Console.Out.Flush();
@@ -172,12 +171,12 @@ public class DockerBenchmarkConfig : ManualConfig
             .WithLaunchCount(1)
             .WithWarmupCount(2)
             .WithIterationCount(3)
-            // Remove explicit InvocationCount to let BenchmarkDotNet calculate it
+        // Remove explicit InvocationCount to let BenchmarkDotNet calculate it
         );
-        
+
         // Add console logger to ensure output is visible
         AddLogger(ConsoleLogger.Default);
-        
+
         // Disable optimizations validator which can cause issues in containers
         WithOptions(ConfigOptions.DisableOptimizationsValidator);
     }
