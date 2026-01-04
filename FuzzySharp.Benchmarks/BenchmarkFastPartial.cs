@@ -15,7 +15,7 @@ public class BenchmarkFastPartial
     [Benchmark]
     public int PartialRatio()
     {
-        return Fuzz.PartialRatio("similar", "somewhresimlrbetweenthisstring");
+        return Fuzz.PartialRatio("Supplier: ACME Corp. International, Address: 221B Baker St., London NW1 6XE", "Order: PO-100923, Supplier: Acme Corporation International, Address: 221B Baker Street, London NW1 6XE, VAT: GB123456789, Contact: accounting@acme.example");
     }
 
     [Benchmark]
