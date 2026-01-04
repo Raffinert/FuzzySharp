@@ -1,10 +1,10 @@
 ```
 
-BenchmarkDotNet v0.15.2, Windows 11 (10.0.22621.6060/22H2/2022Update/SunValley2)
-11th Gen Intel Core i7-1185G7 3.00GHz, 1 CPU, 8 logical and 4 physical cores
-.NET SDK 10.0.101
-  [Host]   : .NET 9.0.11 (9.0.1125.51716), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
-  ShortRun : .NET 9.0.11 (9.0.1125.51716), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+BenchmarkDotNet v0.15.1, Windows 11 (10.0.26100.4351/24H2/2024Update/HudsonValley)
+12th Gen Intel Core i7-1255U 2.60GHz, 1 CPU, 12 logical and 10 physical cores
+.NET SDK 9.0.301
+  [Host]   : .NET 9.0.6 (9.0.625.26613), X64 RyuJIT AVX2
+  ShortRun : .NET 9.0.6 (9.0.625.26613), X64 RyuJIT AVX2
 
 Job=ShortRun  IterationCount=3  LaunchCount=1  
 WarmupCount=3  
@@ -12,8 +12,8 @@ WarmupCount=3
 ```
 | Method            | Mean       | Error       | StdDev    | Ratio | RatioSD | Gen0      | Gen1     | Allocated  | Alloc Ratio |
 |------------------ |-----------:|------------:|----------:|------:|--------:|----------:|---------:|-----------:|------------:|
-| NaiveDp           | 9,463.2 μs | 8,455.64 μs | 463.48 μs |  1.00 |    0.06 | 1593.7500 | 203.1250 | 10012112 B |       1.000 |
-| FuzzySharpClassic | 5,479.2 μs |   748.67 μs |  41.04 μs |  0.58 |    0.02 |   46.8750 |        - |   300048 B |       0.030 |
-| Fastenshtein      | 4,542.1 μs | 1,550.30 μs |  84.98 μs |  0.48 |    0.02 |         - |        - |     7064 B |       0.001 |
-| Quickenshtein     | 1,455.0 μs |   147.24 μs |   8.07 μs |  0.15 |    0.01 |         - |        - |        1 B |       0.000 |
-| FuzzySharp        |   497.7 μs |    23.78 μs |   1.30 μs |  0.05 |    0.00 |         - |        - |     3203 B |       0.000 |
+| NaiveDp           | 8,613.1 μs | 4,977.60 μs | 272.84 μs |  1.00 |    0.04 | 1593.7500 | 203.1250 | 10012124 B |       1.000 |
+| FuzzySharpClassic | 4,866.5 μs |   866.89 μs |  47.52 μs |  0.57 |    0.02 |   46.8750 |        - |   300051 B |       0.030 |
+| Fastenshtein      | 4,076.7 μs | 1,265.24 μs |  69.35 μs |  0.47 |    0.01 |         - |        - |     7070 B |       0.001 |
+| Quickenshtein     | 1,330.2 μs |   111.30 μs |   6.10 μs |  0.15 |    0.00 |         - |        - |        2 B |       0.000 |
+| FuzzySharp        |   588.2 μs |    83.65 μs |   4.59 μs |  0.07 |    0.00 |         - |        - |     3041 B |       0.000 |
