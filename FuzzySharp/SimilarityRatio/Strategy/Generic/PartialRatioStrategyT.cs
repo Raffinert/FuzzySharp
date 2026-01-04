@@ -143,17 +143,14 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
         if (len1 == 0 || len2 == 0)
             return res;
 
-        // Precompute s1’s character set for fast Contains
-        var charSet = new HashSet<T>(s1.ToArray());
-
-        double? cutoff = scoreCutoff;
+        double cutoff = scoreCutoff ?? 0.0;
         // 1) Prefixes shorter than len1
         for (int i = 1; i < len1; i++)
         {
-            if (!charSet.Contains(s2[i - 1])) continue;
+            if (!charMask.ContainsKey(s2[i - 1])) continue;
             var slice = s2[..i];
             double sim = Indel.BlockNormalizedSimilarity(charMask, s1, slice);
-            if (sim > res.Score && (!cutoff.HasValue || sim >= cutoff.Value))
+            if (sim > res.Score && sim >= cutoff)
             {
                 res.Score = sim;
                 cutoff = sim;
@@ -166,10 +163,10 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
         // 2) Full-width windows of length len1
         for (int i = 0; i <= len2 - len1; i++)
         {
-            if (!charSet.Contains(s2[i + len1 - 1])) continue;
+            if (!charMask.ContainsKey(s2[i + len1 - 1])) continue;
             var window = s2[i..(i + len1)];
             double sim = Indel.BlockNormalizedSimilarity(charMask, s1, window);
-            if (sim > res.Score && (!cutoff.HasValue || sim >= cutoff.Value))
+            if (sim > res.Score && sim >= cutoff)
             {
                 res.Score = sim;
                 cutoff = sim;
@@ -182,10 +179,10 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
         // 3) Suffixes shorter than len1
         for (int i = len2 - len1 + 1; i < len2; i++)
         {
-            if (!charSet.Contains(s2[i])) continue;
+            if (!charMask.ContainsKey(s2[i])) continue;
             var tail = s2[i..];
             double sim = Indel.BlockNormalizedSimilarity(charMask, s1, tail);
-            if (sim > res.Score && (!cutoff.HasValue || sim >= cutoff.Value))
+            if (sim > res.Score && sim >= cutoff)
             {
                 res.Score = sim;
                 cutoff = sim;
