@@ -26,7 +26,7 @@ public sealed partial class Indel
         int? scoreCutoff = null) where T : IEquatable<T>
     {
         var maximum = s1.Length + s2.Length;
-        var lcsSim = LongestCommonSequence.BlockSimilarityMultipleULongs(block, s1, s2);
+        var lcsSim = LongestCommonSequence.BlockSimilarity(block, s1, s2);
         var dist = maximum - 2 * lcsSim;
         var result = scoreCutoff == null || dist <= scoreCutoff.Value
             ? dist

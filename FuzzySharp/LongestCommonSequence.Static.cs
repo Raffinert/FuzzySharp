@@ -350,6 +350,50 @@ public sealed partial class LongestCommonSequence
     /// <param name="scoreCutoff">Optional minimum similarity threshold.</param>
     /// <returns>The length of the longest common subsequence, or 0 if below cutoff.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int BlockSimilarity<T>(
+        CharMaskBuffer<T> block,
+        ReadOnlySpan<T> s1,
+        ReadOnlySpan<T> s2,
+        int? scoreCutoff = null
+    ) where T : IEquatable<T>
+    {
+        return s1.Length <= 64
+            ? BlockSimilaritySingleULong(block, s1, s2, scoreCutoff)
+            : BlockSimilarityMultipleULongs(block, s1, s2, scoreCutoff);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int BlockSimilaritySingleULong<T>(
+        CharMaskBuffer<T> block,
+        ReadOnlySpan<T> s1,
+        ReadOnlySpan<T> s2,
+        int? scoreCutoff = null
+    ) where T : IEquatable<T>
+    {
+        if (s1.IsEmpty)
+            return 0;
+
+        int len1 = s1.Length;
+        ulong mask = len1 == 64 ? ulong.MaxValue : (1UL << len1) - 1UL;
+
+        ulong S = mask;
+        foreach (T ch in s2)
+        {
+            ulong M = block.GetOrZero(ch)[0];
+            ulong u = S & M;
+            unchecked
+            {
+                S = (S + u) | (S - u);
+            }
+        }
+
+        int lcs = CountZeroBits(S, len1);
+        return scoreCutoff == null || lcs >= scoreCutoff.Value
+            ? lcs
+            : 0;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int BlockSimilarityMultipleULongs<T>(
         CharMaskBuffer<T> block,
         ReadOnlySpan<T> s1,
@@ -411,12 +455,9 @@ public sealed partial class LongestCommonSequence
 
             // --- 4) count zero bits in the lower len1 positions of S ---
             int lcs = CountZeroBits(S, len1);
-
-            var result = scoreCutoff == null || lcs >= scoreCutoff.Value
+            return scoreCutoff == null || lcs >= scoreCutoff.Value
                 ? lcs
                 : 0;
-
-            return result;
         }
         finally
         {
