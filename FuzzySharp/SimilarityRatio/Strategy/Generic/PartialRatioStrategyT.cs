@@ -11,15 +11,15 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
     /// Searches for the optimal alignment of the shorter span in the longer span
     /// and returns the partial fuzz.ratio for that alignment, as a value in [0…100].
     /// </summary>
-    public static int Calculate(T[] input1, T[] input2)
+    public static int Calculate(ReadOnlySpan<T> input1, ReadOnlySpan<T> input2)
     {
         if (input1.Length == 0 || input2.Length == 0)
         {
             return 0;
         }
 
-        var shorter = (ReadOnlySpan<T>)input1;
-        var longer = (ReadOnlySpan<T>)input2;
+        var shorter = input1;
+        var longer = input2;
 
         SequenceUtils.SwapIfSourceIsLonger(ref shorter, ref longer);
 

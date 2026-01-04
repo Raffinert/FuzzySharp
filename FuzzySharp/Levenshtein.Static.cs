@@ -110,9 +110,9 @@ public sealed partial class Levenshtein
     /// <param name="s1">First sequence.</param>
     /// <param name="s2">Second sequence.</param>
     /// <returns>List of matching blocks.</returns>
-    public static List<MatchingBlock> GetMatchingBlocks<T>(T[] s1, T[] s2) where T : IEquatable<T>
+    public static List<MatchingBlock> GetMatchingBlocks<T>(ReadOnlySpan<T> s1, ReadOnlySpan<T> s2) where T : IEquatable<T>
     {
-        var editOps = GetEditOps(new ReadOnlySpan<T>(s1), new ReadOnlySpan<T>(s2));
+        var editOps = GetEditOps(s1, s2);
         var matchingBlocks = editOps.AsMatchingBlocks(s1.Length, s2.Length);
         return matchingBlocks;
     }
