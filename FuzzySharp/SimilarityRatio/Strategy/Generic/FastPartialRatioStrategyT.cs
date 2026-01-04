@@ -7,11 +7,6 @@ internal static class FastPartialRatioStrategyT<T> where T : IEquatable<T>
 {
     public static int Calculate(ReadOnlySpan<T> input1, ReadOnlySpan<T> input2)
     {
-        if (input1.Length == 0 || input2.Length == 0)
-        {
-            return 0;
-        }
-
         var shorter = input1;
         var longer = input2;
 

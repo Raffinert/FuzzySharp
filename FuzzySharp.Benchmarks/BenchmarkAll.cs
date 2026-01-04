@@ -8,6 +8,12 @@ namespace Raffinert.FuzzySharp.Benchmarks;
 [MemoryDiagnoser]
 public class BenchmarkAll
 {
+    [GlobalSetup]
+    public void GlobalSetup()
+    {
+        GlobalConfig.PartialRatioAccuracy = PartialRatioAccuracy.Strict;
+    }
+
     [Benchmark]
     public int Ratio()
     {
@@ -86,7 +92,7 @@ public class BenchmarkAll
     {
         return Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessMode.Full);
     }
-
+    
     [Benchmark]
     public int RatioClassic()
     {
