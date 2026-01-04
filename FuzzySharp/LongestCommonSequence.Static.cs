@@ -2,6 +2,7 @@
 using Raffinert.FuzzySharp.Extensions;
 using Raffinert.FuzzySharp.Utils;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
@@ -348,6 +349,7 @@ public sealed partial class LongestCommonSequence
     /// <param name="s2">Second sequence (text).</param>
     /// <param name="scoreCutoff">Optional minimum similarity threshold.</param>
     /// <returns>The length of the longest common subsequence, or 0 if below cutoff.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int BlockSimilarityMultipleULongs<T>(
         CharMaskBuffer<T> block,
         ReadOnlySpan<T> s1,
@@ -361,60 +363,65 @@ public sealed partial class LongestCommonSequence
         int len1 = s1.Length;
         int segCount = (len1 + 63) / 64;
 
-        // --- 2) prepare the \"all-ones up to len1\" mask and state S ---
-        ulong[] S = new ulong[segCount];
-        for (int i = 0; i < segCount; i++)
-            S[i] = ulong.MaxValue;
-        // clear high bits in the final segment if len1 % 64 != 0
-        int rem = len1 & 63;
-        if (rem != 0)
-            S[segCount - 1] = (1UL << rem) - 1;
-
-        // --- 3) main bit-parallel loop: S = (S + u) | (S - u)  ---
-        foreach (T ch in s2)
+        var scratch = ArrayPool<ulong>.Shared.Rent(segCount * 4);
+        try
         {
-            var M = block.GetOrZero(ch);
+            var S = scratch.AsSpan(0, segCount);
+            var u = scratch.AsSpan(segCount, segCount);
+            var add = scratch.AsSpan(segCount * 2, segCount);
+            var sub = scratch.AsSpan(segCount * 3, segCount);
 
-            // u = S & M
-            var u = new ulong[segCount];
-            for (int i = 0; i < segCount; i++)
-                u[i] = S[i] & M[i];
+            // --- 2) prepare the \"all-ones up to len1\" mask and state S ---
+            S.Fill(ulong.MaxValue);
+            int rem = len1 & 63;
+            if (rem != 0)
+                S[segCount - 1] = (1UL << rem) - 1;
 
-            // add = S + u  (multi-precision)
-            var add = new ulong[segCount];
-            ulong carry = 0;
-            for (int i = 0; i < segCount; i++)
+            // --- 3) main bit-parallel loop: S = (S + u) | (S - u)  ---
+            foreach (T ch in s2)
             {
-                ulong sum = S[i] + u[i] + carry;
-                // carry if sum < S[i] or (carry==1 && sum==S[i])
-                carry = sum < S[i] || (carry == 1 && sum == S[i]) ? 1UL : 0UL;
-                add[i] = sum;
+                var M = block.GetOrZero(ch);
+
+                // u = S & M
+                for (int i = 0; i < segCount; i++)
+                    u[i] = S[i] & M[i];
+
+                // add = S + u  (multi-precision)
+                ulong carry = 0;
+                for (int i = 0; i < segCount; i++)
+                {
+                    ulong sum = S[i] + u[i] + carry;
+                    carry = sum < S[i] || (carry == 1 && sum == S[i]) ? 1UL : 0UL;
+                    add[i] = sum;
+                }
+
+                // sub = S - u  (multi-precision)
+                ulong borrow = 0;
+                for (int i = 0; i < segCount; i++)
+                {
+                    ulong diff = S[i] - u[i] - borrow;
+                    borrow = S[i] < u[i] + borrow ? 1UL : 0UL;
+                    sub[i] = diff;
+                }
+
+                // new S = add | sub
+                for (int i = 0; i < segCount; i++)
+                    S[i] = add[i] | sub[i];
             }
 
-            // sub = S - u  (multi-precision)
-            var sub = new ulong[segCount];
-            ulong borrow = 0;
-            for (int i = 0; i < segCount; i++)
-            {
-                ulong diff = S[i] - u[i] - borrow;
-                // borrow if original S[i] < u[i] + borrow
-                borrow = S[i] < u[i] + borrow ? 1UL : 0UL;
-                sub[i] = diff;
-            }
+            // --- 4) count zero bits in the lower len1 positions of S ---
+            int lcs = CountZeroBits(S, len1);
 
-            // new S = add | sub
-            for (int i = 0; i < segCount; i++)
-                S[i] = add[i] | sub[i];
+            var result = scoreCutoff == null || lcs >= scoreCutoff.Value
+                ? lcs
+                : 0;
+
+            return result;
         }
-
-        // --- 4) count zero bits in the lower len1 positions of S ---
-        int lcs = CountZeroBits(S, len1);
-
-        var result = scoreCutoff == null || lcs >= scoreCutoff.Value
-            ? lcs
-            : 0;
-
-        return result;
+        finally
+        {
+            ArrayPool<ulong>.Shared.Return(scratch);
+        }
     }
 
     private static int CountZeroBits(ulong x, int length)
@@ -425,6 +432,11 @@ public sealed partial class LongestCommonSequence
     }
 
     private static int CountZeroBits(ulong[] S, int length)
+    {
+        return CountZeroBits((ReadOnlySpan<ulong>)S, length);
+    }
+
+    private static int CountZeroBits(ReadOnlySpan<ulong> S, int length)
     {
         int fullBlocks = length / 64;
         int remBits = length % 64;

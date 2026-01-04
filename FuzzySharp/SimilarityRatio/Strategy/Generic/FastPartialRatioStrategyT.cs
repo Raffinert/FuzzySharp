@@ -1,5 +1,6 @@
-using Raffinert.FuzzySharp.Utils;
 using System;
+using System.Runtime.CompilerServices;
+using Raffinert.FuzzySharp.Utils;
 
 namespace Raffinert.FuzzySharp.SimilarityRatio.Strategy.Generic;
 
@@ -7,39 +8,55 @@ internal static class FastPartialRatioStrategyT<T> where T : IEquatable<T>
 {
     public static int Calculate(ReadOnlySpan<T> input1, ReadOnlySpan<T> input2)
     {
+        if (input1.Length == 0 || input2.Length == 0)
+        {
+            return 0;
+        }
+
         var shorter = input1;
         var longer = input2;
 
         SequenceUtils.SwapIfSourceIsLonger(ref shorter, ref longer);
 
-        var matchingBlocks = Levenshtein.GetMatchingBlocks(shorter, longer);
+        using var charMask = CharMask.Create(shorter);
 
+        var maxScore = ComputeMaxScore(shorter, longer, charMask);
+
+        return (int)Math.Round(100 * maxScore);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static double ComputeMaxScore(
+        ReadOnlySpan<T> shorter,
+        ReadOnlySpan<T> longer,
+        CharMaskBuffer<T> charMask)
+    {
         double maxScore = 0;
+        var len1 = shorter.Length;
+        var len2 = longer.Length;
 
-        foreach (var matchingBlock in matchingBlocks)
+        // Only full-length windows are required for partial ratio once strings are normalized.
+        for (var i = 0; i <= len2 - len1; i++)
         {
-            int dist = matchingBlock.DestPos - matchingBlock.SourcePos;
-
-            int longStart = dist > 0 ? dist : 0;
-            int longEnd   = longStart + shorter.Length;
-
-            if (longEnd > longer.Length) longEnd = longer.Length;
-
-            var longSubstr = longer[longStart..longEnd];
-
-            double ratio = Indel.NormalizedSimilarity(shorter, longSubstr);
-
-            if (ratio > .995)
+            // Cheap filter to skip windows that cannot improve the score.
+            if (!charMask.ContainsKey(longer[i + len1 - 1]))
             {
-                return 100;
+                continue;
             }
+
+            var window = longer.Slice(i, len1);
+            var ratio = Indel.BlockNormalizedSimilarity(charMask, shorter, window);
 
             if (ratio > maxScore)
             {
                 maxScore = ratio;
+                if (ratio >= 0.995)
+                {
+                    return 1.0;
+                }
             }
         }
 
-        return (int)Math.Round(100 * maxScore);
+        return maxScore;
     }
 }

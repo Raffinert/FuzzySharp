@@ -1,6 +1,7 @@
 ﻿using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
+using Raffinert.FuzzySharp.Benchmarks;
 
 //using Raffinert.FuzzySharp;
 //using Raffinert.FuzzySharp.SimilarityRatio;
@@ -10,7 +11,8 @@ using BenchmarkDotNet.Running;
 var config = ManualConfig.Create(DefaultConfig.Instance)
     .AddJob(Job.ShortRun);  // ← built-in short run
 
-BenchmarkRunner.Run(typeof(Program).Assembly, config);
+//BenchmarkRunner.Run(typeof(Program).Assembly, config);
+BenchmarkRunner.Run<BenchmarkFastPartial>(config);
 
 //var input1 = "+30.0% Damage to Close Enemies [30.01%";
 //var input2Collection = new[]

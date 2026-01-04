@@ -21,7 +21,7 @@
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/Raffinert/FuzzySharp</RepositoryUrl>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp3.1;net45;net46;net462;net472;net48;NET60;NET80;NET90</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp3.1;net45;net46;net462;net472;net48;NET60;NET80;NET90;NET10.0</TargetFrameworks>
     <AssemblyName>Raffinert.$(MSBuildProjectName)</AssemblyName>
     <RootNamespace>Raffinert.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
     <PackageReadmeFile>README.md</PackageReadmeFile>

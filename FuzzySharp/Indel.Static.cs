@@ -43,6 +43,7 @@ public sealed partial class Indel
     /// <param name="s2">Second sequence.</param>
     /// <param name="scoreCutoff">Optional maximum normalized distance threshold. If the distance exceeds this value, returns 1.</param>
     /// <returns>The normalized Indel distance between the two sequences.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double BlockNormalizedDistance<T>(
         CharMaskBuffer<T> block,
         ReadOnlySpan<T> s1,
@@ -68,6 +69,7 @@ public sealed partial class Indel
     /// <param name="s2">Second sequence.</param>
     /// <param name="scoreCutoff">Optional minimum similarity threshold. If the similarity is below this value, returns 0.</param>
     /// <returns>The normalized Indel similarity between the two sequences.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double BlockNormalizedSimilarity<T>(
         CharMaskBuffer<T> block,
         ReadOnlySpan<T> s1,
