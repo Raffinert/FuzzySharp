@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+using Raffinert.FuzzySharp;
 using Raffinert.FuzzySharp.Utils;
 
 namespace Raffinert.FuzzySharp.SimilarityRatio.Strategy.Generic;
@@ -35,16 +36,20 @@ internal static class FastPartialRatioStrategyT<T> where T : IEquatable<T>
         var len1 = shorter.Length;
         var len2 = longer.Length;
 
-        // Only full-length windows are required for partial ratio once strings are normalized.
-        for (var i = 0; i <= len2 - len1; i++)
+        // Reuse the matching-block candidate generation to avoid scanning every window.
+        var matchingBlocks = Levenshtein.GetMatchingBlocks(shorter, longer);
+        foreach (var block in matchingBlocks)
         {
-            // Cheap filter to skip windows that cannot improve the score.
-            if (!charMask.ContainsKey(longer[i + len1 - 1]))
+            // Offset between source and destination tells us where the shorter string could align.
+            var dist = block.DestPos - block.SourcePos;
+            var windowStart = dist > 0 ? dist : 0;
+            var windowEnd = windowStart + len1;
+            if (windowEnd > len2)
             {
-                continue;
+                windowEnd = len2;
             }
 
-            var window = longer.Slice(i, len1);
+            var window = longer.Slice(windowStart, windowEnd - windowStart);
             var ratio = Indel.BlockNormalizedSimilarity(charMask, shorter, window);
 
             if (ratio > maxScore)
