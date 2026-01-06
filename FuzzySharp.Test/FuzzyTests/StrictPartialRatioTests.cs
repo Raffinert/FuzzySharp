@@ -4,7 +4,7 @@ using Raffinert.FuzzySharp.PreProcess;
 namespace Raffinert.FuzzySharp.Test.FuzzyTests;
 
 [TestFixture]
-public class RatioTests
+public class StrictPartialRatioTests
 {
     #region Private Fields
     private string _s1,

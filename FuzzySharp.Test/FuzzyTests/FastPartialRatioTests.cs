@@ -5,7 +5,7 @@ using Raffinert.FuzzySharp.PreProcess;
 namespace Raffinert.FuzzySharp.Test.FuzzyTests;
 
 [TestFixture]
-public class PartialRatioFastTests : IDisposable
+public class FastPartialRatioTests : IDisposable
 {
     #region Private Fields
     private string _s1,
