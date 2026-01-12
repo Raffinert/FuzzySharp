@@ -67,6 +67,13 @@ public sealed class CharMaskBuffer<T> : IDisposable where T : notnull, IEquatabl
         _capacity = newCapacity;
     }
 
+    public bool ContainsKey(T key)
+    {
+        if (_disposed) throw new ObjectDisposedException(nameof(CharMaskBuffer<T>));
+
+        return _indexMap.ContainsKey(key);
+    }
+
     public bool TryGetMask(T key, out ReadOnlySpan<ulong> mask)
     {
         if (_disposed) throw new ObjectDisposedException(nameof(CharMaskBuffer<T>));

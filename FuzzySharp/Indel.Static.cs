@@ -26,7 +26,7 @@ public sealed partial class Indel
         int? scoreCutoff = null) where T : IEquatable<T>
     {
         var maximum = s1.Length + s2.Length;
-        var lcsSim = LongestCommonSequence.BlockSimilarityMultipleULongs(block, s1, s2);
+        var lcsSim = LongestCommonSequence.BlockSimilarity(block, s1, s2);
         var dist = maximum - 2 * lcsSim;
         var result = scoreCutoff == null || dist <= scoreCutoff.Value
             ? dist
@@ -43,6 +43,7 @@ public sealed partial class Indel
     /// <param name="s2">Second sequence.</param>
     /// <param name="scoreCutoff">Optional maximum normalized distance threshold. If the distance exceeds this value, returns 1.</param>
     /// <returns>The normalized Indel distance between the two sequences.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double BlockNormalizedDistance<T>(
         CharMaskBuffer<T> block,
         ReadOnlySpan<T> s1,
@@ -68,6 +69,7 @@ public sealed partial class Indel
     /// <param name="s2">Second sequence.</param>
     /// <param name="scoreCutoff">Optional minimum similarity threshold. If the similarity is below this value, returns 0.</param>
     /// <returns>The normalized Indel similarity between the two sequences.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double BlockNormalizedSimilarity<T>(
         CharMaskBuffer<T> block,
         ReadOnlySpan<T> s1,
