@@ -472,11 +472,6 @@ public sealed partial class LongestCommonSequence
         return NumericsPolyfill.PopCount(inv);
     }
 
-    private static int CountZeroBits(ulong[] S, int length)
-    {
-        return CountZeroBits((ReadOnlySpan<ulong>)S, length);
-    }
-
     private static int CountZeroBits(ReadOnlySpan<ulong> S, int length)
     {
         int fullBlocks = length / 64;

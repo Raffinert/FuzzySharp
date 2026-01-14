@@ -1,6 +1,5 @@
 ﻿using Raffinert.FuzzySharp.Utils;
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace Raffinert.FuzzySharp.SimilarityRatio.Strategy.Generic;
