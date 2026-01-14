@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyVersion>3.0.6.0</AssemblyVersion>
-	<FileVersion>3.0.6.0</FileVersion>
-	<Version>3.0.6</Version>
-	<PackageVersion>3.0.6</PackageVersion>
+    <AssemblyVersion>3.0.7.0</AssemblyVersion>
+	<FileVersion>3.0.7.0</FileVersion>
+	<Version>3.0.7</Version>
+	<PackageVersion>3.0.7</PackageVersion>
     <Authors>Jacob Bayer;Yevhen Cherkes</Authors>
     <Company />
     <Description>
@@ -12,7 +12,7 @@
 	</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>
-    <LangVersion>12.0</LangVersion>
+    <LangVersion>Latest</LangVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Raffinert/FuzzySharp</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
@@ -21,7 +21,7 @@
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/Raffinert/FuzzySharp</RepositoryUrl>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp3.1;net45;net46;net462;net472;net48;NET60;NET80;NET90</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp3.1;net45;net46;net462;net472;net48;NET60;NET80;NET90;NET10.0</TargetFrameworks>
     <AssemblyName>Raffinert.$(MSBuildProjectName)</AssemblyName>
     <RootNamespace>Raffinert.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
     <PackageReadmeFile>README.md</PackageReadmeFile>

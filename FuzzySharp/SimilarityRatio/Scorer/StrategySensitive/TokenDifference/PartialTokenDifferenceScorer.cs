@@ -5,5 +5,5 @@ namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 
 public sealed class PartialTokenDifferenceScorer : TokenDifferenceScorerBase
 {
-    protected override Func<string[], string[], int> Scorer => PartialRatioStrategy<string>.Calculate;
+    protected override Func<string[], string[], int> Scorer => static (strings1, strings2) => PartialRatioStrategy<string>.Calculate(strings1.AsSpan(), strings2.AsSpan());
 }
