@@ -34,6 +34,8 @@ Random words of 3 to 1024 random chars (LevenshteinLarge.cs):
 
 
 # Release Notes:
+v3.0.7 – Improved LongestCommonSequence for faster execution. This caused the PartialRatioStrategy speedup.
+
 v3.0.6 – Optimized TokenInitialismRatio for faster execution and reduced memory allocations.
 
 v3.0.5  – Return netstandard20 support, small code cleanup.
