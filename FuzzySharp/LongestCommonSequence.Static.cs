@@ -330,8 +330,8 @@ public sealed partial class LongestCommonSequence
         int? scoreCutoff = null) where T : IEquatable<T>
     {
         var sim = s1.Length > 64
-            ? SimilarityMultipleULongs(s1, s2, charMask)
-            : SimilaritySingleULong(s1, s2, charMask);
+            ? BlockSimilarityMultipleULongs(charMask, s1, s2)
+            : BlockSimilaritySingleULong(charMask, s1, s2);
 
         var result = scoreCutoff == null || sim >= scoreCutoff.Value
             ? sim
@@ -592,90 +592,5 @@ public sealed partial class LongestCommonSequence
 
         int sim = CountZeroBits(S, m);
         return (sim, matrix);
-    }
-
-    private static int SimilarityMultipleULongs<T>(ReadOnlySpan<T> s1, ReadOnlySpan<T> s2, CharMaskBuffer<T> charMask) where T : IEquatable<T>
-    {
-        if (s1.IsEmpty)
-            return 0;
-
-        int len1 = s1.Length;
-        int segCount = (len1 + 63) / 64;
-
-        // --- 2) prepare the \"all-ones up to len1\" mask and state S ---
-        ulong[] S = new ulong[segCount];
-        for (int i = 0; i < segCount; i++)
-            S[i] = ulong.MaxValue;
-        // clear high bits in the final segment if len1 % 64 != 0
-        int rem = len1 & 63;
-        if (rem != 0)
-            S[segCount - 1] = (1UL << rem) - 1;
-
-        // --- 3) main bit-parallel loop: S = (S + u) | (S - u)  ---
-        foreach (T ch in s2)
-        {
-            var M = charMask.GetOrZero(ch);
-
-            // u = S & M
-            var u = new ulong[segCount];
-            for (int i = 0; i < segCount; i++)
-                u[i] = S[i] & M[i];
-
-            // add = S + u  (multi-precision)
-            var add = new ulong[segCount];
-            ulong carry = 0;
-            for (int i = 0; i < segCount; i++)
-            {
-                ulong sum = S[i] + u[i] + carry;
-                // carry if sum < S[i] or (carry==1 && sum==S[i])
-                carry = sum < S[i] || (carry == 1 && sum == S[i]) ? 1UL : 0UL;
-                add[i] = sum;
-            }
-
-            // sub = S - u  (multi-precision)
-            var sub = new ulong[segCount];
-            ulong borrow = 0;
-            for (int i = 0; i < segCount; i++)
-            {
-                ulong diff = S[i] - u[i] - borrow;
-                // borrow if original S[i] < u[i] + borrow
-                borrow = S[i] < u[i] + borrow ? 1UL : 0UL;
-                sub[i] = diff;
-            }
-
-            // new S = add | sub
-            for (int i = 0; i < segCount; i++)
-                S[i] = add[i] | sub[i];
-        }
-
-        // --- 4) count zero bits in the lower len1 positions of S ---
-        int lcs = CountZeroBits(S, len1);
-
-        return lcs;
-    }
-
-    private static int SimilaritySingleULong<T>(ReadOnlySpan<T> s1, ReadOnlySpan<T> s2, CharMaskBuffer<T> charMask) where T : IEquatable<T>
-    {
-        if (s1.IsEmpty)
-            return 0;
-
-        int len1 = s1.Length;
-
-        ulong mask = len1 == 64 ? ulong.MaxValue : (1UL << len1) - 1UL;
-
-        // Bit-parallel LCS loop
-        ulong S = mask;
-        foreach (T ch2 in s2)
-        {
-            ulong M = charMask.GetOrZero(ch2)[0];
-            ulong u = S & M;
-            unchecked
-            {
-                S = (S + u) | (S - u);
-            }
-        }
-
-        int res = CountZeroBits(S, len1);
-        return res;
     }
 }
