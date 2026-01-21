@@ -97,27 +97,13 @@ public sealed class CharMaskBuffer<T> : IDisposable where T : notnull, IEquatabl
         return TryGetMask(key, out var mask) ? mask : fallback;
     }
 
-    ~CharMaskBuffer()
-    {
-        Dispose(false);
-    }
-
     public void Dispose()
     {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    private void Dispose(bool disposing)
-    {
         if (_disposed) return;
-
-        if (disposing)
-        {
-            _indexMap.Dispose();
-            _pool.Return(_buffer);
-            _pool.Return(_zeroMask);
-        }
+        
+        _indexMap.Dispose();
+        _pool.Return(_buffer);
+        _pool.Return(_zeroMask);
 
         _disposed = true;
     }

@@ -400,12 +400,6 @@ internal sealed class DictionarySlimPooled<TKey, TValue> : IDisposable, IReadOnl
     public void Dispose()
     {
         Clear();
-        GC.SuppressFinalize(this);
-    }
-
-    ~DictionarySlimPooled()
-    {
-        Clear();
     }
 }
 
