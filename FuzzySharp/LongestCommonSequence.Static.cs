@@ -35,19 +35,19 @@ public sealed partial class LongestCommonSequence
             processor(ref s2);
         }
 
-        using var charMask = CharMask.Create(s1);
+        using var patternMatchVector = PatternMatchVector.Create(s1);
 
-        return DistanceImpl(s1, s2, charMask, scoreCutoff);
+        return DistanceImpl(s1, s2, patternMatchVector, scoreCutoff);
     }
 
     private static int DistanceImpl<T>(
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
-        CharMaskBuffer<T> charMask,
+        IPatternMatchVector<T> patternMatchVector,
         int? scoreCutoff = null) where T : IEquatable<T>
     {
         int maximum = Math.Max(s1.Length, s2.Length);
-        int sim = SimilarityImpl(s1, s2, charMask);
+        int sim = SimilarityImpl(s1, s2, patternMatchVector);
         int dist = maximum - sim;
 
         var result = scoreCutoff == null || dist <= scoreCutoff.Value
@@ -318,20 +318,20 @@ public sealed partial class LongestCommonSequence
             processor(ref s2);
         }
 
-        using var charMask = CharMask.Create(s1);
+        using var patternMatchVector = PatternMatchVector.Create(s1);
 
-        return SimilarityImpl(s1, s2, charMask, scoreCutoff);
+        return SimilarityImpl(s1, s2, patternMatchVector, scoreCutoff);
     }
 
     internal static int SimilarityImpl<T>(
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
-        CharMaskBuffer<T> charMask,
+        IPatternMatchVector<T> patternMatchVector,
         int? scoreCutoff = null) where T : IEquatable<T>
     {
         var sim = s1.Length > 64
-            ? BlockSimilarityMultipleULongs(charMask, s1, s2)
-            : BlockSimilaritySingleULong(charMask, s1, s2);
+            ? BlockSimilarityMultipleULongs(patternMatchVector, s1, s2)
+            : BlockSimilaritySingleULong(patternMatchVector, s1, s2);
 
         var result = scoreCutoff == null || sim >= scoreCutoff.Value
             ? sim
@@ -351,7 +351,7 @@ public sealed partial class LongestCommonSequence
     /// <returns>The length of the longest common subsequence, or 0 if below cutoff.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int BlockSimilarity<T>(
-        CharMaskBuffer<T> block,
+        IPatternMatchVector<T> block,
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
         int? scoreCutoff = null
@@ -364,7 +364,7 @@ public sealed partial class LongestCommonSequence
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int BlockSimilaritySingleULong<T>(
-        CharMaskBuffer<T> block,
+        IPatternMatchVector<T> block,
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
         int? scoreCutoff = null
@@ -395,7 +395,7 @@ public sealed partial class LongestCommonSequence
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int BlockSimilarityMultipleULongs<T>(
-        CharMaskBuffer<T> block,
+        IPatternMatchVector<T> block,
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
         int? scoreCutoff = null
@@ -512,7 +512,7 @@ public sealed partial class LongestCommonSequence
         }
 
         // build blockTable: element → bit-mask array
-        using var blockTable = CharMask.Create(s1);
+        using var blockTable = PatternMatchVector.Create(s1);
 
         var matrix = new List<ulong[]>(s2.Length);
         var Sum = new ulong[blocks];
@@ -572,7 +572,7 @@ public sealed partial class LongestCommonSequence
         ulong S = m == 64 ? ulong.MaxValue : (1UL << m) - 1UL;
 
         // build bit-mask
-        using var block = CharMask.Create(s1);
+        using var block = PatternMatchVector.Create(s1);
 
         var matrix = new List<ulong[]>(s2.Length);
         foreach (var y in s2)

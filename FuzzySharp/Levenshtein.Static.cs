@@ -54,40 +54,40 @@ public sealed partial class Levenshtein
             GenericDistance(source, target, insertCost, deleteCost, replaceCost, scoreCutoff);
         }
 
-        using var charMask = CharMask.Create(source);
+        using var patternMatchVector = PatternMatchVector.Create(source);
 
         if (replaceCost == 1)
         {
             return scoreCutoff.HasValue
-                ? Distance(source, target, scoreCutoff.Value, charMask)
-                : Distance(source, target, charMask);
+                ? Distance(source, target, scoreCutoff.Value, patternMatchVector)
+                : Distance(source, target, patternMatchVector);
         }
 
-        return Indel.DistanceImpl(source, target, charMask, scoreCutoff);
+        return Indel.DistanceImpl(source, target, patternMatchVector, scoreCutoff);
     }
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int Distance<T>(ReadOnlySpan<T> source, ReadOnlySpan<T> target, int scoreCutoff, CharMaskBuffer<T> charMask) where T : IEquatable<T>
+    private static int Distance<T>(ReadOnlySpan<T> source, ReadOnlySpan<T> target, int scoreCutoff, IPatternMatchVector<T> patternMatchVector) where T : IEquatable<T>
     {
         if (source.Length <= 64)
         {
-            return DistanceSingleULong(source, target, scoreCutoff, charMask);
+            return DistanceSingleULong(source, target, scoreCutoff, patternMatchVector);
         }
 
-        return DistanceMultipleULongs(source, target, scoreCutoff, charMask);
+        return DistanceMultipleULongs(source, target, scoreCutoff, patternMatchVector);
     }
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int Distance<T>(ReadOnlySpan<T> source, ReadOnlySpan<T> target, CharMaskBuffer<T> charMask) where T : IEquatable<T>
+    private static int Distance<T>(ReadOnlySpan<T> source, ReadOnlySpan<T> target, IPatternMatchVector<T> patternMatchVector) where T : IEquatable<T>
     {
         if (source.Length <= 64)
         {
-            return DistanceSingleULong(source, target, charMask);
+            return DistanceSingleULong(source, target, patternMatchVector);
         }
 
-        return DistanceMultipleULongs(source, target, null, charMask);
+        return DistanceMultipleULongs(source, target, null, patternMatchVector);
     }
 
     /// <summary>
@@ -328,7 +328,7 @@ public sealed partial class Levenshtein
         var topBitMask = 1UL << topBitPos;
 
         // Build the “block” table: for each character, which bit(s) in each block it sets
-        using var blockTable = CharMask.Create(pattern);
+        using var blockTable = PatternMatchVector.Create(pattern);
 
         var currDist = m;
         var matrixVP = new List<ulong[]>();
@@ -428,7 +428,7 @@ public sealed partial class Levenshtein
         var mask = 1UL << (s1.Length - 1);
 
         // Build the “block” table: for each character in s1, which bit(s) it sets
-        using var blockTable = CharMask.Create(s1);
+        using var blockTable = PatternMatchVector.Create(s1);
 
         var matrixVP = new List<ulong[]>();
         var matrixVN = new List<ulong[]>();
@@ -651,7 +651,7 @@ public sealed partial class Levenshtein
         ReadOnlySpan<T> source,
         ReadOnlySpan<T> target,
         int? scoreCutoff,
-        CharMaskBuffer<T> charMask
+        IPatternMatchVector<T> patternMatchVector
     ) where T : IEquatable<T>
     {
         var m = source.Length;
@@ -669,7 +669,7 @@ public sealed partial class Levenshtein
         var scratchArray = ArrayPool<ulong>.Shared.Rent(totalScratch);
         try
         {
-            var result = DistanceMultipleULongsImpl(target, scoreCutoff, m, blocks, charMask, scratchArray);
+            var result = DistanceMultipleULongsImpl(target, scoreCutoff, m, blocks, patternMatchVector, scratchArray);
             return result;
         }
         finally
@@ -693,7 +693,7 @@ public sealed partial class Levenshtein
         int? scoreCutoff,
         int m,
         int blocks,
-        CharMaskBuffer<T> charMask,
+        IPatternMatchVector<T> patternMatchVector,
         Span<ulong> scratch
     ) where T : IEquatable<T>
     {
@@ -727,7 +727,7 @@ public sealed partial class Levenshtein
         foreach (var c2 in target)
         {
             // Look up the precomputed bitmask array, or use zeroMask if not found
-            var PMitem = charMask.GetOrZero(c2);
+            var PMitem = patternMatchVector.GetOrZero(c2);
 
             // “D0‐loop” with carry across blocks
             var carry = 0UL;
@@ -792,7 +792,7 @@ public sealed partial class Levenshtein
         return dist;
     }
 
-    private static int DistanceSingleULong<T>(ReadOnlySpan<T> source, ReadOnlySpan<T> target, int scoreCutoff, CharMaskBuffer<T> charMask) where T : IEquatable<T>
+    private static int DistanceSingleULong<T>(ReadOnlySpan<T> source, ReadOnlySpan<T> target, int scoreCutoff, IPatternMatchVector<T> patternMatchVector) where T : IEquatable<T>
     {
         var m = source.Length;
         if (m == 0) return target.Length;
@@ -805,7 +805,7 @@ public sealed partial class Levenshtein
 
         foreach (var c2 in target)
         {
-            var PM = charMask.GetOrZero(c2)[0];
+            var PM = patternMatchVector.GetOrZero(c2)[0];
 
             // Myers bit-parallel update
             var X = PM | VN;
@@ -830,7 +830,7 @@ public sealed partial class Levenshtein
         return dist;
     }
 
-    private static int DistanceSingleULong<T>(ReadOnlySpan<T> source, ReadOnlySpan<T> target, CharMaskBuffer<T> charMask) where T : IEquatable<T>
+    private static int DistanceSingleULong<T>(ReadOnlySpan<T> source, ReadOnlySpan<T> target, IPatternMatchVector<T> patternMatchVector) where T : IEquatable<T>
     {
         var m = source.Length;
         if (m == 0) return target.Length;
@@ -843,7 +843,7 @@ public sealed partial class Levenshtein
 
         foreach (var c2 in target)
         {
-            var PM = charMask.GetOrZero(c2)[0];
+            var PM = patternMatchVector.GetOrZero(c2)[0];
 
             // Myers bit-parallel update
             var X = PM | VN;

@@ -20,7 +20,7 @@ public sealed partial class Indel
     /// <param name="scoreCutoff">Optional maximum distance threshold. If the distance exceeds this value, returns scoreCutoff + 1.</param>
     /// <returns>The Indel distance between the two sequences.</returns>
     public static int BlockDistance<T>(
-        CharMaskBuffer<T> block,
+        IPatternMatchVector<T> block,
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
         int? scoreCutoff = null) where T : IEquatable<T>
@@ -45,7 +45,7 @@ public sealed partial class Indel
     /// <returns>The normalized Indel distance between the two sequences.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double BlockNormalizedDistance<T>(
-        CharMaskBuffer<T> block,
+        IPatternMatchVector<T> block,
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
         int? scoreCutoff = null) where T : IEquatable<T>
@@ -71,7 +71,7 @@ public sealed partial class Indel
     /// <returns>The normalized Indel similarity between the two sequences.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double BlockNormalizedSimilarity<T>(
-        CharMaskBuffer<T> block,
+        IPatternMatchVector<T> block,
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
         int? scoreCutoff = null) where T : IEquatable<T>
@@ -116,20 +116,18 @@ public sealed partial class Indel
         ReadOnlySpan<T> s2,
         int? scoreCutoff = null) where T : IEquatable<T>
     {
-        var blocks = (s1.Length + 63) >> 6;
-
-        using var charMask = CharMask.Create(s1);
-        return DistanceImpl(s1, s2, charMask, scoreCutoff);
+        using var patternMatchVector = PatternMatchVector.Create(s1);
+        return DistanceImpl(s1, s2, patternMatchVector, scoreCutoff);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int DistanceImpl<T>(ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
-        CharMaskBuffer<T> charMask,
+        IPatternMatchVector<T> patternMatchVector,
         int? scoreCutoff = null) where T : IEquatable<T>
     {
         var maximum = s1.Length + s2.Length;
-        var lcsSim = LongestCommonSequence.SimilarityImpl(s1, s2, charMask);
+        var lcsSim = LongestCommonSequence.SimilarityImpl(s1, s2, patternMatchVector);
         var dist = maximum - 2 * lcsSim;
         var result = scoreCutoff == null || dist <= scoreCutoff.Value
             ? dist

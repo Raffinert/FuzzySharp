@@ -116,8 +116,8 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
         if (len1 > len2)
             throw new ArgumentException("Requires s1.Length <= s2.Length");
 
-        using var charMask = CharMask.Create(s1);
-        return PartialRatioImpl(s1, s2, charMask, scoreCutoff);
+        using var patternMatchVector = PatternMatchVector.Create(s1);
+        return PartialRatioImpl(s1, s2, patternMatchVector, scoreCutoff);
     }
 
     /// <summary>
@@ -128,7 +128,7 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
     private static ScoreAlignment PartialRatioImpl(
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
-        CharMaskBuffer<T> charMask,
+        IPatternMatchVector<T> patternMatchVector,
         double? scoreCutoff = null
     )
     {
@@ -146,9 +146,9 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
         // 1) Prefixes shorter than len1
         for (int i = 1; i < len1; i++)
         {
-            if (!charMask.ContainsKey(s2[i - 1])) continue;
+            if (!patternMatchVector.ContainsKey(s2[i - 1])) continue;
             var slice = s2[..i];
-            double sim = Indel.BlockNormalizedSimilarity(charMask, s1, slice);
+            double sim = Indel.BlockNormalizedSimilarity(patternMatchVector, s1, slice);
             if (sim > res.Score && sim >= cutoff)
             {
                 res.Score = sim;
@@ -162,9 +162,9 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
         // 2) Full-width windows of length len1
         for (int i = 0; i <= len2 - len1; i++)
         {
-            if (!charMask.ContainsKey(s2[i + len1 - 1])) continue;
+            if (!patternMatchVector.ContainsKey(s2[i + len1 - 1])) continue;
             var window = s2[i..(i + len1)];
-            double sim = Indel.BlockNormalizedSimilarity(charMask, s1, window);
+            double sim = Indel.BlockNormalizedSimilarity(patternMatchVector, s1, window);
             if (sim > res.Score && sim >= cutoff)
             {
                 res.Score = sim;
@@ -178,9 +178,9 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
         // 3) Suffixes shorter than len1
         for (int i = len2 - len1 + 1; i < len2; i++)
         {
-            if (!charMask.ContainsKey(s2[i])) continue;
+            if (!patternMatchVector.ContainsKey(s2[i])) continue;
             var tail = s2[i..];
-            double sim = Indel.BlockNormalizedSimilarity(charMask, s1, tail);
+            double sim = Indel.BlockNormalizedSimilarity(patternMatchVector, s1, tail);
             if (sim > res.Score && sim >= cutoff)
             {
                 res.Score = sim;

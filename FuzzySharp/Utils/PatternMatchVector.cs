@@ -4,33 +4,65 @@ using System.Runtime.CompilerServices;
 
 namespace Raffinert.FuzzySharp.Utils;
 
-public sealed class CharMaskBuffer<T> : IDisposable where T : notnull, IEquatable<T>
+public interface IPatternMatchVector<in TKey> : IDisposable where TKey : notnull, IEquatable<TKey>
+{
+    int Blocks { get; }
+    ReadOnlySpan<ulong> GetOrZero(TKey key);
+
+    void AddBit(TKey key, int position);
+
+    bool ContainsKey(TKey key);
+}
+
+public sealed class PatternMatchVector
+{
+    public static IPatternMatchVector<T> Create<T>(ReadOnlySpan<T> source) where T : notnull, IEquatable<T>
+    {
+        var blocks = (source.Length + 63) >> 6;
+
+        var pmv = typeof(T) == typeof(char) 
+            ? (IPatternMatchVector<T>)(object)new PatternMatchVectorChar(estimatedNonAsciiCharCount: 8, blocks: blocks) 
+            : new PatternMatchVector<T>(64, blocks);
+
+        int i = 0;
+
+        foreach (var item in source)
+        {
+            pmv.AddBit(item, i++);
+        }
+
+        return pmv;
+    }
+}
+
+public sealed class PatternMatchVector<T> : IPatternMatchVector<T> where T : notnull, IEquatable<T>
 {
     private readonly ArrayPool<ulong> _pool;
     private readonly DictionarySlimPooled<T, int> _indexMap;
     private ulong[] _buffer;
-    private readonly int _blocks;
     private int _capacity;
     private int _next;
     private readonly ulong[] _zeroMask;
     private bool _disposed;
 
-    public CharMaskBuffer(int estimatedCharCount, int blocks, ArrayPool<ulong> pool = null)
+    public PatternMatchVector(int estimatedCharCount, int blocks, ArrayPool<ulong> pool = null)
     {
         _pool = pool ?? ArrayPool<ulong>.Shared;
-        _blocks = blocks;
+        Blocks = blocks;
         _capacity = estimatedCharCount;
-        _buffer = _pool.Rent(_capacity * _blocks);
-        _zeroMask = _pool.Rent(_blocks);
-        Array.Clear(_zeroMask, 0, _blocks);
+        _buffer = _pool.Rent(_capacity * Blocks);
+        _zeroMask = _pool.Rent(Blocks);
+        Array.Clear(_zeroMask, 0, Blocks);
         _indexMap = new DictionarySlimPooled<T, int>(estimatedCharCount);
         _next = 0;
     }
 
+    public int Blocks { get; }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AddBit(T key, int position)
     {
-        if (_disposed) throw new ObjectDisposedException(nameof(CharMaskBuffer<T>));
+        if (_disposed) throw new ObjectDisposedException(nameof(PatternMatchVector<>));
 
         ref var index = ref _indexMap.GetOrAddValueRef(key);
 
@@ -43,22 +75,22 @@ public sealed class CharMaskBuffer<T> : IDisposable where T : notnull, IEquatabl
 
             index = ++_next;
 
-            Array.Clear(_buffer, (index - 1) * _blocks, _blocks);
+            Array.Clear(_buffer, (index - 1) * Blocks, Blocks);
         }
 
         int block = position >> 6;
         int offset = position & 63;
 
-        _buffer[(index - 1) * _blocks + block] |= 1UL << offset;
+        _buffer[(index - 1) * Blocks + block] |= 1UL << offset;
     }
 
     private void GrowBuffer()
     {
         int newCapacity = _capacity * 2;
-        ulong[] newBuffer = _pool.Rent(newCapacity * _blocks);
+        ulong[] newBuffer = _pool.Rent(newCapacity * Blocks);
 
         // Copy existing masks
-        Array.Copy(_buffer, 0, newBuffer, 0, _capacity * _blocks);
+        Array.Copy(_buffer, 0, newBuffer, 0, _capacity * Blocks);
 
         // Return old buffer
         _pool.Return(_buffer);
@@ -69,18 +101,18 @@ public sealed class CharMaskBuffer<T> : IDisposable where T : notnull, IEquatabl
 
     public bool ContainsKey(T key)
     {
-        if (_disposed) throw new ObjectDisposedException(nameof(CharMaskBuffer<T>));
+        if (_disposed) throw new ObjectDisposedException(nameof(PatternMatchVector<>));
 
         return _indexMap.ContainsKey(key);
     }
 
     public bool TryGetMask(T key, out ReadOnlySpan<ulong> mask)
     {
-        if (_disposed) throw new ObjectDisposedException(nameof(CharMaskBuffer<T>));
+        if (_disposed) throw new ObjectDisposedException(nameof(PatternMatchVector<>));
 
         if (_indexMap.TryGetValue(key, out var index))
         {
-            mask = new ReadOnlySpan<ulong>(_buffer, (index - 1) * _blocks, _blocks);
+            mask = new ReadOnlySpan<ulong>(_buffer, (index - 1) * Blocks, Blocks);
             return true;
         }
         mask = default;
