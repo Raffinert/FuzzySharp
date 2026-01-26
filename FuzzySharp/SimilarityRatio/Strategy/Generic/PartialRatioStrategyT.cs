@@ -17,12 +17,7 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
             return 0;
         }
 
-        var shorter = input1;
-        var longer = input2;
-
-        SequenceUtils.SwapIfSourceIsLonger(ref shorter, ref longer);
-
-        var alignment = PartialRatioAlignment(shorter, longer);
+        var alignment = PartialRatioAlignment(input1, input2);
 
         return (int)Math.Round(alignment.Score);
     }
