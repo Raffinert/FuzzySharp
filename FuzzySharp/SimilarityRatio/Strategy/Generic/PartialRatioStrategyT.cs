@@ -27,8 +27,8 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
     /// and returns a ScoreAlignment (with a score in [0…100]) or null if below cutoff.
     /// </summary>
     internal static ScoreAlignment PartialRatioAlignment(
-        ReadOnlySpan<T> s1,
-        ReadOnlySpan<T> s2,
+        ReadOnlySpan<T> shorter,
+        ReadOnlySpan<T> longer,
         Processor<T> processor = null,
         double? scoreCutoff = null
     )
@@ -36,34 +36,34 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
         // 1) Optional preprocessing
         if (processor != null)
         {
-            processor(ref s1);
-            processor(ref s2);
+            processor(ref shorter);
+            processor(ref longer);
         }
 
         // 2) Normalize cutoff to 0…100
         double cutoff100 = scoreCutoff.GetValueOrDefault(0.0);
 
         // 3) Handle both empty → perfect match
-        if (s1.IsEmpty && s2.IsEmpty)
+        if (shorter.IsEmpty && longer.IsEmpty)
         {
             return new ScoreAlignment(100.0, 0, 0, 0, 0);
         }
 
         // 4) Determine shorter/longer
-        var swapped = SequenceUtils.SwapIfSourceIsLonger(ref s1, ref s2);
+        var swapped = SequenceUtils.SwapIfSourceIsLonger(ref shorter, ref longer);
 
         // 5) Call the core PartialRatioImpl with cutoff in [0..1]
         double fracCutoff = cutoff100 / 100.0;
-        var res = PartialRatioImpl(s1, s2, fracCutoff);
+        var res = PartialRatioImpl(shorter, longer, fracCutoff);
 
         // 6) If same-length inputs and not perfect, try the other direction
-        if (res.Score < 100.0 && s1.Length == s2.Length)
+        if (res.Score < 100.0 && shorter.Length == longer.Length)
         {
             // bump cutoff to whatever we got
             double newCutoff100 = Math.Max(cutoff100, res.Score);
             double newFracCutoff = newCutoff100 / 100.0;
 
-            var res2 = PartialRatioImpl(s1, s2, newFracCutoff);
+            var res2 = PartialRatioImpl(longer, shorter, newFracCutoff);
             if (res2.Score > res.Score)
             {
                 // swap src/dest

@@ -25,7 +25,7 @@ public class RatioIssuesTests
     {
         var str1 = new string('a', 65);
         var str2 = "a" + (char)256 + new string('a', 63);
-        Assert.That(Fuzz.PartialRatio(str1, str2), Is.EqualTo(98));
+        Assert.That(Fuzz.PartialRatio(str1, str2), Is.EqualTo(99));
     }
 
     [Test]
