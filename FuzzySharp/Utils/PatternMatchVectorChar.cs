@@ -12,7 +12,7 @@ namespace Raffinert.FuzzySharp.Utils;
 /// Each char maps to a mask of length <see cref="Blocks"/> ulongs.
 /// Bit position indicates where that char occurs in the pattern.
 /// </summary>
-public sealed class PatternMatchVectorChar : IPatternMatchVector<char>
+internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
 {
     private readonly ArrayPool<ulong> _pool;
     private readonly DictionarySlimPooled<char, int> _indexMap; // non-ASCII only (1-based)
@@ -25,6 +25,7 @@ public sealed class PatternMatchVectorChar : IPatternMatchVector<char>
     private int _next;
 
     private readonly ulong[] _zeroMask; // blocks
+    private readonly ulong[] _asciiPresence; // 4 ulongs to track which ASCII chars exist (256 bits)
     private bool _disposed;
 
     public int Blocks => _blocks;
@@ -41,6 +42,9 @@ public sealed class PatternMatchVectorChar : IPatternMatchVector<char>
         _asciiMasks = _pool.Rent(256 * _blocks);
         Array.Clear(_asciiMasks, 0, 256 * _blocks);
 
+        // Track which ASCII characters have been added (256 bits = 4 ulongs)
+        _asciiPresence = _pool.Rent(4);
+
         // Non-ASCII buffer
         _capacity = Math.Max(2, estimatedNonAsciiCharCount);
         _buffer = _pool.Rent(_capacity * _blocks);
@@ -53,24 +57,6 @@ public sealed class PatternMatchVectorChar : IPatternMatchVector<char>
         _next = 0;
     }
 
-    /// <summary>
-    /// Builds a PMV for a pattern (source) span.
-    /// </summary>
-    public static PatternMatchVectorChar Create(ReadOnlySpan<char> source, ArrayPool<ulong>? pool = null)
-    {
-        int blocks = (source.Length + 63) >> 6;
-
-        // Estimate non-ASCII count cheaply: usually 0, so don't over-allocate.
-        // If you want a better estimate, you can scan and count >255 chars.
-        var pmv = new PatternMatchVectorChar(estimatedNonAsciiCharCount: 8, blocks: blocks, pool: pool);
-
-        for (int i = 0; i < source.Length; i++)
-        {
-            pmv.AddBit(source[i], i);
-        }
-
-        return pmv;
-    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AddBit(char key, int position)
@@ -104,6 +90,31 @@ public sealed class PatternMatchVectorChar : IPatternMatchVector<char>
         _buffer[(index - 1) * _blocks + block] |= 1UL << offset;
     }
 
+    /// <summary>
+    /// Finalizes the pattern match vector by populating the ASCII presence bitmap.
+    /// Call this after all bits have been added.
+    /// </summary>
+    public void Seal()
+    {
+        // Scan ASCII masks and populate presence bitmap
+        for (int ch = 0; ch < 256; ch++)
+        {
+            int start = ch * _blocks;
+
+            // Check if this character has any bits set
+            for (int i = 0; i < _blocks; i++)
+            {
+                if (_asciiMasks[start + i] != 0)
+                {
+                    int presenceIndex = ch >> 6;
+                    int presenceOffset = ch & 63;
+                    _asciiPresence[presenceIndex] |= 1UL << presenceOffset;
+                    break;
+                }
+            }
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGetMask(char key, out ReadOnlySpan<ulong> mask)
     {
@@ -111,11 +122,13 @@ public sealed class PatternMatchVectorChar : IPatternMatchVector<char>
 
         if ((uint)key <= 255u)
         {
-            int start = key * _blocks;
+            // Check presence bitmap instead of scanning the mask
+            int presenceIndex = key >> 6;
+            int presenceOffset = key & 63;
 
-            if (!IsAllZero(_asciiMasks, start, _blocks))
+            if ((_asciiPresence[presenceIndex] & (1UL << presenceOffset)) != 0)
             {
-                mask = new ReadOnlySpan<ulong>(_asciiMasks, start, _blocks);
+                mask = new ReadOnlySpan<ulong>(_asciiMasks, key * _blocks, _blocks);
                 return true;
             }
 
@@ -147,7 +160,7 @@ public sealed class PatternMatchVectorChar : IPatternMatchVector<char>
 
     /// <summary>
     /// Useful helper if you want to check "known key".
-    /// For ASCII we infer it by "any bits set".
+    /// For ASCII we check the presence bitmap.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool ContainsKey(char key)
@@ -155,7 +168,11 @@ public sealed class PatternMatchVectorChar : IPatternMatchVector<char>
         if (_disposed) throw new ObjectDisposedException(nameof(PatternMatchVectorChar));
 
         if ((uint)key <= 255u)
-            return !IsAllZero(_asciiMasks, key * _blocks, _blocks);
+        {
+            int presenceIndex = key >> 6;
+            int presenceOffset = key & 63;
+            return (_asciiPresence[presenceIndex] & (1UL << presenceOffset)) != 0;
+        }
 
         return _indexMap.ContainsKey(key);
     }
@@ -175,17 +192,6 @@ public sealed class PatternMatchVectorChar : IPatternMatchVector<char>
         _capacity = newCapacity;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool IsAllZero(ulong[] array, int start, int length)
-    {
-        for (int i = 0; i < length; i++)
-        {
-            if (array[start + i] != 0)
-                return false;
-        }
-        return true;
-    }
-
     public void Dispose()
     {
         if (_disposed) return;
@@ -193,6 +199,7 @@ public sealed class PatternMatchVectorChar : IPatternMatchVector<char>
         _indexMap.Dispose();
 
         _pool.Return(_asciiMasks);
+        _pool.Return(_asciiPresence);
         _pool.Return(_buffer);
         _pool.Return(_zeroMask);
 

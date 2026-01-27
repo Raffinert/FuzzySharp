@@ -9,9 +9,13 @@ public interface IPatternMatchVector<in TKey> : IDisposable where TKey : notnull
     int Blocks { get; }
     ReadOnlySpan<ulong> GetOrZero(TKey key);
 
-    void AddBit(TKey key, int position);
-
     bool ContainsKey(TKey key);
+}
+
+internal interface IPatternMatchVectorImpl<in TKey> : IPatternMatchVector<TKey> where TKey : IEquatable<TKey>
+{
+    void AddBit(TKey key, int position);
+    void Seal();
 }
 
 public sealed class PatternMatchVector
@@ -20,22 +24,24 @@ public sealed class PatternMatchVector
     {
         var blocks = (source.Length + 63) >> 6;
 
-        var pmv = typeof(T) == typeof(char) 
-            ? (IPatternMatchVector<T>)(object)new PatternMatchVectorChar(estimatedNonAsciiCharCount: 8, blocks: blocks) 
+        var pmv = typeof(T) == typeof(char)
+            ? (IPatternMatchVectorImpl<T>)(object)new PatternMatchVectorChar(estimatedNonAsciiCharCount: 8, blocks: blocks)
             : new PatternMatchVector<T>(64, blocks);
 
-        int i = 0;
+        var i = 0;
 
         foreach (var item in source)
         {
             pmv.AddBit(item, i++);
         }
 
+        pmv.Seal();
+
         return pmv;
     }
 }
 
-public sealed class PatternMatchVector<T> : IPatternMatchVector<T> where T : notnull, IEquatable<T>
+internal sealed class PatternMatchVector<T> : IPatternMatchVectorImpl<T> where T : notnull, IEquatable<T>
 {
     private readonly ArrayPool<ulong> _pool;
     private readonly DictionarySlimPooled<T, int> _indexMap;
@@ -82,6 +88,11 @@ public sealed class PatternMatchVector<T> : IPatternMatchVector<T> where T : not
         int offset = position & 63;
 
         _buffer[(index - 1) * Blocks + block] |= 1UL << offset;
+    }
+
+    public void Seal()
+    {
+        // do nothing
     }
 
     private void GrowBuffer()
