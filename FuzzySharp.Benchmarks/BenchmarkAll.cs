@@ -1,6 +1,9 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Raffinert.FuzzySharp.Extractor;
 using Raffinert.FuzzySharp.PreProcess;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 using Classic = FuzzySharp;
 
 namespace Raffinert.FuzzySharp.Benchmarks;
@@ -49,6 +52,21 @@ public class BenchmarkAll
     public int WeightedRatio()
     {
         return Fuzz.WeightedRatio("The quick brown fox jimps ofver the small lazy dog", "the quick brown fox jumps over the small lazy dog");
+    }
+
+    private ICachedRatioScorer _cachedWeightedScorer = new CachedWeightedRatioScorer("The quick brown fox jimps ofver the small lazy dog");
+
+    [GlobalSetup]
+    public void GlobalSetup()
+    {
+        _cachedWeightedScorer = new CachedWeightedRatioScorer("The quick brown fox jimps ofver the small lazy dog");
+        _extractScorer = new CachedWeightedRatioScorer(Query[0]);
+    }
+
+    [Benchmark]
+    public int CachedWeightedRatio()
+    {
+        return _cachedWeightedScorer.Score("the quick brown fox jumps over the small lazy dog");
     }
 
     //[Benchmark]
@@ -165,26 +183,56 @@ public class BenchmarkAll
     //    return Classic.Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", Classic.PreProcess.PreprocessMode.Full);
     //}
 
-    //private static readonly string[][] Events =
-    //[
-    //    ["chicago cubs vs new york mets", "CitiField", "2011-05-11", "8pm"],
-    //        ["new york yankees vs boston red sox", "Fenway Park", "2011-05-11", "8pm"],
-    //        ["atlanta braves vs pittsburgh pirates", "PNC Park", "2011-05-11", "8pm"]
-    //];
+    private static readonly string[][] Events =
+    [
+        ["chicago cubs vs new york mets", "CitiField", "2011-05-11", "8pm"],
+        ["new york yankees vs boston red sox", "Fenway Park", "2011-05-11", "8pm"],
+        ["atlanta braves vs pittsburgh pirates", "PNC Park", "2011-05-11", "8pm"]
+    ];
 
-    //private static readonly string[] Query = ["new york mets vs chicago cubs", "CitiField", "2017-03-19", "8pm"];
+    private static readonly string[] Query = ["new york mets vs chicago cubs", "CitiField", "2017-03-19", "8pm"];
+    private ICachedRatioScorer _extractScorer = null!;
 
-    //[Benchmark]
-    //public ExtractedResult<string[]> ExtractOne()
-    //{
-    //    return Process.ExtractOne(Query, Events, static strings => strings[0]);
-    //}
 
-    //[Benchmark]
-    //public Classic.Extractor.ExtractedResult<string[]> ExtractOneClassic()
-    //{
-    //    return Classic.Process.ExtractOne(Query, Events, static strings => strings[0]);
-    //}
+    [Benchmark]
+    public ExtractedResult<string[]> CachedExtractOne()
+    {
+
+        return Process.Cached.ExtractOne(Query, Events, static strings => strings[0], _extractScorer);
+    }
+
+    [Benchmark]
+    public ExtractedResult<string[]> ExtractOne()
+    {
+
+        return Process.ExtractOne(Query, Events, static strings => strings[0]);
+    }
+
+    [Benchmark]
+    public Classic.Extractor.ExtractedResult<string[]> ExtractOneClassic()
+    {
+        return Classic.Process.ExtractOne(Query, Events, static strings => strings[0]);
+    }
+
+    [Benchmark]
+    public List<ExtractedResult<string[]>> CachedExtractAll()
+    {
+
+        return Process.Cached.ExtractAll(Query, Events, static strings => strings[0], _extractScorer).ToList();
+    }
+
+    [Benchmark]
+    public List<ExtractedResult<string[]>> ExtractAll()
+    {
+
+        return Process.ExtractAll(Query, Events, static strings => strings[0]).ToList();
+    }
+
+    [Benchmark]
+    public List<global::FuzzySharp.Extractor.ExtractedResult<string[]>> ExtractAllClassic()
+    {
+        return Classic.Process.ExtractAll(Query, Events, static strings => strings[0]).ToList();
+    }
 
     //private static readonly Levenshtein FuzzySharpLevenshtein = new Levenshtein("chicago cubs vs new york mets");
     //private static readonly Fastenshtein.Levenshtein FastenLevenshtein = new Fastenshtein.Levenshtein("chicago cubs vs new york mets");
