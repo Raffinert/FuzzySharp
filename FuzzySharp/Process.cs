@@ -8,7 +8,7 @@ using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
 
 namespace Raffinert.FuzzySharp;
 
-public static class Process
+public static partial class Process
 {
     private static readonly IRatioScorer DefaultScorer = ScorerCache.Get<WeightedRatioScorer>();
     private static readonly Func<string, string> DefaultStringProcessor = StringPreprocessorFactory.GetPreprocessor(PreprocessMode.Full);
@@ -36,6 +36,8 @@ public static class Process
         return ResultExtractor.ExtractWithoutOrder(query, choices, processor, scorer, cutoff);
     }
 
+    
+
     /// <summary>
     /// Creates a list of ExtractedResult which contain all the choices with
     /// their corresponding score where higher is more similar
@@ -56,7 +58,7 @@ public static class Process
         scorer ??= DefaultScorer;
         return ResultExtractor.ExtractWithoutOrder(query, choices, processor, scorer, cutoff);
     }
-
+    
     /// <summary>
     /// Creates a list of ExtractedResult which contain all the choices with
     /// their corresponding score where higher is more similar
@@ -77,6 +79,7 @@ public static class Process
         scorer ??= DefaultScorer;
         return ResultExtractor.ExtractWithoutOrder(query, choices, processor, scorer, cutoff);
     }
+
     #endregion
 
     #region ExtractTop
@@ -104,7 +107,6 @@ public static class Process
         return ResultExtractor.ExtractTop(query, choices, processor, scorer, limit, cutoff);
     }
 
-
     /// <summary>
     /// Creates a sorted list of ExtractedResult  which contain the
     /// top limit most similar choices
@@ -127,9 +129,11 @@ public static class Process
         scorer ??= DefaultScorer;
         return ResultExtractor.ExtractTop(query, choices, processor, scorer, limit, cutoff);
     }
+
     #endregion
 
     #region ExtractSorted
+    
     /// <summary>
     /// Creates a sorted list of ExtractedResult with the closest matches first
     /// </summary>
@@ -170,6 +174,7 @@ public static class Process
         scorer ??= DefaultScorer;
         return ResultExtractor.ExtractSorted(query, choices, processor, scorer, cutoff);
     }
+
     #endregion
 
     #region ExtractOne
@@ -224,5 +229,6 @@ public static class Process
     {
         return ResultExtractor.ExtractOne(query, choices, DefaultStringProcessor, DefaultScorer);
     }
+
     #endregion
 }

@@ -7,3 +7,8 @@ public abstract class StrategySensitiveScorerBase<T> : ScorerBase<T> where T : I
 {
     protected abstract Func<T[], T[], int> Scorer { get; }
 }
+
+public abstract class CachedStrategySensitiveScorerBase<T> : CachedScorerBase<T> where T : IEquatable<T>
+{
+    protected abstract Func<T[], int> Scorer { get; }
+}

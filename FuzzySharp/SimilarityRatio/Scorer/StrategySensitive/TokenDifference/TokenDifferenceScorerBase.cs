@@ -1,4 +1,5 @@
-﻿using Raffinert.FuzzySharp.Extensions;
+﻿using System;
+using Raffinert.FuzzySharp.Extensions;
 using Raffinert.FuzzySharp.PreProcess;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive.Generic;
 
@@ -28,4 +29,20 @@ public abstract class TokenDifferenceScorerBase : StrategySensitiveScorerBase<st
 
         return Score(input1, input2);
     }
+}
+
+public abstract class CachedTokenDifferenceScorerBase : CachedStrategySensitiveScorerBase<string>, ICachedRatioScorer
+{
+    public override int Score(string[] input2)
+    {
+        return Scorer(input2);
+    }
+
+    public int Score(string input2)
+    {
+        var tokens2 = input2.GetSortedWords();
+
+        return Score(tokens2);
+    }
+    public abstract void Dispose();
 }
