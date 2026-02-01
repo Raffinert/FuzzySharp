@@ -3,6 +3,7 @@ using Raffinert.FuzzySharp.Extractor;
 using Raffinert.FuzzySharp.PreProcess;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Generic;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using Classic = FuzzySharp;
 
@@ -54,7 +55,7 @@ public class BenchmarkAll
         return Fuzz.WeightedRatio("The quick brown fox jimps ofver the small lazy dog", "the quick brown fox jumps over the small lazy dog");
     }
 
-    private ICachedRatioScorer _cachedWeightedScorer = new CachedWeightedRatioScorer("The quick brown fox jimps ofver the small lazy dog");
+    private ICachedRatioScorer _cachedWeightedScorer;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -65,6 +66,13 @@ public class BenchmarkAll
 
     [Benchmark]
     public int CachedWeightedRatio()
+    {
+
+        return new CachedWeightedRatioScorer("The quick brown fox jimps ofver the small lazy dog").Score("the quick brown fox jumps over the small lazy dog");
+    }
+
+    [Benchmark]
+    public int CachedCachedWeightedRatio()
     {
         return _cachedWeightedScorer.Score("the quick brown fox jumps over the small lazy dog");
     }
@@ -198,6 +206,13 @@ public class BenchmarkAll
     public ExtractedResult<string[]> CachedExtractOne()
     {
 
+        return Process.Cached.ExtractOne(Query, Events, static strings => strings[0]);
+    }
+
+    [Benchmark]
+    public ExtractedResult<string[]> CachedCachedExtractOne()
+    {
+
         return Process.Cached.ExtractOne(Query, Events, static strings => strings[0], _extractScorer);
     }
 
@@ -216,6 +231,13 @@ public class BenchmarkAll
 
     [Benchmark]
     public List<ExtractedResult<string[]>> CachedExtractAll()
+    {
+
+        return Process.Cached.ExtractAll(Query, Events, static strings => strings[0]).ToList();
+    }
+
+    [Benchmark]
+    public List<ExtractedResult<string[]>> CachedCachedExtractAll()
     {
 
         return Process.Cached.ExtractAll(Query, Events, static strings => strings[0], _extractScorer).ToList();
