@@ -6,20 +6,3 @@ public sealed class PartialTokenSetScorer : TokenSetScorerBase
 {
     protected override FuzzySharp.Scorer Scorer => PartialRatioStrategy.Calculate;
 }
-
-public sealed class CachedPartialTokenSetScorer : CachedTokenSetScorerBase
-{
-    public CachedPartialTokenSetScorer(string input1) : base(input1)
-    {
-    }
-
-    public CachedPartialTokenSetScorer(CachedTokenSetScorerBase other)
-    {
-        Tokens1 = other.Tokens1;
-    }
-
-    protected override FuzzySharp.Scorer Scorer => PartialRatioStrategy.Calculate;
-    public override void Dispose()
-    {
-    }
-}
