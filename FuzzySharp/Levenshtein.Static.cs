@@ -343,10 +343,10 @@ public sealed partial class Levenshtein
         var HNs = new ulong[blocks];
 
         // Process each character of the text
-        foreach (var c in text)
+        for (var i = 0; i < text.Length; i++)
         {
             // 1) Load the pattern‐mask for c, or zeros if not present
-            var X = blockTable.GetOrZero(c);
+            var X = blockTable.GetOrZero(text[i]);
 
             // 2) Compute D0 = (((X & VP) + VP) ^ VP) | X | VN
             //    -> Must do a big‐integer add and carry across blocks
@@ -433,9 +433,9 @@ public sealed partial class Levenshtein
         var matrixVP = new List<ulong[]>();
         var matrixVN = new List<ulong[]>();
 
-        foreach (var c in s2)
+        for (var i = 0; i < s2.Length; i++)
         {
-            var PMj = blockTable.GetOrZero(c)[0];
+            var PMj = blockTable.GetOrZero(s2[i])[0];
 
             // Step 1: D0 = (((PMj & VP) + VP) ^ VP) | PMj | VN
             // Use unchecked so addition wraps modulo 2^64
@@ -602,7 +602,7 @@ public sealed partial class Levenshtein
         for (var i = 0; i <= len1; i++)
             row[i] = i * deleteCost;
 
-        foreach (var c2 in target)
+        for (var index = 0; index < target.Length; index++)
         {
             var prev = row[0];
             row[0] += insertCost;
@@ -610,21 +610,26 @@ public sealed partial class Levenshtein
             {
                 var curr = row[i + 1];
                 var cost = prev;
-                if (!EqualityComparer<T>.Default.Equals(source[i], c2))
+                if (!EqualityComparer<T>.Default.Equals(source[i], target[index]))
                 {
                     var del = row[i] + deleteCost;
                     var ins = row[i + 1] + insertCost;
                     var rep = prev + replaceCost;
                     cost = del < ins
                         ? del < rep ? del : rep
-                        : ins < rep ? ins : rep;
+                        : ins < rep
+                            ? ins
+                            : rep;
                 }
+
                 prev = curr;
                 row[i + 1] = cost;
             }
+
             if (scoreCutoff.HasValue && row[len1] > scoreCutoff.Value)
                 return scoreCutoff.Value + 1;
         }
+
         return row[len1];
     }
 
@@ -724,10 +729,10 @@ public sealed partial class Levenshtein
         var highestBitMask = 1UL << ((m - 1) & 63);
         var dist = m;
 
-        foreach (var c2 in target)
+        for (var i = 0; i < target.Length; i++)
         {
             // Look up the precomputed bitmask array, or use zeroMask if not found
-            var PMitem = patternMatchVector.GetOrZero(c2);
+            var PMitem = patternMatchVector.GetOrZero(target[i]);
 
             // “D0‐loop” with carry across blocks
             var carry = 0UL;
@@ -803,9 +808,9 @@ public sealed partial class Levenshtein
         var highestBit = 1UL << (m - 1);
         var dist = m;
 
-        foreach (var c2 in target)
+        for (var i = 0; i < target.Length; i++)
         {
-            var PM = patternMatchVector.GetOrZero(c2)[0];
+            var PM = patternMatchVector.GetOrZero(target[i])[0];
 
             // Myers bit-parallel update
             var X = PM | VN;
@@ -841,9 +846,9 @@ public sealed partial class Levenshtein
         var highestBit = 1UL << (m - 1);
         var dist = m;
 
-        foreach (var c2 in target)
+        for (var i = 0; i < target.Length; i++)
         {
-            var PM = patternMatchVector.GetOrZero(c2)[0];
+            var PM = patternMatchVector.GetOrZero(target[i])[0];
 
             // Myers bit-parallel update
             var X = PM | VN;

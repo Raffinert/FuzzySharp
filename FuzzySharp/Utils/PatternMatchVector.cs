@@ -50,7 +50,7 @@ public sealed class PatternMatchVector<T> : IDisposable where T : notnull, IEqua
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AddBit(T key, int position)
     {
-        if (_disposed) throw new ObjectDisposedException(nameof(PatternMatchVector<>));
+        if (_disposed) throw new ObjectDisposedException(nameof(PatternMatchVector<T>));
 
         ref var index = ref _indexMap.GetOrAddValueRef(key);
 
@@ -92,16 +92,18 @@ public sealed class PatternMatchVector<T> : IDisposable where T : notnull, IEqua
         _capacity = newCapacity;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool ContainsKey(T key)
     {
-        if (_disposed) throw new ObjectDisposedException(nameof(PatternMatchVector<>));
+        if (_disposed) throw new ObjectDisposedException(nameof(PatternMatchVector<T>));
 
         return _indexMap.ContainsKey(key);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGetMask(T key, out ReadOnlySpan<ulong> mask)
     {
-        if (_disposed) throw new ObjectDisposedException(nameof(PatternMatchVector<>));
+        if (_disposed) throw new ObjectDisposedException(nameof(PatternMatchVector<T>));
 
         if (_indexMap.TryGetValue(key, out var index))
         {
@@ -112,6 +114,7 @@ public sealed class PatternMatchVector<T> : IDisposable where T : notnull, IEqua
         return false;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ReadOnlySpan<ulong> GetOrZero(T key)
     {
         return TryGetMask(key, out var mask) ? mask : _zeroMask;

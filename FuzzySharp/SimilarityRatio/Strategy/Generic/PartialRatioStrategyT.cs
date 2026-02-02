@@ -138,6 +138,7 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
             return res;
 
         double cutoff = scoreCutoff ?? 0.0;
+
         // 1) Prefixes shorter than len1
         for (int i = 1; i < len1; i++)
         {

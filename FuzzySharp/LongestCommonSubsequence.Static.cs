@@ -377,9 +377,10 @@ public sealed partial class LongestCommonSubsequence
         ulong mask = len1 == 64 ? ulong.MaxValue : (1UL << len1) - 1UL;
 
         ulong S = mask;
-        foreach (T ch in s2)
+        
+        for (int i = 0; i < s2.Length; i++)
         {
-            ulong M = block.GetOrZero(ch)[0];
+            ulong M = block.GetOrZero(s2[i])[0];
             ulong u = S & M;
             unchecked
             {
@@ -422,9 +423,9 @@ public sealed partial class LongestCommonSubsequence
                 S[segCount - 1] = (1UL << rem) - 1;
 
             // --- 3) main bit-parallel loop: S = (S + u) | (S - u)  ---
-            foreach (T ch in s2)
+            for (int chIdx = 0; chIdx < s2.Length; chIdx++)
             {
-                var M = block.GetOrZero(ch);
+                var M = block.GetOrZero(s2[chIdx]);
 
                 // u = S & M
                 for (int i = 0; i < segCount; i++)
