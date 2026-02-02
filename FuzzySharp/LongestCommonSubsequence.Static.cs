@@ -43,7 +43,7 @@ public sealed partial class LongestCommonSubsequence
     private static int DistanceImpl<T>(
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
-        IPatternMatchVector<T> patternMatchVector,
+        PatternMatchVector<T> patternMatchVector,
         int? scoreCutoff = null) where T : IEquatable<T>
     {
         int maximum = Math.Max(s1.Length, s2.Length);
@@ -326,7 +326,7 @@ public sealed partial class LongestCommonSubsequence
     internal static int SimilarityImpl<T>(
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
-        IPatternMatchVector<T> patternMatchVector,
+        PatternMatchVector<T> patternMatchVector,
         int? scoreCutoff = null) where T : IEquatable<T>
     {
         var sim = s1.Length > 64
@@ -351,7 +351,7 @@ public sealed partial class LongestCommonSubsequence
     /// <returns>The length of the longest common subsequence, or 0 if below cutoff.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int BlockSimilarity<T>(
-        IPatternMatchVector<T> block,
+        PatternMatchVector<T> block,
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
         int? scoreCutoff = null
@@ -364,7 +364,7 @@ public sealed partial class LongestCommonSubsequence
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int BlockSimilaritySingleULong<T>(
-        IPatternMatchVector<T> block,
+        PatternMatchVector<T> block,
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
         int? scoreCutoff = null
@@ -395,7 +395,7 @@ public sealed partial class LongestCommonSubsequence
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int BlockSimilarityMultipleULongs<T>(
-        IPatternMatchVector<T> block,
+        PatternMatchVector<T> block,
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
         int? scoreCutoff = null

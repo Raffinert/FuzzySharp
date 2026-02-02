@@ -123,7 +123,7 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
     private static ScoreAlignment PartialRatioImpl(
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
-        IPatternMatchVector<T> patternMatchVector,
+        PatternMatchVector<T> patternMatchVector,
         double? scoreCutoff = null
     )
     {

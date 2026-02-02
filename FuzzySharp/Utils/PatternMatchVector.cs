@@ -4,29 +4,13 @@ using System.Runtime.CompilerServices;
 
 namespace Raffinert.FuzzySharp.Utils;
 
-public interface IPatternMatchVector<in TKey> : IDisposable where TKey : notnull, IEquatable<TKey>
-{
-    int Blocks { get; }
-    ReadOnlySpan<ulong> GetOrZero(TKey key);
-
-    bool ContainsKey(TKey key);
-}
-
-internal interface IPatternMatchVectorImpl<in TKey> : IPatternMatchVector<TKey> where TKey : IEquatable<TKey>
-{
-    void AddBit(TKey key, int position);
-    void Seal();
-}
-
 public sealed class PatternMatchVector
 {
-    public static IPatternMatchVector<T> Create<T>(ReadOnlySpan<T> source) where T : notnull, IEquatable<T>
+    public static PatternMatchVector<T> Create<T>(ReadOnlySpan<T> source) where T : notnull, IEquatable<T>
     {
         var blocks = (source.Length + 63) >> 6;
 
-        var pmv = typeof(T) == typeof(char)
-            ? (IPatternMatchVectorImpl<T>)(object)new PatternMatchVectorChar(estimatedNonAsciiCharCount: 8, blocks: blocks)
-            : new PatternMatchVector<T>(64, blocks);
+        var pmv = new PatternMatchVector<T>(64, blocks);
 
         var i = 0;
 
@@ -35,13 +19,11 @@ public sealed class PatternMatchVector
             pmv.AddBit(item, i++);
         }
 
-        pmv.Seal();
-
         return pmv;
     }
 }
 
-internal sealed class PatternMatchVector<T> : IPatternMatchVectorImpl<T> where T : notnull, IEquatable<T>
+public sealed class PatternMatchVector<T> : IDisposable where T : notnull, IEquatable<T>
 {
     private readonly ArrayPool<ulong> _pool;
     private readonly DictionarySlimPooled<T, int> _indexMap;

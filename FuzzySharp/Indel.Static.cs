@@ -20,7 +20,7 @@ public sealed partial class Indel
     /// <param name="scoreCutoff">Optional maximum distance threshold. If the distance exceeds this value, returns scoreCutoff + 1.</param>
     /// <returns>The Indel distance between the two sequences.</returns>
     public static int BlockDistance<T>(
-        IPatternMatchVector<T> block,
+        PatternMatchVector<T> block,
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
         int? scoreCutoff = null) where T : IEquatable<T>
@@ -45,7 +45,7 @@ public sealed partial class Indel
     /// <returns>The normalized Indel distance between the two sequences.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double BlockNormalizedDistance<T>(
-        IPatternMatchVector<T> block,
+        PatternMatchVector<T> block,
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
         int? scoreCutoff = null) where T : IEquatable<T>
@@ -71,7 +71,7 @@ public sealed partial class Indel
     /// <returns>The normalized Indel similarity between the two sequences.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double BlockNormalizedSimilarity<T>(
-        IPatternMatchVector<T> block,
+        PatternMatchVector<T> block,
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
         int? scoreCutoff = null) where T : IEquatable<T>
@@ -123,7 +123,7 @@ public sealed partial class Indel
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int DistanceImpl<T>(ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
-        IPatternMatchVector<T> patternMatchVector,
+        PatternMatchVector<T> patternMatchVector,
         int? scoreCutoff = null) where T : IEquatable<T>
     {
         var maximum = s1.Length + s2.Length;
@@ -165,7 +165,7 @@ public sealed partial class Indel
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static double NormalizedDistanceImpl<T>(ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
-        IPatternMatchVector<T> patternMatchVector,
+        PatternMatchVector<T> patternMatchVector,
         int? scoreCutoff = null) where T : IEquatable<T>
     {
         var dist = DistanceImpl(s1, s2, patternMatchVector, scoreCutoff);
@@ -220,7 +220,7 @@ public sealed partial class Indel
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static double NormalizedSimilarityImpl<T>(ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
-        IPatternMatchVector<T> patternMatchVector,
+        PatternMatchVector<T> patternMatchVector,
 
         int? scoreCutoff = null) where T : IEquatable<T>
     {

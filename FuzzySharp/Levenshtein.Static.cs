@@ -68,7 +68,7 @@ public sealed partial class Levenshtein
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int Distance<T>(ReadOnlySpan<T> source, ReadOnlySpan<T> target, int scoreCutoff, IPatternMatchVector<T> patternMatchVector) where T : IEquatable<T>
+    private static int Distance<T>(ReadOnlySpan<T> source, ReadOnlySpan<T> target, int scoreCutoff, PatternMatchVector<T> patternMatchVector) where T : IEquatable<T>
     {
         if (source.Length <= 64)
         {
@@ -80,7 +80,7 @@ public sealed partial class Levenshtein
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int Distance<T>(ReadOnlySpan<T> source, ReadOnlySpan<T> target, IPatternMatchVector<T> patternMatchVector) where T : IEquatable<T>
+    private static int Distance<T>(ReadOnlySpan<T> source, ReadOnlySpan<T> target, PatternMatchVector<T> patternMatchVector) where T : IEquatable<T>
     {
         if (source.Length <= 64)
         {
@@ -651,7 +651,7 @@ public sealed partial class Levenshtein
         ReadOnlySpan<T> source,
         ReadOnlySpan<T> target,
         int? scoreCutoff,
-        IPatternMatchVector<T> patternMatchVector
+        PatternMatchVector<T> patternMatchVector
     ) where T : IEquatable<T>
     {
         var m = source.Length;
@@ -693,7 +693,7 @@ public sealed partial class Levenshtein
         int? scoreCutoff,
         int m,
         int blocks,
-        IPatternMatchVector<T> patternMatchVector,
+        PatternMatchVector<T> patternMatchVector,
         Span<ulong> scratch
     ) where T : IEquatable<T>
     {
@@ -792,7 +792,7 @@ public sealed partial class Levenshtein
         return dist;
     }
 
-    private static int DistanceSingleULong<T>(ReadOnlySpan<T> source, ReadOnlySpan<T> target, int scoreCutoff, IPatternMatchVector<T> patternMatchVector) where T : IEquatable<T>
+    private static int DistanceSingleULong<T>(ReadOnlySpan<T> source, ReadOnlySpan<T> target, int scoreCutoff, PatternMatchVector<T> patternMatchVector) where T : IEquatable<T>
     {
         var m = source.Length;
         if (m == 0) return target.Length;
@@ -830,7 +830,7 @@ public sealed partial class Levenshtein
         return dist;
     }
 
-    private static int DistanceSingleULong<T>(ReadOnlySpan<T> source, ReadOnlySpan<T> target, IPatternMatchVector<T> patternMatchVector) where T : IEquatable<T>
+    private static int DistanceSingleULong<T>(ReadOnlySpan<T> source, ReadOnlySpan<T> target, PatternMatchVector<T> patternMatchVector) where T : IEquatable<T>
     {
         var m = source.Length;
         if (m == 0) return target.Length;
