@@ -3,7 +3,7 @@ using System;
 
 namespace Raffinert.FuzzySharp;
 
-public sealed partial class LongestCommonSequence(string source) : IDisposable
+public sealed partial class LongestCommonSubsequence(string source) : IDisposable
 {
     private readonly string _source = source ?? throw new ArgumentNullException(nameof(source));
     private readonly IPatternMatchVector<char> _patternMatchVector = PatternMatchVector.Create(source.AsSpan());

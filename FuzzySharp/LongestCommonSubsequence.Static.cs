@@ -12,7 +12,7 @@ namespace Raffinert.FuzzySharp;
 /// Provides static methods for computing the Longest Common Subsequence (LCS) and related similarity metrics.
 /// Implements a bit-parallel LCS algorithm inspired by RapidFuzz's LCSseq implementation.
 /// </summary>
-public sealed partial class LongestCommonSequence
+public sealed partial class LongestCommonSubsequence
 {
     /// <summary>
     /// Computes the LCS-based distance between two sequences.

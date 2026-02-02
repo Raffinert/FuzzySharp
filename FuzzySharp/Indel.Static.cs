@@ -26,7 +26,7 @@ public sealed partial class Indel
         int? scoreCutoff = null) where T : IEquatable<T>
     {
         var maximum = s1.Length + s2.Length;
-        var lcsSim = LongestCommonSequence.BlockSimilarity(block, s1, s2);
+        var lcsSim = LongestCommonSubsequence.BlockSimilarity(block, s1, s2);
         var dist = maximum - 2 * lcsSim;
         var result = scoreCutoff == null || dist <= scoreCutoff.Value
             ? dist
@@ -127,7 +127,7 @@ public sealed partial class Indel
         int? scoreCutoff = null) where T : IEquatable<T>
     {
         var maximum = s1.Length + s2.Length;
-        var lcsSim = LongestCommonSequence.SimilarityImpl(s1, s2, patternMatchVector);
+        var lcsSim = LongestCommonSubsequence.SimilarityImpl(s1, s2, patternMatchVector);
         var dist = maximum - 2 * lcsSim;
         var result = scoreCutoff == null || dist <= scoreCutoff.Value
             ? dist
