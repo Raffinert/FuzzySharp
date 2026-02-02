@@ -1,4 +1,6 @@
 using BenchmarkDotNet.Attributes;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 using Classic = FuzzySharp;
 
 namespace Raffinert.FuzzySharp.Benchmarks;
@@ -6,6 +8,14 @@ namespace Raffinert.FuzzySharp.Benchmarks;
 [MemoryDiagnoser]
 public class RatioBenchmarks
 {
+    private ICachedRatioScorer _cachedRatioScorer = null!;
+
+    [GlobalSetup]
+    public void GlobalSetup()
+    {
+        _cachedRatioScorer = new CachedDefaultRatioScorer("mysmilarstring");
+    }
+
     [Benchmark]
     public int Ratio()
     {
@@ -16,5 +26,18 @@ public class RatioBenchmarks
     public int RatioClassic()
     {
         return Classic.Fuzz.Ratio("mysmilarstring", "myawfullysimilarstirng");
+    }
+
+    [Benchmark]
+    public int RatioCached()
+    {
+        using var scorer = new CachedDefaultRatioScorer("mysmilarstring");
+        return scorer.Score("myawfullysimilarstirng");
+    }
+
+    [Benchmark]
+    public int RatioAcrossRunsCached()
+    {
+        return _cachedRatioScorer.Score("myawfullysimilarstirng");
     }
 }
