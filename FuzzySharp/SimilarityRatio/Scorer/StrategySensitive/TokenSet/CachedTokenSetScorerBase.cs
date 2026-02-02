@@ -5,20 +5,10 @@ using Raffinert.FuzzySharp.Extensions;
 
 namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 
-public abstract class CachedTokenSetScorerBase : CachedScorerBase
+public abstract class CachedTokenSetScorerBase(string input1) : CachedScorerBase
 {
-    public HashSet<string> Tokens1 { get; protected set; }
+    private HashSet<string> Tokens1 { get; set; } = new HashSet<string>(input1.SplitByAnySpace());
     protected abstract FuzzySharp.Scorer Scorer { get; }
-
-    protected CachedTokenSetScorerBase()
-    {
-        
-    }
-
-    protected CachedTokenSetScorerBase(string input1)
-    {
-        Tokens1 = new HashSet<string>(input1.SplitByAnySpace());
-    }
 
     public override int Score(string input2)
     {

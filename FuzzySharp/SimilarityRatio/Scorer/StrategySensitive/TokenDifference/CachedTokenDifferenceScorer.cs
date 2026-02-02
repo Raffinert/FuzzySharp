@@ -13,8 +13,8 @@ public sealed class CachedTokenDifferenceScorer : ICachedRatioScorer
     public CachedTokenDifferenceScorer(string input1, PreprocessMode preprocess = PreprocessMode.None)
     {
         _preprocessFactory = StringPreprocessorFactory.GetPreprocessor(preprocess);
-        input1 = _preprocessFactory(input1);
-        var tokens1 = input1.GetSortedWords();
+        var preprocessedInput1 = _preprocessFactory(input1);
+        var tokens1 = preprocessedInput1.GetSortedWords();
         _scorer = new CachedDefaultRatioStrategy<string>(tokens1);
     }
 

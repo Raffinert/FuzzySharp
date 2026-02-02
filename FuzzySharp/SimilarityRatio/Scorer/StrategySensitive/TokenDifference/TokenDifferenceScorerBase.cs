@@ -1,5 +1,4 @@
-﻿using System;
-using Raffinert.FuzzySharp.Extensions;
+﻿using Raffinert.FuzzySharp.Extensions;
 using Raffinert.FuzzySharp.PreProcess;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive.Generic;
 
