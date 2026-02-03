@@ -6,7 +6,7 @@ namespace Raffinert.FuzzySharp;
 public sealed partial class Levenshtein(string source) : IDisposable
 {
     private readonly string _source = source ?? throw new ArgumentNullException(nameof(source));
-    private readonly PatternMatchVector<char> _patternMatchVector = PatternMatchVector.Create(source.AsSpan());
+    private readonly IPatternMatchVector<char> _patternMatchVector = PatternMatchVector.Create(source.AsSpan());
 
     public int DistanceFrom(string value)
     {

@@ -6,7 +6,7 @@ namespace Raffinert.FuzzySharp;
 public sealed partial class Indel(string source) : IDisposable
 {
     private readonly string _source = source ?? throw new ArgumentNullException(nameof(source));
-    private readonly PatternMatchVector<char> _patternMatchVector = PatternMatchVector.Create(source.AsSpan());
+    private readonly IPatternMatchVector<char> _patternMatchVector = PatternMatchVector.Create(source.AsSpan());
 
     public int DistanceFrom(string value)
     {
@@ -27,7 +27,7 @@ public sealed partial class Indel(string source) : IDisposable
 public sealed class IndelT<T>(T[] source) : IDisposable where T : IEquatable<T>
 {
     private readonly T[] _source = source ?? throw new ArgumentNullException(nameof(source));
-    private readonly PatternMatchVector<T> _patternMatchVector = PatternMatchVector.Create(source.AsSpan());
+    private readonly IPatternMatchVector<T> _patternMatchVector = PatternMatchVector.Create(source.AsSpan());
 
     public int DistanceFrom(T[] value)
     {
