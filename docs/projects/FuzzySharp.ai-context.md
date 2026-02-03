@@ -1,6 +1,6 @@
 # FuzzySharp Technical Context (AI oriented)
 
-This document is derived from the code bundle at `codefetch/projects/FuzzySharp.codebase.md`. It is intended to give an AI agent enough context to work in this repo without deep reverse engineering.
+This document is derived from the code bundle at `codefetch/codebase.md`. It is intended to give an AI agent enough context to work in this repo without deep reverse engineering.
 
 ## Scope and purpose
 - Library: `Raffinert.FuzzySharp` provides fast fuzzy string matching and similarity scoring.
@@ -77,7 +77,7 @@ Behavior:
 - Otherwise, creates a `CachedWeightedRatioScorer` for the (processed) query, uses it for all choices, and disposes it.
 
 ### Distance APIs
-Location: `FuzzySharp/Indel.*.cs`, `FuzzySharp/Levenshtein.*.cs`, `FuzzySharp/LongestCommonSequence.*.cs`
+Location: `FuzzySharp/Indel.*.cs`, `FuzzySharp/Levenshtein.*.cs`, `FuzzySharp/LongestCommonSubsequence.*.cs`
 
 Public types:
 - `Indel` (static distance/similarity + cached instance class `Indel(string)`).
@@ -180,7 +180,7 @@ Behavior:
 - Score average per permutation and return max.
 
 ### Weighted ratio (composite)
-Location: `SimilarityRatio/Scorer/Composite/WeightedRatioScorer.cs`
+Location: `SimilarityRatio/Scorer/Composite/WeightedRatioScorer.cs` and `SimilarityRatio/Scorer/Composite/CachedWeightedRatioScorer.cs`
 
 Behavior:
 - Always compute base `Ratio`.
@@ -240,7 +240,7 @@ Location: `FuzzySharp/Indel.*.cs`
 Notes:
 - Indel distance = `len(s1) + len(s2) - 2 * LCS(s1, s2)`.
 - `NormalizedSimilarity` returns `1 - normalized distance`.
-- Uses `PatternMatchVector` and `LongestCommonSequence` for bit-parallel computation.
+- Uses `PatternMatchVector` and `LongestCommonSubsequence` for bit-parallel computation.
 
 ### Levenshtein
 Location: `FuzzySharp/Levenshtein.*.cs`
@@ -317,7 +317,7 @@ Benchmarks (`FuzzySharp.Benchmarks/FuzzySharp.Benchmarks.csproj`):
   - `Process.*` defaults to `PreprocessMode.Full` for strings.
 - `ExtractedResult<T>.CompareTo` compares only `Score`. Use `Index` for stable ordering if needed.
 - `TokenAbbreviation` can be expensive due to permutations; it short-circuits when shorter has more than 4 tokens.
-- Cached scorers (`CachedWeightedRatioScorer`, `CachedDefaultRatioStrategy`, `Indel`, `Levenshtein`, `LongestCommonSequence`) hold pooled buffers and must be disposed when created directly.
+- Cached scorers (`CachedWeightedRatioScorer`, `CachedDefaultRatioStrategy`, `Indel`, `Levenshtein`, `LongestCommonSubsequence`) hold pooled buffers and must be disposed when created directly.
 - `TokenInitialism` and `TokenAbbreviation` include length ratio checks; short strings can return 0.
 
 ## File-level starting points
