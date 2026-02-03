@@ -15,7 +15,6 @@ public interface IPatternMatchVector<in TKey> : IDisposable where TKey : notnull
 internal interface IPatternMatchVectorImpl<in TKey> : IPatternMatchVector<TKey> where TKey : IEquatable<TKey>
 {
     void AddBit(TKey key, int position);
-    void Seal();
 }
 
 public sealed class PatternMatchVector
@@ -34,8 +33,6 @@ public sealed class PatternMatchVector
         {
             pmv.AddBit(item, i++);
         }
-
-        pmv.Seal();
 
         return pmv;
     }
@@ -88,11 +85,6 @@ internal sealed class PatternMatchVector<T> : IPatternMatchVectorImpl<T> where T
         int offset = position & 63;
 
         _buffer[(index - 1) * Blocks + block] |= 1UL << offset;
-    }
-
-    public void Seal()
-    {
-        // do nothing
     }
 
     private void GrowBuffer()

@@ -17,15 +17,17 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
     private readonly ArrayPool<ulong> _pool;
     private readonly DictionarySlimPooled<char, int> _indexMap; // non-ASCII only (1-based)
 
-    private readonly ulong[] _asciiMasks; // 256 * blocks
-    private ulong[] _buffer;     // capacity * blocks for non-ASCII
+    private readonly ulong[] _fixedData; // Single rental: [asciiMasks (256*blocks) | asciiPresence (4) | zeroMask (blocks)]
+    private readonly int _asciiMasksOffset;
+    private readonly int _asciiPresenceOffset;
+    private readonly int _zeroMaskOffset;
+
+    private ulong[] _buffer;     // capacity * blocks for non-ASCII (separate rental, can grow)
 
     private readonly int _blocks;
     private int _capacity;
     private int _next;
 
-    private readonly ulong[] _zeroMask; // blocks
-    private readonly ulong[] _asciiPresence; // 4 ulongs to track which ASCII chars exist (256 bits)
     private bool _disposed;
 
     public int Blocks => _blocks;
@@ -38,20 +40,22 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
         _pool = pool ?? ArrayPool<ulong>.Shared;
         _blocks = blocks;
 
-        // ASCII (0..255)
-        _asciiMasks = _pool.Rent(256 * _blocks);
-        Array.Clear(_asciiMasks, 0, 256 * _blocks);
+        // Single rental for all fixed-size data:
+        // Layout: [asciiMasks (256*blocks) | asciiPresence (4) | zeroMask (blocks)]
+        int totalFixedSize = (256 * _blocks) + 4 + _blocks;
+        _fixedData = _pool.Rent(totalFixedSize);
+        
+        _asciiMasksOffset = 0;
+        _asciiPresenceOffset = 256 * _blocks;
+        _zeroMaskOffset = _asciiPresenceOffset + 4;
 
-        // Track which ASCII characters have been added (256 bits = 4 ulongs)
-        _asciiPresence = _pool.Rent(4);
+        // Clear all fixed data
+        Array.Clear(_fixedData, 0, totalFixedSize);
 
-        // Non-ASCII buffer
+        // Non-ASCII buffer (separate rental, can grow)
         _capacity = Math.Max(2, estimatedNonAsciiCharCount);
         _buffer = _pool.Rent(_capacity * _blocks);
         // Intentionally not clearing entire _buffer. Each new key slice is cleared once.
-
-        _zeroMask = _pool.Rent(_blocks);
-        Array.Clear(_zeroMask, 0, _blocks);
 
         _indexMap = new DictionarySlimPooled<char, int>(estimatedNonAsciiCharCount);
         _next = 0;
@@ -69,7 +73,13 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
         // Fast path: ASCII / extended ASCII
         if ((uint)key <= 255u)
         {
-            _asciiMasks[(key * _blocks) + block] |= 1UL << offset;
+            _fixedData[_asciiMasksOffset + (key * _blocks) + block] |= 1UL << offset;
+            
+            // Update presence bitmap
+            int presenceIndex = key >> 6;
+            int presenceOffset = key & 63;
+            _fixedData[_asciiPresenceOffset + presenceIndex] |= 1UL << presenceOffset;
+            
             return;
         }
 
@@ -90,30 +100,6 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
         _buffer[(index - 1) * _blocks + block] |= 1UL << offset;
     }
 
-    /// <summary>
-    /// Finalizes the pattern match vector by populating the ASCII presence bitmap.
-    /// Call this after all bits have been added.
-    /// </summary>
-    public void Seal()
-    {
-        // Scan ASCII masks and populate presence bitmap
-        for (int ch = 0; ch < 256; ch++)
-        {
-            int start = ch * _blocks;
-
-            // Check if this character has any bits set
-            for (int i = 0; i < _blocks; i++)
-            {
-                if (_asciiMasks[start + i] != 0)
-                {
-                    int presenceIndex = ch >> 6;
-                    int presenceOffset = ch & 63;
-                    _asciiPresence[presenceIndex] |= 1UL << presenceOffset;
-                    break;
-                }
-            }
-        }
-    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGetMask(char key, out ReadOnlySpan<ulong> mask)
@@ -126,9 +112,9 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
             int presenceIndex = key >> 6;
             int presenceOffset = key & 63;
 
-            if ((_asciiPresence[presenceIndex] & (1UL << presenceOffset)) != 0)
+            if ((_fixedData[_asciiPresenceOffset + presenceIndex] & (1UL << presenceOffset)) != 0)
             {
-                mask = new ReadOnlySpan<ulong>(_asciiMasks, key * _blocks, _blocks);
+                mask = new ReadOnlySpan<ulong>(_fixedData, _asciiMasksOffset + (key * _blocks), _blocks);
                 return true;
             }
 
@@ -149,7 +135,7 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ReadOnlySpan<ulong> GetOrZero(char key)
     {
-        return TryGetMask(key, out var mask) ? mask : _zeroMask;
+        return TryGetMask(key, out var mask) ? mask : new ReadOnlySpan<ulong>(_fixedData, _zeroMaskOffset, _blocks);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -171,7 +157,7 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
         {
             int presenceIndex = key >> 6;
             int presenceOffset = key & 63;
-            return (_asciiPresence[presenceIndex] & (1UL << presenceOffset)) != 0;
+            return (_fixedData[_asciiPresenceOffset + presenceIndex] & (1UL << presenceOffset)) != 0;
         }
 
         return _indexMap.ContainsKey(key);
@@ -198,10 +184,8 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
 
         _indexMap.Dispose();
 
-        _pool.Return(_asciiMasks);
-        _pool.Return(_asciiPresence);
+        _pool.Return(_fixedData);
         _pool.Return(_buffer);
-        _pool.Return(_zeroMask);
 
         _disposed = true;
     }
