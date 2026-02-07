@@ -216,9 +216,7 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
                         break;
 
                     windows.Clear();
-                    var tmp = windows;
-                    windows = newWindows;
-                    newWindows = tmp;
+                    (windows, newWindows) = (newWindows, windows);
                 }
 
                 if (bestDist != int.MaxValue)

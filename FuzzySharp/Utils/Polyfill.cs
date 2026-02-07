@@ -19,6 +19,7 @@ internal static class Polyfill
 #endif
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ArrayFill<T>(T[] array, T value, int startIndex, int count)
     {
 #if NETCOREAPP2_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
