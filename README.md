@@ -34,6 +34,8 @@ Random words of 3 to 1024 random chars (LevenshteinLarge.cs):
 
 
 # Release Notes:
+v3.0.9 – Implemented RapidFuzz-style window pruning for the full-width partial ratio scan so it avoids evaluating every window when len2 > len1, and adjusted the suffix loop to cover the last full-width window.
+
 v3.0.8 – Removed finalizers from CharMaskBuffer and DictionarySlimPooled as they don't use unmanaged resources.
 
 v3.0.7 – Improved LongestCommonSequence for faster execution. This caused the PartialRatioStrategy speedup.
