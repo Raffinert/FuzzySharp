@@ -7,6 +7,7 @@ using Classic = FuzzySharp;
 namespace Raffinert.FuzzySharp.Benchmarks;
 
 [MemoryDiagnoser]
+[RankColumn]
 public class ExtractAllBenchmarks
 {
     private static readonly string[][] Events =

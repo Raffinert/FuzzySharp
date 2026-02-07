@@ -4,6 +4,7 @@ using Classic = FuzzySharp;
 namespace Raffinert.FuzzySharp.Benchmarks;
 
 [MemoryDiagnoser]
+[RankColumn]
 public class LevenshteinDistanceBenchmarks
 {
     private static readonly Levenshtein FuzzySharpLevenshtein = new("chicago cubs vs new york mets");

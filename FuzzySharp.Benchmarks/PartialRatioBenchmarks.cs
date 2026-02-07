@@ -4,6 +4,7 @@ using Classic = FuzzySharp;
 namespace Raffinert.FuzzySharp.Benchmarks;
 
 [MemoryDiagnoser]
+[RankColumn]
 public class PartialRatioBenchmarks
 {
     [Benchmark]

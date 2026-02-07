@@ -1,5 +1,7 @@
 ﻿using Raffinert.FuzzySharp.Utils;
 using System;
+using System.Buffers;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace Raffinert.FuzzySharp.SimilarityRatio.Strategy.Generic;
@@ -41,7 +43,7 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
         }
 
         // 2) Normalize cutoff to 0…100
-        double cutoff100 = scoreCutoff.GetValueOrDefault(0.0);
+        double cutoff100 = scoreCutoff.GetValueOrDefault();
 
         // 3) Handle both empty → perfect match
         if (shorter.IsEmpty && longer.IsEmpty)
@@ -139,6 +141,101 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
 
         double cutoff = scoreCutoff ?? 0.0;
 
+        if (len2 > len1)
+        {
+            int maximum = len1 + len1;
+            int windowCount = len2 - len1;
+            int cutoffDist = (int)Math.Ceiling(maximum * (1.0 - cutoff));
+            int bestDist = int.MaxValue;
+            int[] scores = ArrayPool<int>.Shared.Rent(windowCount);
+
+            Polyfill.ArrayFill(scores, int.MaxValue, 0, windowCount);
+
+            try
+            {
+                var windows = new List<(int First, int Second)>(4) { (0, windowCount - 1) };
+                var newWindows = new List<(int First, int Second)>(4);
+
+                while (windows.Count > 0)
+                {
+                    foreach (var window in windows)
+                    {
+                        int first = window.First;
+                        int second = window.Second;
+
+                        if (scores[first] == int.MaxValue)
+                        {
+                            int dist = Indel.DistanceImpl(s1, s2.Slice(first, len1), patternMatchVector);
+                            scores[first] = dist;
+                            if (dist < cutoffDist)
+                            {
+                                cutoffDist = bestDist = dist;
+                                res.DestStart = first;
+                                res.DestEnd = first + len1;
+                                if (bestDist == 0)
+                                {
+                                    res.Score = 100.0;
+                                    return res;
+                                }
+                            }
+                        }
+
+                        if (scores[second] == int.MaxValue)
+                        {
+                            int dist = Indel.DistanceImpl(s1, s2.Slice(second, len1), patternMatchVector);
+                            scores[second] = dist;
+                            if (dist < cutoffDist)
+                            {
+                                cutoffDist = bestDist = dist;
+                                res.DestStart = second;
+                                res.DestEnd = second + len1;
+                                if (bestDist == 0)
+                                {
+                                    res.Score = 100.0;
+                                    return res;
+                                }
+                            }
+                        }
+
+                        int cellDiff = second - first;
+                        if (cellDiff == 1)
+                            continue;
+
+                        int knownEdits = Math.Abs(scores[first] - scores[second]);
+                        int maxScoreImprovement = ((cellDiff - knownEdits / 2) / 2) * 2;
+                        int minScore = Math.Min(scores[first], scores[second]) - maxScoreImprovement;
+                        if (minScore < cutoffDist)
+                        {
+                            int center = cellDiff / 2;
+                            newWindows.Add((first, first + center));
+                            newWindows.Add((first + center, second));
+                        }
+                    }
+
+                    if (newWindows.Count == 0)
+                        break;
+
+                    windows.Clear();
+                    var tmp = windows;
+                    windows = newWindows;
+                    newWindows = tmp;
+                }
+
+                if (bestDist != int.MaxValue)
+                {
+                    double score = 1.0 - (bestDist / (double)maximum);
+                    if (score >= cutoff)
+                    {
+                        cutoff = res.Score = score;
+                    }
+                }
+            }
+            finally
+            {
+                ArrayPool<int>.Shared.Return(scores);
+            }
+        }
+
         // 1) Prefixes shorter than len1
         for (int i = 1; i < len1; i++)
         {
@@ -155,24 +252,8 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
             }
         }
 
-        // 2) Full-width windows of length len1
-        for (int i = 0; i <= len2 - len1; i++)
-        {
-            if (!patternMatchVector.ContainsKey(s2[i + len1 - 1])) continue;
-            var window = s2[i..(i + len1)];
-            double sim = Indel.BlockNormalizedSimilarity(patternMatchVector, s1, window);
-            if (sim > res.Score && sim >= cutoff)
-            {
-                res.Score = sim;
-                cutoff = sim;
-                res.DestStart = i;
-                res.DestEnd = i + len1;
-                if (sim >= .995) { res.Score = 100.0; return res; }
-            }
-        }
-
-        // 3) Suffixes shorter than len1
-        for (int i = len2 - len1 + 1; i < len2; i++)
+        // 2) Suffixes up to len1 (includes the last full-width window)
+        for (int i = len2 - len1; i < len2; i++)
         {
             if (!patternMatchVector.ContainsKey(s2[i])) continue;
             var tail = s2[i..];

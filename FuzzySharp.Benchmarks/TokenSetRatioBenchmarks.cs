@@ -6,6 +6,7 @@ using Classic = FuzzySharp;
 namespace Raffinert.FuzzySharp.Benchmarks;
 
 [MemoryDiagnoser]
+[RankColumn]
 public class TokenSetRatioBenchmarks
 {
     private ICachedRatioScorer _cachedTokenSetScorer = null!;

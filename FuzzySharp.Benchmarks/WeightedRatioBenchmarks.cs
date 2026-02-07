@@ -6,6 +6,7 @@ using Classic = FuzzySharp;
 namespace Raffinert.FuzzySharp.Benchmarks;
 
 [MemoryDiagnoser]
+[RankColumn]
 public class WeightedRatioBenchmarks
 {
     private ICachedRatioScorer _cachedWeightedScorer = null!;
