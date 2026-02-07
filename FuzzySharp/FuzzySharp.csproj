@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyVersion>3.0.8.0</AssemblyVersion>
-	<FileVersion>3.0.8.0</FileVersion>
-	<Version>3.0.8</Version>
-	<PackageVersion>3.0.8</PackageVersion>
+    <AssemblyVersion>3.0.9.0</AssemblyVersion>
+	<FileVersion>3.0.9.0</FileVersion>
+	<Version>3.0.9</Version>
+	<PackageVersion>3.0.9</PackageVersion>
     <Authors>Jacob Bayer;Yevhen Cherkes</Authors>
     <Company />
     <Description>
