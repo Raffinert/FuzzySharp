@@ -3,7 +3,6 @@ using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace Raffinert.FuzzySharp.Extractor;
 

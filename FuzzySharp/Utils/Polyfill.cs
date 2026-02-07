@@ -35,7 +35,7 @@ internal static class Polyfill
 
         if ((uint)count > (uint)(array.Length - startIndex))
             throw new ArgumentOutOfRangeException(nameof(count));
-        
+
         for (var i = startIndex; i < startIndex + count; i++)
         {
             array[i] = value;
