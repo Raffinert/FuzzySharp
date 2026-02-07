@@ -20,7 +20,7 @@ public static partial class Process
             processor ??= DefaultStringProcessor;
             if (scorer != null)
             {
-                foreach (var extractedResult in ResultExtractor.ExtractWithoutOrder(choices, processor, scorer, cutoff))
+                foreach (var extractedResult in ResultExtractor.Cached.ExtractWithoutOrder(choices, processor, scorer, cutoff))
                 {
                     yield return extractedResult;
                 }
@@ -28,7 +28,7 @@ public static partial class Process
             }
 
             using var scorer1 = new CachedWeightedRatioScorer(processor(query));
-            foreach (var extractedResult in ResultExtractor.ExtractWithoutOrder(choices, processor, scorer1, cutoff))
+            foreach (var extractedResult in ResultExtractor.Cached.ExtractWithoutOrder(choices, processor, scorer1, cutoff))
             {
                 yield return extractedResult;
             }
@@ -43,7 +43,7 @@ public static partial class Process
         {
             if (scorer != null)
             {
-                foreach (var extractedResult in ResultExtractor.ExtractWithoutOrder(choices, processor, scorer, cutoff))
+                foreach (var extractedResult in ResultExtractor.Cached.ExtractWithoutOrder(choices, processor, scorer, cutoff))
                 {
                     yield return extractedResult;
                 }
@@ -51,7 +51,7 @@ public static partial class Process
             }
 
             using var scorer1 = new CachedWeightedRatioScorer(processor(query));
-            foreach (var extractedResult in ResultExtractor.ExtractWithoutOrder(choices, processor, scorer1, cutoff))
+            foreach (var extractedResult in ResultExtractor.Cached.ExtractWithoutOrder(choices, processor, scorer1, cutoff))
             {
                 yield return extractedResult;
             }
@@ -66,7 +66,7 @@ public static partial class Process
         {
             if (scorer != null)
             {
-                foreach (var extractedResult in ResultExtractor.ExtractWithoutOrder(choices, processor, scorer, cutoff))
+                foreach (var extractedResult in ResultExtractor.Cached.ExtractWithoutOrder(choices, processor, scorer, cutoff))
                 {
                     yield return extractedResult;
                 }
@@ -74,7 +74,7 @@ public static partial class Process
             }
 
             using var scorer1 = new CachedWeightedRatioScorer(query);
-            foreach (var extractedResult in ResultExtractor.ExtractWithoutOrder(choices, processor, scorer1, cutoff))
+            foreach (var extractedResult in ResultExtractor.Cached.ExtractWithoutOrder(choices, processor, scorer1, cutoff))
             {
                 yield return extractedResult;
             }
@@ -91,7 +91,7 @@ public static partial class Process
             processor ??= DefaultStringProcessor;
             if (scorer != null)
             {
-                foreach (var extractedResult in ResultExtractor.ExtractTop(choices, processor, scorer, limit, cutoff))
+                foreach (var extractedResult in ResultExtractor.Cached.ExtractTop(choices, processor, scorer, limit, cutoff))
                 {
                     yield return extractedResult;
                 }
@@ -99,7 +99,7 @@ public static partial class Process
             }
 
             using var scorer1 = new CachedWeightedRatioScorer(processor(query));
-            foreach (var extractedResult in ResultExtractor.ExtractTop(choices, processor, scorer1, limit, cutoff))
+            foreach (var extractedResult in ResultExtractor.Cached.ExtractTop(choices, processor, scorer1, limit, cutoff))
             {
                 yield return extractedResult;
             }
@@ -115,7 +115,7 @@ public static partial class Process
         {
             if (scorer != null)
             {
-                foreach (var extractedResult in ResultExtractor.ExtractTop(choices, processor, scorer, limit, cutoff))
+                foreach (var extractedResult in ResultExtractor.Cached.ExtractTop(choices, processor, scorer, limit, cutoff))
                 {
                     yield return extractedResult;
                 }
@@ -123,7 +123,7 @@ public static partial class Process
             }
 
             using var scorer1 = new CachedWeightedRatioScorer(processor(query));
-            foreach (var extractedResult in ResultExtractor.ExtractTop(choices, processor, scorer1, limit, cutoff))
+            foreach (var extractedResult in ResultExtractor.Cached.ExtractTop(choices, processor, scorer1, limit, cutoff))
             {
                 yield return extractedResult;
             }
@@ -139,7 +139,7 @@ public static partial class Process
             processor ??= DefaultStringProcessor;
             if (scorer != null)
             {
-                foreach (var extractedResult in ResultExtractor.ExtractSorted(choices, processor, scorer, cutoff))
+                foreach (var extractedResult in ResultExtractor.Cached.ExtractSorted(choices, processor, scorer, cutoff))
                 {
                     yield return extractedResult;
                 }
@@ -147,7 +147,7 @@ public static partial class Process
             }
 
             using var scorer1 = new CachedWeightedRatioScorer(processor(query));
-            foreach (var extractedResult in ResultExtractor.ExtractSorted(choices, processor, scorer1, cutoff))
+            foreach (var extractedResult in ResultExtractor.Cached.ExtractSorted(choices, processor, scorer1, cutoff))
             {
                 yield return extractedResult;
             }
@@ -162,7 +162,7 @@ public static partial class Process
         {
             if (scorer != null)
             {
-                foreach (var extractedResult in ResultExtractor.ExtractSorted(choices, processor, scorer, cutoff))
+                foreach (var extractedResult in ResultExtractor.Cached.ExtractSorted(choices, processor, scorer, cutoff))
                 {
                     yield return extractedResult;
                 }
@@ -170,7 +170,7 @@ public static partial class Process
             }
 
             using var scorer1 = new CachedWeightedRatioScorer(processor(query));
-            foreach (var extractedResult in ResultExtractor.ExtractSorted(choices, processor, scorer1, cutoff))
+            foreach (var extractedResult in ResultExtractor.Cached.ExtractSorted(choices, processor, scorer1, cutoff))
             {
                 yield return extractedResult;
             }
@@ -186,11 +186,11 @@ public static partial class Process
             processor ??= DefaultStringProcessor;
             if (scorer != null)
             {
-                return ResultExtractor.ExtractOne(choices, processor, scorer, cutoff);
+                return ResultExtractor.Cached.ExtractOne(choices, processor, scorer, cutoff);
             }
 
             using var scorer1 = new CachedWeightedRatioScorer(processor(query));
-            return ResultExtractor.ExtractOne(choices, processor, scorer1, cutoff);
+            return ResultExtractor.Cached.ExtractOne(choices, processor, scorer1, cutoff);
         }
 
         public static ExtractedResult<T> ExtractOne<T>(
@@ -202,16 +202,16 @@ public static partial class Process
         {
             if (scorer != null)
             {
-                return ResultExtractor.ExtractOne(choices, processor, scorer, cutoff);
+                return ResultExtractor.Cached.ExtractOne(choices, processor, scorer, cutoff);
             }
             using var scorer1 = new CachedWeightedRatioScorer(processor(query));
-            return ResultExtractor.ExtractOne(choices, processor, scorer1, cutoff);
+            return ResultExtractor.Cached.ExtractOne(choices, processor, scorer1, cutoff);
         }
 
         public static ExtractedResult<string> ExtractOne(string query, params string[] choices)
         {
             using var scorer = new CachedWeightedRatioScorer(DefaultStringProcessor(query));
-            return ResultExtractor.ExtractOne(choices, DefaultStringProcessor, scorer);
+            return ResultExtractor.Cached.ExtractOne(choices, DefaultStringProcessor, scorer);
         }
     }
 }

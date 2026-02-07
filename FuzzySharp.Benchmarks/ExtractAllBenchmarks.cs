@@ -19,11 +19,16 @@ public class ExtractAllBenchmarks
 
     private static readonly string[] Query = ["new york mets vs chicago cubs", "CitiField", "2017-03-19", "8pm"];
     private ICachedRatioScorer _extractScorer = null!;
+    private ParallelOptions _parallelOptions = null!;
 
     [GlobalSetup]
     public void GlobalSetup()
     {
         _extractScorer = new CachedWeightedRatioScorer(Query[0]);
+        _parallelOptions = new ParallelOptions
+        {
+            MaxDegreeOfParallelism = 4
+        };
     }
 
     [Benchmark]
@@ -39,14 +44,32 @@ public class ExtractAllBenchmarks
     }
 
     [Benchmark]
+    public List<ExtractedResult<string[]>> ExtractAllParallel()
+    {
+        return Process.Parallel.ExtractAll(Query, Events, static strings => strings[0], parallelOptions: _parallelOptions).ToList();
+    }
+
+    [Benchmark]
     public List<ExtractedResult<string[]>> ExtractAllCached()
     {
         return Process.Cached.ExtractAll(Query, Events, static strings => strings[0]).ToList();
     }
 
     [Benchmark]
+    public List<ExtractedResult<string[]>> ExtractAllParallelCached()
+    {
+        return Process.Parallel.Cached.ExtractAll(Query, Events, static strings => strings[0], parallelOptions: _parallelOptions).ToList();
+    }
+
+    [Benchmark]
     public List<ExtractedResult<string[]>> ExtractAllAcrossRunsCached()
     {
         return Process.Cached.ExtractAll(Query, Events, static strings => strings[0], _extractScorer).ToList();
+    }
+
+    [Benchmark]
+    public List<ExtractedResult<string[]>> ExtractAllAcrossRunsParallelCached()
+    {
+        return Process.Parallel.Cached.ExtractAll(Query, Events, static strings => strings[0], _extractScorer, parallelOptions: _parallelOptions).ToList();
     }
 }
