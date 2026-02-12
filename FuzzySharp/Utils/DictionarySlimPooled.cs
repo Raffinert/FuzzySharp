@@ -117,6 +117,7 @@ internal sealed class DictionarySlimPooled<TKey, TValue> : IDisposable, IReadOnl
     /// </summary>
     /// <param name="key">Key to look for</param>
     /// <returns>true if the key is present, otherwise false</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool ContainsKey(TKey key)
     {
         if (key == null) ThrowHelper.ThrowKeyArgumentNullException();
@@ -147,6 +148,7 @@ internal sealed class DictionarySlimPooled<TKey, TValue> : IDisposable, IReadOnl
     /// <param name="key">Key to look for</param>
     /// <param name="value">Value found, otherwise default(TValue)</param>
     /// <returns>true if the key is present, otherwise false</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGetValue(TKey key, out TValue value)
     {
         if (key == null) ThrowHelper.ThrowKeyArgumentNullException();

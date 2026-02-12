@@ -1,12 +1,12 @@
-﻿using System;
+﻿using Raffinert.FuzzySharp.Extensions;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Raffinert.FuzzySharp.Extensions;
-using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
 
 namespace Raffinert.FuzzySharp.Extractor;
 
-public static class ResultExtractor
+public static partial class ResultExtractor
 {
     public static IEnumerable<ExtractedResult<T>> ExtractWithoutOrder<T>(string query, IEnumerable<T> choices, Func<T, string> processor, IRatioScorer scorer, int cutoff = 0)
     {

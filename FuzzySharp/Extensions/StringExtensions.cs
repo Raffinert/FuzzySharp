@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Raffinert.FuzzySharp.Extensions;
@@ -69,7 +68,7 @@ internal static class StringExtensions
         if (string.IsNullOrWhiteSpace(input))
             return [];
 
-        var words = input.Split(EmptyArray<char>(), StringSplitOptions.RemoveEmptyEntries);
+        var words = input.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
 
         return words;
     }
@@ -88,11 +87,5 @@ internal static class StringExtensions
         var words = GetSortedWords(input);
 
         return string.Join(" ", words);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static T[] EmptyArray<T>()
-    {
-        return [];
     }
 }

@@ -1,5 +1,5 @@
-﻿using System;
-using Raffinert.FuzzySharp.SimilarityRatio.Strategy.Generic;
+﻿using Raffinert.FuzzySharp.SimilarityRatio.Strategy.Generic;
+using System;
 
 namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 

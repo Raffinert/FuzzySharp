@@ -20,13 +20,13 @@ public sealed partial class Indel
     /// <param name="scoreCutoff">Optional maximum distance threshold. If the distance exceeds this value, returns scoreCutoff + 1.</param>
     /// <returns>The Indel distance between the two sequences.</returns>
     public static int BlockDistance<T>(
-        CharMaskBuffer<T> block,
+        IPatternMatchVector<T> block,
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
         int? scoreCutoff = null) where T : IEquatable<T>
     {
         var maximum = s1.Length + s2.Length;
-        var lcsSim = LongestCommonSequence.BlockSimilarity(block, s1, s2);
+        var lcsSim = LongestCommonSubsequence.BlockSimilarity(block, s1, s2);
         var dist = maximum - 2 * lcsSim;
         var result = scoreCutoff == null || dist <= scoreCutoff.Value
             ? dist
@@ -45,7 +45,7 @@ public sealed partial class Indel
     /// <returns>The normalized Indel distance between the two sequences.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double BlockNormalizedDistance<T>(
-        CharMaskBuffer<T> block,
+        IPatternMatchVector<T> block,
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
         int? scoreCutoff = null) where T : IEquatable<T>
@@ -71,7 +71,7 @@ public sealed partial class Indel
     /// <returns>The normalized Indel similarity between the two sequences.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double BlockNormalizedSimilarity<T>(
-        CharMaskBuffer<T> block,
+        IPatternMatchVector<T> block,
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
         int? scoreCutoff = null) where T : IEquatable<T>
@@ -116,20 +116,18 @@ public sealed partial class Indel
         ReadOnlySpan<T> s2,
         int? scoreCutoff = null) where T : IEquatable<T>
     {
-        var blocks = (s1.Length + 63) >> 6;
-
-        using var charMask = CharMask.Create(s1);
-        return DistanceImpl(s1, s2, charMask, scoreCutoff);
+        using var patternMatchVector = PatternMatchVector.Create(s1);
+        return DistanceImpl(s1, s2, patternMatchVector, scoreCutoff);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int DistanceImpl<T>(ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
-        CharMaskBuffer<T> charMask,
+        IPatternMatchVector<T> patternMatchVector,
         int? scoreCutoff = null) where T : IEquatable<T>
     {
         var maximum = s1.Length + s2.Length;
-        var lcsSim = LongestCommonSequence.SimilarityImpl(s1, s2, charMask);
+        var lcsSim = LongestCommonSubsequence.SimilarityImpl(s1, s2, patternMatchVector);
         var dist = maximum - 2 * lcsSim;
         var result = scoreCutoff == null || dist <= scoreCutoff.Value
             ? dist
@@ -164,21 +162,36 @@ public sealed partial class Indel
         return NormalizedDistanceImpl(s1, s2, scoreCutoff);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static double NormalizedDistanceImpl<T>(ReadOnlySpan<T> s1,
+        ReadOnlySpan<T> s2,
+        IPatternMatchVector<T> patternMatchVector,
+        int? scoreCutoff = null) where T : IEquatable<T>
+    {
+        var dist = DistanceImpl(s1, s2, patternMatchVector, scoreCutoff);
+        return NormalizedDistanceImpl(s1.Length, s2.Length, dist, scoreCutoff);
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static double NormalizedDistanceImpl<T>(ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
         int? scoreCutoff = null) where T : IEquatable<T>
     {
-        var maximum = s1.Length + s2.Length;
         var dist = Distance(s1, s2);
-        var normDist = maximum == 0 ? 0 : dist / (double)maximum;
+        return NormalizedDistanceImpl(s1.Length, s2.Length, dist, scoreCutoff);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static double NormalizedDistanceImpl(int s1Length, int s2Length, int distance,
+        int? scoreCutoff = null)
+    {
+        var maximum = s1Length + s2Length;
+        var normDist = maximum == 0 ? 0 : distance / (double)maximum;
         var result = scoreCutoff == null || normDist <= scoreCutoff.Value
             ? normDist
             : scoreCutoff.Value + 1;
         return result;
     }
-
     /// <summary>
     /// Computes the normalized Indel similarity between two sequences, in the range [0, 1].
     /// This is defined as 1 - NormalizedDistance(s1, s2).
@@ -202,6 +215,21 @@ public sealed partial class Indel
         }
 
         return NormalizedSimilarityImpl(s1, s2, scoreCutoff);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static double NormalizedSimilarityImpl<T>(ReadOnlySpan<T> s1,
+        ReadOnlySpan<T> s2,
+        IPatternMatchVector<T> patternMatchVector,
+
+        int? scoreCutoff = null) where T : IEquatable<T>
+    {
+        var normDist = NormalizedDistanceImpl(s1, s2, patternMatchVector, scoreCutoff);
+        var normSim = 1 - normDist;
+        var result = scoreCutoff == null || normSim >= scoreCutoff.Value
+            ? normSim
+            : 0;
+        return result;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
