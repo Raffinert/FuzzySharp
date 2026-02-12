@@ -4,17 +4,26 @@ This document is derived from the code bundle at `codefetch/codebase.md`. It is 
 
 ## Scope and purpose
 - Library: `Raffinert.FuzzySharp` provides fast fuzzy string matching and similarity scoring.
-- Entry points: `Fuzz` (single comparisons) and `Process` (matching against choice sets).
+- Entry points: `Fuzz` (single comparisons), `Process` (matching against choice sets), and `Process.Configure()` (fluent builder for pipelines).
 - Core algorithms: Indel, Levenshtein, LCS (LongestCommonSubsequence), and Partial Ratio, with bit-parallel optimizations.
-- Performance: extensive use of pooled buffers, precomputed pattern vectors, and cached scorers.
+- Performance: extensive use of pooled buffers, precomputed pattern vectors, cached scorers, and optional parallel execution.
 
 ## Repository map (high signal)
 - `FuzzySharp/` core library
   - `Fuzz.cs` public scoring API
-  - `Process.cs` and `Process.Cached.cs` extract/best-match APIs
+  - `Process.cs` extract/best-match static API + `Configure()` builder entry point
+  - `ProcessBuilder.cs` fluent builders: `ProcessBuilder`, `CachedProcessBuilder`, `CachedScorerProcessBuilder`
+  - `ProcessPipeline.cs` immutable pipelines: `ProcessPipeline`, `CachedScorerProcessPipeline`
+  - `ProcessOptions.cs` internal option structs: `ProcessOptions`, `CachedScorerProcessOptions`
+  - `ProcessExecutor.cs` internal dispatch (sequential/parallel/cached)
+  - `CachedScorerProcessExecutor.cs` internal dispatch for pre-initialized cached scorer
   - `SimilarityRatio/` scoring strategy and scorer implementations
   - `PreProcess/` input normalization
   - `Extractor/` result extraction pipeline
+    - `ResultExtractor.cs` sequential non-cached extraction
+    - `ResultExtractor.Cached.cs` sequential cached extraction
+    - `ResultExtractor.Parallel.cs` parallel non-cached extraction
+    - `ResultExtractor.Parallel.Cached.cs` parallel cached extraction
   - `Edits/` edit operations and matching blocks
   - `Utils/` low-level data structures and performance helpers
 - `FuzzySharp.Test/` NUnit tests
@@ -22,11 +31,11 @@ This document is derived from the code bundle at `codefetch/codebase.md`. It is 
 - `Directory.Build.props` imports SourceLink props
 
 ## Key namespaces
-- `Raffinert.FuzzySharp` (public API and distance classes)
+- `Raffinert.FuzzySharp` (public API, distance classes, builder, and pipeline types)
 - `Raffinert.FuzzySharp.SimilarityRatio.*` (scorers and strategies)
 - `Raffinert.FuzzySharp.Extractor` (ResultExtractor, ExtractedResult)
 - `Raffinert.FuzzySharp.PreProcess` (PreprocessMode, StringPreprocessorFactory)
-- `Raffinert.FuzzySharp.Utils` (PatternMatchVector, pooled dictionary, heap, etc.)
+- `Raffinert.FuzzySharp.Utils` (PatternMatchVector, Polyfill, pooled dictionary, heap, etc.)
 
 ## Public API entry points
 
@@ -48,7 +57,7 @@ Algorithms exposed:
 Implementation pattern: `Fuzz.*` methods fetch scorer singletons from `ScorerCache` and call `Score`.
 
 ### `Process` (static)
-Location: `FuzzySharp/Process.cs` and `FuzzySharp/Process.Cached.cs`
+Location: `FuzzySharp/Process.cs`
 
 Purpose: match a query against a set of choices and return scored results.
 
@@ -57,6 +66,7 @@ Key methods:
 - `ExtractSorted` (descending by score)
 - `ExtractTop` (top N)
 - `ExtractOne` (best match)
+- `Configure()` (returns `ProcessBuilder` for fluent pipeline construction)
 
 Inputs:
 - `query` (string or generic `T`)
@@ -69,18 +79,86 @@ Default behavior:
 - Default scorer = `WeightedRatioScorer`
 - Default string processor = `PreprocessMode.Full`
 
-### `Process.Cached`
-Purpose: optimized for repeated comparisons of many choices against one query.
+### `Process.Configure()` — Fluent Builder / Pipeline API
+Location: `FuzzySharp/ProcessBuilder.cs`, `FuzzySharp/ProcessPipeline.cs`
 
-Behavior:
-- If a cached scorer is provided, it is used directly.
-- Otherwise, creates a `CachedWeightedRatioScorer` for the (processed) query, uses it for all choices, and disposes it.
+Purpose: build immutable, reusable pipelines with baked-in scorer, caching, and parallelism settings.
+
+#### Builder classes
+
+**`ProcessBuilder`** (public sealed class)
+- Entry point: `Process.Configure()` returns a new `ProcessBuilder`
+- Methods:
+  - `Parallel(ParallelOptions parallelOptions = null)` — enables parallel execution
+  - `WithParallelOptions(ParallelOptions parallelOptions)` — sets options, implicitly enables parallel
+  - `WithScorer(IRatioScorer scorer)` — sets scoring algorithm
+  - `Cached()` — returns `CachedProcessBuilder` (auto-caching mode)
+  - `Cached(ICachedRatioScorer scorer)` — returns `CachedScorerProcessBuilder` (external scorer mode)
+  - `Build()` — produces `ProcessPipeline`
+
+**`CachedProcessBuilder`** (public sealed class)
+- Auto-caching mode: creates a `CachedWeightedRatioScorer` per call internally
+- Methods:
+  - `Parallel(ParallelOptions parallelOptions = null)`
+  - `WithParallelOptions(ParallelOptions parallelOptions)`
+  - `Build()` — produces `ProcessPipeline` (with `UseCaching=true` in options)
+
+**`CachedScorerProcessBuilder`** (public sealed class)
+- External scorer mode: caller provides an `ICachedRatioScorer` with the query already baked in
+- Methods:
+  - `Parallel(ParallelOptions parallelOptions = null)`
+  - `WithParallelOptions(ParallelOptions parallelOptions)`
+  - `Build()` — produces `CachedScorerProcessPipeline`
+
+#### Pipeline structs
+
+**`ProcessPipeline`** (public readonly struct)
+- Immutable pipeline holding `ProcessOptions`
+- Methods mirror `Process` static API: `ExtractAll`, `ExtractTop`, `ExtractSorted`, `ExtractOne`
+- Each has string and generic overloads
+- Delegates to `ProcessExecutor` internally
+
+**`CachedScorerProcessPipeline`** (public readonly struct)
+- Immutable pipeline holding `CachedScorerProcessOptions`
+- Methods do NOT take a `query` parameter (scorer already has the query baked in)
+- Same extract methods: `ExtractAll`, `ExtractTop`, `ExtractSorted`, `ExtractOne`
+- Delegates to `CachedScorerProcessExecutor` internally
+
+#### Internal support types
+
+**`ProcessOptions`** (internal readonly struct)
+- Properties: `UseParallel`, `ParallelOptions`, `Scorer` (`IRatioScorer`), `UseCaching`
+
+**`CachedScorerProcessOptions`** (internal readonly struct)
+- Properties: `UseParallel`, `ParallelOptions`, `CachedScorer` (`ICachedRatioScorer`)
+
+**`ProcessExecutor`** (internal static class)
+- Dispatches between sequential/parallel and cached/uncached paths
+- When `UseCaching=true`: creates `CachedWeightedRatioScorer(processedQuery)` per call, delegates to `CachedScorerProcessExecutor`, and disposes the scorer
+- When `UseParallel=true`: calls `ResultExtractor.Parallel.*`
+- Otherwise: calls `ResultExtractor.*` (sequential)
+
+**`CachedScorerProcessExecutor`** (internal static class)
+- Dispatches between `ResultExtractor.Parallel.Cached.*` and `ResultExtractor.Cached.*`
+- Takes `ICachedRatioScorer scorer` (no query parameter needed)
+
+#### Builder call flow
+
+```
+Process.Configure() → ProcessBuilder
+  ├── .Build() → ProcessPipeline → ProcessExecutor → ResultExtractor / ResultExtractor.Parallel
+  ├── .Cached() → CachedProcessBuilder
+  │     └── .Build() → ProcessPipeline (UseCaching=true) → ProcessExecutor → CachedScorerProcessExecutor
+  └── .Cached(ICachedRatioScorer) → CachedScorerProcessBuilder
+        └── .Build() → CachedScorerProcessPipeline → CachedScorerProcessExecutor → ResultExtractor.Cached / .Parallel.Cached
+```
 
 ### Distance APIs
 Location: `FuzzySharp/Indel.*.cs`, `FuzzySharp/Levenshtein.*.cs`, `FuzzySharp/LongestCommonSubsequence.*.cs`
 
 Public types:
 - `Indel` (static distance/similarity + cached instance class `Indel(string)`).
+- `IndelT<T>` (generic companion, `IndelT<T>(T[] source) where T : IEquatable<T>`, with `DistanceFrom`, `NormalizedSimilarityWith`; `IDisposable`).
 - `Levenshtein` (static distance/similarity + cached instance class `Levenshtein(string)`).
 - `LongestCommonSubsequence` (static distance/similarity + cached instance class `LongestCommonSubsequence(string)`).
 - `EditOp`, `MatchingBlock`, `OpCode` for edit/matching output.
@@ -95,16 +173,23 @@ Typical flow for `Fuzz.*`:
 Fuzz.* -> ScorerCache -> IRatioScorer -> Strategy -> Core algorithm (Indel/LCS/Partial)
 ```
 
-Typical flow for `Process.*`:
+Typical flow for `Process.*` (static API):
 
 ```
 Process.* -> ResultExtractor -> IRatioScorer or ICachedRatioScorer -> score per choice
+```
+
+Typical flow for `Process.Configure().*` (pipeline API):
+
+```
+Process.Configure() -> ProcessBuilder -> ProcessPipeline -> ProcessExecutor -> ResultExtractor (or .Parallel / .Cached / .Parallel.Cached)
 ```
 
 Key implications:
 - `ScorerCache` is a singleton factory that returns a single instance per scorer type.
 - `ScorerBase` applies `PreprocessMode` when you call the overload with preprocessing.
 - `Process` defaults to `PreprocessMode.Full` and `WeightedRatioScorer`.
+- Pipelines bake in scorer, caching, and parallelism settings at build time.
 
 ## Preprocessing and tokenization
 
@@ -205,8 +290,9 @@ Key types:
 ## Cached scoring
 
 Entry points:
-- `Process.Cached` for choice sets.
-- `CachedWeightedRatioScorer` for per-query caching.
+- `Process.Configure().Cached().Build()` for auto-caching (creates `CachedWeightedRatioScorer` per call).
+- `Process.Configure().Cached(scorer).Build()` for external cached scorer.
+- `CachedWeightedRatioScorer` for direct per-query caching.
 
 Key cached components:
 - `CachedDefaultRatioStrategy` caches `Indel` for a processed query string.
@@ -216,7 +302,8 @@ Key cached components:
 Disposal:
 - Cached scorers often allocate pooled buffers or hold `PatternMatchVector`.
 - Types implementing `IDisposable` must be disposed when created by callers.
-- `Process.Cached` takes care of disposal only for the scorers it creates internally.
+- `ProcessExecutor` takes care of disposal for scorers it creates internally (auto-caching path).
+- When using `CachedScorerProcessBuilder`, the caller owns the `ICachedRatioScorer` and must dispose it.
 
 ## Extractor pipeline
 
@@ -224,13 +311,25 @@ Location: `FuzzySharp/Extractor/*`
 
 Key types:
 - `ExtractedResult<T>` contains `Value`, `Score`, and `Index` (original position).
-- `ResultExtractor` implements the extract operations.
+- `ResultExtractor` (partial class) implements extraction in four modes:
 
-Algorithms:
+### Sequential non-cached (`ResultExtractor`)
 - `ExtractWithoutOrder` yields matching items in input order, filtering by cutoff.
 - `ExtractSorted` sorts by score descending.
 - `ExtractTop` uses `MaxN` (min-heap) for top N selection, then reverses to highest-first.
-- `ExtractOne` returns the max score (ties resolved by `ExtractedResult.CompareTo` which compares only `Score`).
+- `ExtractOne` returns the max score.
+
+### Sequential cached (`ResultExtractor.Cached`)
+- Same methods but takes `ICachedRatioScorer` instead of `query + IRatioScorer`.
+
+### Parallel non-cached (`ResultExtractor.Parallel`)
+- Same method signatures as sequential but uses `System.Threading.Tasks.Parallel.ForEach`.
+- Materializes choices to a list, creates result arrays, and filters/sorts after parallel scoring.
+- Accepts `ParallelOptions` for thread control.
+
+### Parallel cached (`ResultExtractor.Parallel.Cached`)
+- Parallel execution with pre-initialized `ICachedRatioScorer`.
+- Same pattern as parallel non-cached but uses `scorer.Score(processor(choice))`.
 
 ## Core distance algorithms
 
@@ -241,6 +340,7 @@ Notes:
 - Indel distance = `len(s1) + len(s2) - 2 * LCS(s1, s2)`.
 - `NormalizedSimilarity` returns `1 - normalized distance`.
 - Uses `PatternMatchVector` and `LongestCommonSubsequence` for bit-parallel computation.
+- `IndelT<T>` provides generic sequence support (`T[] where T : IEquatable<T>`).
 
 ### Levenshtein
 Location: `FuzzySharp/Levenshtein.*.cs`
@@ -272,7 +372,8 @@ Key primitives:
 - `DictionarySlimPooled` is a pooled dictionary used for pattern masks.
 - `ArrayPool<T>` is heavily used to reduce allocations in Levenshtein and LCS.
 - `SequenceUtils` trims common prefix/suffix and swaps to keep shorter inputs first.
-- `NumericsPolyfill.PopCount` provides a cross-target popcount implementation.
+- `Polyfill.PopCount` provides a cross-target popcount implementation (`BitOperations.PopCount` on NET6+, manual bit-hack otherwise).
+- `Polyfill.ArrayFill` provides a cross-target array fill (`Array.Fill` on NETCOREAPP2+/NETSTANDARD2.1+, manual loop otherwise).
 
 ## Build, test, and benchmark
 
@@ -293,7 +394,7 @@ dotnet run --project FuzzySharp.Benchmarks/FuzzySharp.Benchmarks.csproj
 Library (`FuzzySharp/FuzzySharp.csproj`):
 - `IndexRange` 1.0.3 (older frameworks)
 - `System.Memory` 4.5.5 (older frameworks)
-- `Meziantou.Polyfill` 1.0.49 (private assets)
+- `Meziantou.Polyfill` 1.0.49 (private assets, only for `CollectionExtensions.GetValueOrDefault`)
 
 Tests (`FuzzySharp.Test/FuzzySharp.Test.csproj`):
 - `nunit` 3.14.0
@@ -319,12 +420,17 @@ Benchmarks (`FuzzySharp.Benchmarks/FuzzySharp.Benchmarks.csproj`):
 - `TokenAbbreviation` can be expensive due to permutations; it short-circuits when shorter has more than 4 tokens.
 - Cached scorers (`CachedWeightedRatioScorer`, `CachedDefaultRatioStrategy`, `Indel`, `Levenshtein`, `LongestCommonSubsequence`) hold pooled buffers and must be disposed when created directly.
 - `TokenInitialism` and `TokenAbbreviation` include length ratio checks; short strings can return 0.
+- `Process.Cached` no longer exists as a nested class. Caching is accessed via the builder: `Process.Configure().Cached().Build()` or `Process.Configure().Cached(scorer).Build()`.
+- When using `CachedScorerProcessPipeline`, the caller owns the `ICachedRatioScorer` lifetime. When using `ProcessPipeline` with `UseCaching=true`, the executor creates and disposes cached scorers internally.
 
 ## File-level starting points
 
 If you need to change behavior or add features, start here:
-- Public API: `FuzzySharp/Fuzz.cs`, `FuzzySharp/Process.cs`, `FuzzySharp/Process.Cached.cs`
+- Public API: `FuzzySharp/Fuzz.cs`, `FuzzySharp/Process.cs`
+- Builder/Pipeline API: `FuzzySharp/ProcessBuilder.cs`, `FuzzySharp/ProcessPipeline.cs`
+- Internal dispatch: `FuzzySharp/ProcessExecutor.cs`, `FuzzySharp/CachedScorerProcessExecutor.cs`
 - Composite behavior: `SimilarityRatio/Scorer/Composite/WeightedRatioScorer.cs`
 - Core algorithms: `FuzzySharp/Indel.*.cs`, `FuzzySharp/Levenshtein.*.cs`, `FuzzySharp/LongestCommonSubsequence.*.cs`
 - Token logic: `SimilarityRatio/Scorer/StrategySensitive/Token*/*`
+- Extraction pipeline: `FuzzySharp/Extractor/ResultExtractor*.cs`
 - Preprocessing: `FuzzySharp/PreProcess/StringPreprocessorFactory.cs`

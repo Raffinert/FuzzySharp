@@ -1,376 +1,105 @@
 <source_code>
-Directory.Build.props
+FuzzySharp/.filenesting.json
 ```
-<Project>
-  <Import Project="build\SourceLink.props" Condition="'$(DisableSourceLink)' == ''" />
-</Project>
+{
+  "help": "https://go.microsoft.com/fwlink/?linkid=866610",
+  "root": false,
+
+  "pathSegment": {
+    "add": {
+      ".*": [
+        ".cs"
+      ]
+    }
+  }
+}
+
 ```
 
-FuzzySharp.sln
+FuzzySharp/CachedScorerProcessExecutor.cs
 ```
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.10.35122.118
-MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FuzzySharp", "FuzzySharp\FuzzySharp.csproj", "{348B90DA-DA44-45AD-B857-D3A69D05AE46}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FuzzySharp.Test", "FuzzySharp.Test\FuzzySharp.Test.csproj", "{48F4C7CB-E669-410C-A455-DE3330347807}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FuzzySharp.Benchmarks", "FuzzySharp.Benchmarks\FuzzySharp.Benchmarks.csproj", "{480CAE39-ACA7-411A-BF6B-72E61ED6E129}"
-EndProject
-Global
-	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Any CPU = Debug|Any CPU
-		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{348B90DA-DA44-45AD-B857-D3A69D05AE46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{348B90DA-DA44-45AD-B857-D3A69D05AE46}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{348B90DA-DA44-45AD-B857-D3A69D05AE46}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{348B90DA-DA44-45AD-B857-D3A69D05AE46}.Release|Any CPU.Build.0 = Release|Any CPU
-		{48F4C7CB-E669-410C-A455-DE3330347807}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{48F4C7CB-E669-410C-A455-DE3330347807}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{48F4C7CB-E669-410C-A455-DE3330347807}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{48F4C7CB-E669-410C-A455-DE3330347807}.Release|Any CPU.Build.0 = Release|Any CPU
-		{480CAE39-ACA7-411A-BF6B-72E61ED6E129}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{480CAE39-ACA7-411A-BF6B-72E61ED6E129}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{480CAE39-ACA7-411A-BF6B-72E61ED6E129}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{480CAE39-ACA7-411A-BF6B-72E61ED6E129}.Release|Any CPU.Build.0 = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {8B80F7B1-E7E5-4BDA-93E7-5596C608656F}
-	EndGlobalSection
-EndGlobal
-```
-
-.github/FUNDING.yml
-```
-github: [Raffinert, ycherkes]
-custom: ["https://www.paypal.com/donate/?business=KXGF7CMW8Y8WJ"]
-```
-
-FuzzySharp.Benchmarks/ExtractAllBenchmarks.cs
-```
-using BenchmarkDotNet.Attributes;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Raffinert.FuzzySharp.Extractor;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
-using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
-using Classic = FuzzySharp;
 
-namespace Raffinert.FuzzySharp.Benchmarks;
+namespace Raffinert.FuzzySharp;
 
-[MemoryDiagnoser]
-public class ExtractAllBenchmarks
+/// <summary>
+/// Internal execution logic for cached Process operations with a pre-initialized scorer.
+/// The scorer already has the query baked in — methods here take no query parameter.
+/// Dispatches to sequential or parallel cached ResultExtractor paths.
+/// </summary>
+internal static class CachedScorerProcessExecutor
 {
-    private static readonly string[][] Events =
-    [
-        ["chicago cubs vs new york mets", "CitiField", "2011-05-11", "8pm"],
-        ["new york yankees vs boston red sox", "Fenway Park", "2011-05-11", "8pm"],
-        ["atlanta braves vs pittsburgh pirates", "PNC Park", "2011-05-11", "8pm"]
-    ];
-
-    private static readonly string[] Query = ["new york mets vs chicago cubs", "CitiField", "2017-03-19", "8pm"];
-    private ICachedRatioScorer _extractScorer = null!;
-
-    [GlobalSetup]
-    public void GlobalSetup()
+    public static IEnumerable<ExtractedResult<T>> ExtractAll<T>(
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        ICachedRatioScorer scorer,
+        int cutoff,
+        bool useParallel,
+        ParallelOptions parallelOptions)
     {
-        _extractScorer = new CachedWeightedRatioScorer(Query[0]);
+        if (useParallel)
+        {
+            return ResultExtractor.Parallel.Cached.ExtractWithoutOrder(
+                choices, processor, scorer, cutoff, parallelOptions);
+        }
+
+        return ResultExtractor.Cached.ExtractWithoutOrder(choices, processor, scorer, cutoff);
     }
 
-    [Benchmark]
-    public List<ExtractedResult<string[]>> ExtractAll()
+    public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        ICachedRatioScorer scorer,
+        int limit,
+        int cutoff,
+        bool useParallel,
+        ParallelOptions parallelOptions)
     {
-        return Process.ExtractAll(Query, Events, static strings => strings[0]).ToList();
+        if (useParallel)
+        {
+            return ResultExtractor.Parallel.Cached.ExtractTop(
+                choices, processor, scorer, limit, cutoff, parallelOptions);
+        }
+
+        return ResultExtractor.Cached.ExtractTop(choices, processor, scorer, limit, cutoff);
     }
 
-    [Benchmark]
-    public List<global::FuzzySharp.Extractor.ExtractedResult<string[]>> ExtractAllClassic()
+    public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        ICachedRatioScorer scorer,
+        int cutoff,
+        bool useParallel,
+        ParallelOptions parallelOptions)
     {
-        return Classic.Process.ExtractAll(Query, Events, static strings => strings[0]).ToList();
+        if (useParallel)
+        {
+            return ResultExtractor.Parallel.Cached.ExtractSorted(
+                choices, processor, scorer, cutoff, parallelOptions);
+        }
+
+        return ResultExtractor.Cached.ExtractSorted(choices, processor, scorer, cutoff);
     }
 
-    [Benchmark]
-    public List<ExtractedResult<string[]>> ExtractAllCached()
+    public static ExtractedResult<T> ExtractOne<T>(
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        ICachedRatioScorer scorer,
+        int cutoff,
+        bool useParallel,
+        ParallelOptions parallelOptions)
     {
-        return Process.Cached.ExtractAll(Query, Events, static strings => strings[0]).ToList();
-    }
+        if (useParallel)
+        {
+            return ResultExtractor.Parallel.Cached.ExtractOne(
+                choices, processor, scorer, cutoff, parallelOptions);
+        }
 
-    [Benchmark]
-    public List<ExtractedResult<string[]>> ExtractAllAcrossRunsCached()
-    {
-        return Process.Cached.ExtractAll(Query, Events, static strings => strings[0], _extractScorer).ToList();
-    }
-}
-```
-
-FuzzySharp.Benchmarks/ExtractOneBenchmarks.cs
-```
-using BenchmarkDotNet.Attributes;
-using Raffinert.FuzzySharp.Extractor;
-using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
-using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
-using Classic = FuzzySharp;
-
-namespace Raffinert.FuzzySharp.Benchmarks;
-
-[MemoryDiagnoser]
-public class ExtractOneBenchmarks
-{
-    private static readonly string[][] Events =
-    [
-        ["chicago cubs vs new york mets", "CitiField", "2011-05-11", "8pm"],
-        ["new york yankees vs boston red sox", "Fenway Park", "2011-05-11", "8pm"],
-        ["atlanta braves vs pittsburgh pirates", "PNC Park", "2011-05-11", "8pm"]
-    ];
-
-    private static readonly string[] Query = ["new york mets vs chicago cubs", "CitiField", "2017-03-19", "8pm"];
-    private ICachedRatioScorer _extractScorer = null!;
-
-    [GlobalSetup]
-    public void GlobalSetup()
-    {
-        _extractScorer = new CachedWeightedRatioScorer(Query[0]);
-    }
-
-    [Benchmark]
-    public ExtractedResult<string[]> ExtractOne()
-    {
-        return Process.ExtractOne(Query, Events, static strings => strings[0]);
-    }
-
-    [Benchmark]
-    public Classic.Extractor.ExtractedResult<string[]> ExtractOneClassic()
-    {
-        return Classic.Process.ExtractOne(Query, Events, static strings => strings[0]);
-    }
-
-    [Benchmark]
-    public ExtractedResult<string[]> ExtractOneCached()
-    {
-        return Process.Cached.ExtractOne(Query, Events, static strings => strings[0]);
-    }
-
-    [Benchmark]
-    public ExtractedResult<string[]> ExtractOneAcrossRunsCached()
-    {
-        return Process.Cached.ExtractOne(Query, Events, static strings => strings[0], _extractScorer);
-    }
-}
-```
-
-FuzzySharp.Benchmarks/FuzzySharp.Benchmarks.csproj
-```
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>NET10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AssemblyName>$(MSBuildProjectName)</AssemblyName>
-    <RootNamespace>Raffinert.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.15.2" />
-    <PackageReference Include="Fastenshtein" Version="1.0.10" />
-    <PackageReference Include="FuzzySharp" Version="2.0.2" />
-    <PackageReference Include="Microsoft.VisualStudio.DiagnosticsHub.BenchmarkDotNetDiagnosers" Version="18.3.36812.1" />
-    <PackageReference Include="Quickenshtein" Version="1.5.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\FuzzySharp\FuzzySharp.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="BenchmarkDotNet.Artifacts\results\" />
-  </ItemGroup>
-
-</Project>
-```
-
-FuzzySharp.Benchmarks/LevenshteinDistanceBenchmarks.cs
-```
-using BenchmarkDotNet.Attributes;
-using Classic = FuzzySharp;
-
-namespace Raffinert.FuzzySharp.Benchmarks;
-
-[MemoryDiagnoser]
-public class LevenshteinDistanceBenchmarks
-{
-    private static readonly Levenshtein FuzzySharpLevenshtein = new("chicago cubs vs new york mets");
-    private static readonly Fastenshtein.Levenshtein FastenLevenshtein = new("chicago cubs vs new york mets");
-
-    [Benchmark]
-    public int FuzzySharpDistance()
-    {
-        return Levenshtein.Distance("chicago cubs vs new york mets", "new york mets vs chicago cubs");
-    }
-
-    [Benchmark]
-    public int FuzzySharpClassicDistance()
-    {
-        return Classic.Levenshtein.EditDistance("chicago cubs vs new york mets", "new york mets vs chicago cubs");
-    }
-
-    [Benchmark]
-    public int FastenshteinDistance()
-    {
-        return Fastenshtein.Levenshtein.Distance("chicago cubs vs new york mets", "new york mets vs chicago cubs");
-    }
-
-    [Benchmark]
-    public int QuickenshteinDistance()
-    {
-        return Quickenshtein.Levenshtein.GetDistance("chicago cubs vs new york mets", "new york mets vs chicago cubs");
-    }
-
-    [Benchmark]
-    public int FuzzySharpDistanceFrom()
-    {
-        return FuzzySharpLevenshtein.DistanceFrom("new york mets vs chicago cubs");
-    }
-
-    [Benchmark]
-    public int FastenshteinDistanceFrom()
-    {
-        return FastenLevenshtein.DistanceFrom("new york mets vs chicago cubs");
-    }
-}
-```
-
-FuzzySharp.Benchmarks/PartialRatioBenchmarks.cs
-```
-using BenchmarkDotNet.Attributes;
-using Classic = FuzzySharp;
-
-namespace Raffinert.FuzzySharp.Benchmarks;
-
-[MemoryDiagnoser]
-public class PartialRatioBenchmarks
-{
-    [Benchmark]
-    public int PartialRatio()
-    {
-        return Fuzz.PartialRatio("similar", "somewhresimlrbetweenthisstring");
-    }
-
-    [Benchmark]
-    public int PartialRatioClassic()
-    {
-        return Classic.Fuzz.PartialRatio("similar", "somewhresimlrbetweenthisstring");
-    }
-}
-```
-
-FuzzySharp.Benchmarks/Program.cs
-```
-﻿using BenchmarkDotNet.Configs;
-using BenchmarkDotNet.Jobs;
-using BenchmarkDotNet.Running;
-
-var config = ManualConfig.Create(DefaultConfig.Instance)
-    .AddJob(Job.ShortRun);
-
-BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args, config);
-```
-
-FuzzySharp.Benchmarks/RatioBenchmarks.cs
-```
-using BenchmarkDotNet.Attributes;
-using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
-using Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
-using Classic = FuzzySharp;
-
-namespace Raffinert.FuzzySharp.Benchmarks;
-
-[MemoryDiagnoser]
-public class RatioBenchmarks
-{
-    private ICachedRatioScorer _cachedRatioScorer = null!;
-
-    [GlobalSetup]
-    public void GlobalSetup()
-    {
-        _cachedRatioScorer = new CachedDefaultRatioScorer("mysmilarstring");
-    }
-
-    [Benchmark]
-    public int Ratio()
-    {
-        return Fuzz.Ratio("mysmilarstring", "myawfullysimilarstirng");
-    }
-
-    [Benchmark]
-    public int RatioClassic()
-    {
-        return Classic.Fuzz.Ratio("mysmilarstring", "myawfullysimilarstirng");
-    }
-
-    [Benchmark]
-    public int RatioCached()
-    {
-        using var scorer = new CachedDefaultRatioScorer("mysmilarstring");
-        return scorer.Score("myawfullysimilarstirng");
-    }
-
-    [Benchmark]
-    public int RatioAcrossRunsCached()
-    {
-        return _cachedRatioScorer.Score("myawfullysimilarstirng");
-    }
-}
-```
-
-FuzzySharp.Benchmarks/WeightedRatioBenchmarks.cs
-```
-using BenchmarkDotNet.Attributes;
-using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
-using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
-using Classic = FuzzySharp;
-
-namespace Raffinert.FuzzySharp.Benchmarks;
-
-[MemoryDiagnoser]
-public class WeightedRatioBenchmarks
-{
-    private ICachedRatioScorer _cachedWeightedScorer = null!;
-
-    [GlobalSetup]
-    public void GlobalSetup()
-    {
-        _cachedWeightedScorer = new CachedWeightedRatioScorer("The quick brown fox jimps ofver the small lazy dog");
-    }
-
-    [Benchmark]
-    public int WeightedRatio()
-    {
-        return Fuzz.WeightedRatio("The quick brown fox jimps ofver the small lazy dog", "the quick brown fox jumps over the small lazy dog");
-    }
-
-    [Benchmark]
-    public int WeightedRatioClassic()
-    {
-        return Classic.Fuzz.WeightedRatio("The quick brown fox jimps ofver the small lazy dog", "the quick brown fox jumps over the small lazy dog");
-    }
-
-    [Benchmark]
-    public int WeightedRatioCached()
-    {
-        return new CachedWeightedRatioScorer("The quick brown fox jimps ofver the small lazy dog").Score("the quick brown fox jumps over the small lazy dog");
-    }
-
-    [Benchmark]
-    public int WeightedRatioAcrossRunsCached()
-    {
-        return _cachedWeightedScorer.Score("the quick brown fox jumps over the small lazy dog");
+        return ResultExtractor.Cached.ExtractOne(choices, processor, scorer, cutoff);
     }
 }
 ```
@@ -757,15 +486,18 @@ FuzzySharp/FuzzySharp.csproj
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <FileVersion>3.0.8.0</FileVersion>
+    <Version>3.0.8</Version>
+    <PackageVersion>3.0.8</PackageVersion>
     <AssemblyVersion>4.0.0.0</AssemblyVersion>
-	<FileVersion>4.0.0.0</FileVersion>
-	<Version>4.0.0</Version>
-	<PackageVersion>4.0.0</PackageVersion>
+    <FileVersion>4.0.0.0</FileVersion>
+    <Version>4.0.0</Version>
+    <PackageVersion>4.0.0</PackageVersion>
     <Authors>Jacob Bayer;Yevhen Cherkes</Authors>
     <Company />
     <Description>
-	    Bit-parallel accelerated Fuzzy string matcher based on FuzzyWuzzy algorithm from SeatGeek and RapidFuzz python library from Max Bachmann.
-	</Description>
+        Bit-parallel accelerated Fuzzy string matcher based on FuzzyWuzzy algorithm from SeatGeek and RapidFuzz python library from Max Bachmann.
+    </Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>
     <LangVersion>Latest</LangVersion>
@@ -788,24 +520,24 @@ FuzzySharp/FuzzySharp.csproj
     <PackageReference Include="System.Memory" Version="4.5.5" />
   </ItemGroup>
 
-	<ItemGroup>
-		<None Include="../README.md" pack="true" PackagePath="." />
-	</ItemGroup>
+    <ItemGroup>
+        <None Include="../README.md" pack="true" PackagePath="." />
+    </ItemGroup>
 
-	<ItemGroup>
-		<PackageReference Include="Meziantou.Polyfill" Version="1.0.49">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-	</ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Meziantou.Polyfill" Version="1.0.49">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
 
-	<PropertyGroup>
-		<MeziantouPolyfill_IncludedPolyfills>M:System.Collections.Generic.CollectionExtensions.GetValueOrDefault</MeziantouPolyfill_IncludedPolyfills>
-	</PropertyGroup>
+    <PropertyGroup>
+        <MeziantouPolyfill_IncludedPolyfills>M:System.Collections.Generic.CollectionExtensions.GetValueOrDefault</MeziantouPolyfill_IncludedPolyfills>
+    </PropertyGroup>
 
-	<ItemGroup>
-		<InternalsVisibleTo Include="Raffinert.FuzzySharp.Test" />
-	</ItemGroup>
+    <ItemGroup>
+        <InternalsVisibleTo Include="Raffinert.FuzzySharp.Test" />
+    </ItemGroup>
 
 </Project>
 ```
@@ -2522,7 +2254,7 @@ public sealed partial class LongestCommonSubsequence
     {
         // invert and mask
         ulong inv = ~x & (length == 64 ? ulong.MaxValue : (1UL << length) - 1UL);
-        return NumericsPolyfill.PopCount(inv);
+        return Polyfill.PopCount(inv);
     }
 
     private static int CountZeroBits(ReadOnlySpan<ulong> S, int length)
@@ -2533,13 +2265,13 @@ public sealed partial class LongestCommonSubsequence
 
         // all full blocks
         for (int i = 0; i < fullBlocks; i++)
-            zeros += NumericsPolyfill.PopCount(~S[i]);
+            zeros += Polyfill.PopCount(~S[i]);
 
         // last partial block
         if (remBits > 0)
         {
             ulong mask = (1UL << remBits) - 1;
-            zeros += NumericsPolyfill.PopCount(~S[fullBlocks] & mask);
+            zeros += Polyfill.PopCount(~S[fullBlocks] & mask);
         }
 
         return zeros;
@@ -2644,230 +2376,9 @@ public sealed partial class LongestCommonSubsequence
 }
 ```
 
-FuzzySharp/Process.Cached.cs
-```
-﻿using Raffinert.FuzzySharp.Extractor;
-using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
-using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
-using System;
-using System.Collections.Generic;
-
-namespace Raffinert.FuzzySharp;
-
-public static partial class Process
-{
-    public static class Cached
-    {
-        public static IEnumerable<ExtractedResult<string>> ExtractAll(
-            string query,
-            IEnumerable<string> choices,
-            Func<string, string> processor = null,
-            ICachedRatioScorer scorer = null,
-            int cutoff = 0)
-        {
-            processor ??= DefaultStringProcessor;
-            if (scorer != null)
-            {
-                foreach (var extractedResult in ResultExtractor.ExtractWithoutOrder(choices, processor, scorer, cutoff))
-                {
-                    yield return extractedResult;
-                }
-                yield break;
-            }
-
-            using var scorer1 = new CachedWeightedRatioScorer(processor(query));
-            foreach (var extractedResult in ResultExtractor.ExtractWithoutOrder(choices, processor, scorer1, cutoff))
-            {
-                yield return extractedResult;
-            }
-        }
-
-        public static IEnumerable<ExtractedResult<T>> ExtractAll<T>(
-            T query,
-            IEnumerable<T> choices,
-            Func<T, string> processor,
-            ICachedRatioScorer scorer = null,
-            int cutoff = 0)
-        {
-            if (scorer != null)
-            {
-                foreach (var extractedResult in ResultExtractor.ExtractWithoutOrder(choices, processor, scorer, cutoff))
-                {
-                    yield return extractedResult;
-                }
-                yield break;
-            }
-
-            using var scorer1 = new CachedWeightedRatioScorer(processor(query));
-            foreach (var extractedResult in ResultExtractor.ExtractWithoutOrder(choices, processor, scorer1, cutoff))
-            {
-                yield return extractedResult;
-            }
-        }
-
-        public static IEnumerable<ExtractedResult<T>> ExtractAll<T>(
-            string query,
-            IEnumerable<T> choices,
-            Func<T, string> processor,
-            ICachedRatioScorer scorer = null,
-            int cutoff = 0)
-        {
-            if (scorer != null)
-            {
-                foreach (var extractedResult in ResultExtractor.ExtractWithoutOrder(choices, processor, scorer, cutoff))
-                {
-                    yield return extractedResult;
-                }
-                yield break;
-            }
-
-            using var scorer1 = new CachedWeightedRatioScorer(query);
-            foreach (var extractedResult in ResultExtractor.ExtractWithoutOrder(choices, processor, scorer1, cutoff))
-            {
-                yield return extractedResult;
-            }
-        }
-
-        public static IEnumerable<ExtractedResult<string>> ExtractTop(
-            string query,
-            IEnumerable<string> choices,
-            Func<string, string> processor = null,
-            ICachedRatioScorer scorer = null,
-            int limit = 5,
-            int cutoff = 0)
-        {
-            processor ??= DefaultStringProcessor;
-            if (scorer != null)
-            {
-                foreach (var extractedResult in ResultExtractor.ExtractTop(choices, processor, scorer, limit, cutoff))
-                {
-                    yield return extractedResult;
-                }
-                yield break;
-            }
-
-            using var scorer1 = new CachedWeightedRatioScorer(processor(query));
-            foreach (var extractedResult in ResultExtractor.ExtractTop(choices, processor, scorer1, limit, cutoff))
-            {
-                yield return extractedResult;
-            }
-        }
-
-        public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(
-            T query,
-            IEnumerable<T> choices,
-            Func<T, string> processor,
-            ICachedRatioScorer scorer = null,
-            int limit = 5,
-            int cutoff = 0)
-        {
-            if (scorer != null)
-            {
-                foreach (var extractedResult in ResultExtractor.ExtractTop(choices, processor, scorer, limit, cutoff))
-                {
-                    yield return extractedResult;
-                }
-                yield break;
-            }
-
-            using var scorer1 = new CachedWeightedRatioScorer(processor(query));
-            foreach (var extractedResult in ResultExtractor.ExtractTop(choices, processor, scorer1, limit, cutoff))
-            {
-                yield return extractedResult;
-            }
-        }
-
-        public static IEnumerable<ExtractedResult<string>> ExtractSorted(
-            string query,
-            IEnumerable<string> choices,
-            Func<string, string> processor = null,
-            ICachedRatioScorer scorer = null,
-            int cutoff = 0)
-        {
-            processor ??= DefaultStringProcessor;
-            if (scorer != null)
-            {
-                foreach (var extractedResult in ResultExtractor.ExtractSorted(choices, processor, scorer, cutoff))
-                {
-                    yield return extractedResult;
-                }
-                yield break;
-            }
-
-            using var scorer1 = new CachedWeightedRatioScorer(processor(query));
-            foreach (var extractedResult in ResultExtractor.ExtractSorted(choices, processor, scorer1, cutoff))
-            {
-                yield return extractedResult;
-            }
-        }
-
-        public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(
-            T query,
-            IEnumerable<T> choices,
-            Func<T, string> processor,
-            ICachedRatioScorer scorer = null,
-            int cutoff = 0)
-        {
-            if (scorer != null)
-            {
-                foreach (var extractedResult in ResultExtractor.ExtractSorted(choices, processor, scorer, cutoff))
-                {
-                    yield return extractedResult;
-                }
-                yield break;
-            }
-
-            using var scorer1 = new CachedWeightedRatioScorer(processor(query));
-            foreach (var extractedResult in ResultExtractor.ExtractSorted(choices, processor, scorer1, cutoff))
-            {
-                yield return extractedResult;
-            }
-        }
-
-        public static ExtractedResult<string> ExtractOne(
-            string query,
-            IEnumerable<string> choices,
-            Func<string, string> processor = null,
-            ICachedRatioScorer scorer = null,
-            int cutoff = 0)
-        {
-            processor ??= DefaultStringProcessor;
-            if (scorer != null)
-            {
-                return ResultExtractor.ExtractOne(choices, processor, scorer, cutoff);
-            }
-
-            using var scorer1 = new CachedWeightedRatioScorer(processor(query));
-            return ResultExtractor.ExtractOne(choices, processor, scorer1, cutoff);
-        }
-
-        public static ExtractedResult<T> ExtractOne<T>(
-            T query,
-            IEnumerable<T> choices,
-            Func<T, string> processor,
-            ICachedRatioScorer scorer = null,
-            int cutoff = 0)
-        {
-            if (scorer != null)
-            {
-                return ResultExtractor.ExtractOne(choices, processor, scorer, cutoff);
-            }
-            using var scorer1 = new CachedWeightedRatioScorer(processor(query));
-            return ResultExtractor.ExtractOne(choices, processor, scorer1, cutoff);
-        }
-
-        public static ExtractedResult<string> ExtractOne(string query, params string[] choices)
-        {
-            using var scorer = new CachedWeightedRatioScorer(DefaultStringProcessor(query));
-            return ResultExtractor.ExtractOne(choices, DefaultStringProcessor, scorer);
-        }
-    }
-}
-```
-
 FuzzySharp/Process.cs
 ```
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Raffinert.FuzzySharp.Extractor;
 using Raffinert.FuzzySharp.PreProcess;
@@ -2877,10 +2388,17 @@ using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
 
 namespace Raffinert.FuzzySharp;
 
-public static partial class Process
+public static class Process
 {
-    private static readonly IRatioScorer DefaultScorer = ScorerCache.Get<WeightedRatioScorer>();
-    private static readonly Func<string, string> DefaultStringProcessor = StringPreprocessorFactory.GetPreprocessor(PreprocessMode.Full);
+    internal static readonly IRatioScorer DefaultScorer = ScorerCache.Get<WeightedRatioScorer>();
+    internal static readonly Func<string, string> DefaultStringProcessor = StringPreprocessorFactory.GetPreprocessor(PreprocessMode.Full);
+
+    /// <summary>
+    /// Creates a new fluent builder for configuring a fuzzy string matching pipeline.
+    /// Supports caching, parallel execution, and custom configuration.
+    /// </summary>
+    /// <returns>A new ProcessBuilder instance</returns>
+    public static ProcessBuilder Configure() => new ProcessBuilder();
 
     #region ExtractAll
     /// <summary>
@@ -3103,1746 +2621,895 @@ public static partial class Process
 }
 ```
 
-FuzzySharp.Test/DictionarySlimTests.cs
+FuzzySharp/ProcessBuilder.cs
 ```
-﻿using NUnit.Framework;
-using Raffinert.FuzzySharp.Utils;
-using System.Collections.Generic;
-
-namespace Raffinert.FuzzySharp.Test;
-
-[TestFixture]
-public class DictionarySlimTests
-{
-    [Test, TestCaseSource(typeof(RandomWordPairs), nameof(RandomWordPairs.GetWordPairs))]
-    public void DictionarySlim_And_Dictionary_ShouldHaveEqualResults(string s1, string s2)
-    {
-        var ds1 = new DictionarySlimPooled<char, int>(64);
-        var d1 = new Dictionary<char, int>(64);
-
-        for (var index = 0; index < s1.Length; index++)
-        {
-            var c = s1[index];
-            ref var val = ref ds1.GetOrAddValueRef(c);
-            val = index + 1;
-            d1[c] = index + 1;
-        }
-
-        foreach (var c in s1)
-        {
-            Assert.True(ds1.TryGetValue(c, out var value));
-            Assert.AreEqual(value, d1[c]);
-        }
-
-        var ds2 = new DictionarySlimPooled<char, int>(64);
-        var d2 = new Dictionary<char, int>(64);
-
-        for (var index = 0; index < s2.Length; index++)
-        {
-            var c = s2[index];
-            ref var val = ref ds2.GetOrAddValueRef(c);
-            val = index + 1;
-
-            d2[c] = index + 1;
-        }
-
-        foreach (var c in s2)
-        {
-            Assert.True(ds2.TryGetValue(c, out var value));
-            Assert.AreEqual(value, d2[c]);
-        }
-    }
-}
-```
-
-FuzzySharp.Test/EditOpsTests.cs
-```
-﻿using NUnit.Framework;
-using Raffinert.FuzzySharp.Edits;
-
-namespace Raffinert.FuzzySharp.Test;
-
-[TestFixture]
-public class EditOpsTests
-{
-    [Test]
-    public void GetEditOps_KittenToSitting_ReturnsExpectedEditOps()
-    {
-        // Arrange
-        string source = "kitten";
-        string target = "sitting";
-
-        // Act
-        var ops = Levenshtein.GetEditOps(source, target);
-
-        // Assert
-        Assert.IsNotNull(ops);
-        Assert.AreEqual(3, ops.Length);
-
-        Assert.AreEqual(EditType.REPLACE, ops[0].EditType);
-        Assert.AreEqual(0, ops[0].SourcePos);
-        Assert.AreEqual(0, ops[0].DestPos);
-
-        Assert.AreEqual(EditType.REPLACE, ops[1].EditType);
-        Assert.AreEqual(4, ops[1].SourcePos);
-        Assert.AreEqual(4, ops[1].DestPos);
-
-        Assert.AreEqual(EditType.INSERT, ops[2].EditType);
-        Assert.AreEqual(6, ops[2].SourcePos);
-        Assert.AreEqual(6, ops[2].DestPos);
-    }
-
-    [Test]
-    public void GetEditOps_putinIsWarCriminal_ReturnsExpectedEditOps()
-    {
-        // Arrange
-        string source = "putin";
-        string target = "war criminal";
-
-        // Act
-        var ops = Levenshtein.GetEditOps(source, target);
-
-        Assert.That(ops, Is.EquivalentTo(new[]
-        {
-            new EditOp
-            {
-                EditType = EditType.INSERT,
-                SourcePos = 0,
-                DestPos = 0
-            },
-            new EditOp
-            {
-                EditType = EditType.INSERT,
-                SourcePos = 0,
-                DestPos = 1
-            },
-            new EditOp
-            {
-                EditType = EditType.INSERT,
-                SourcePos = 0,
-                DestPos = 2
-            },
-            new EditOp
-            {
-                EditType = EditType.REPLACE,
-                SourcePos = 0,
-                DestPos = 3
-            },
-            new EditOp
-            {
-                EditType = EditType.REPLACE,
-                SourcePos = 1,
-                DestPos = 4
-            },
-            new EditOp
-            {
-                EditType = EditType.REPLACE,
-                SourcePos = 2,
-                DestPos = 5
-            },
-            new EditOp
-            {
-                EditType = EditType.INSERT,
-                SourcePos = 4,
-                DestPos = 7
-            },
-            new EditOp
-            {
-                EditType = EditType.INSERT,
-                SourcePos = 4,
-                DestPos = 8
-            },
-            new EditOp
-            {
-                EditType = EditType.INSERT,
-                SourcePos = 5,
-                DestPos = 10
-            },
-            new EditOp
-            {
-                EditType = EditType.INSERT,
-                SourcePos = 5,
-                DestPos = 11
-            }
-        }));
-    }
-}
-```
-
-FuzzySharp.Test/FuzzySharp.Test.csproj
-```
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <TargetFrameworks>netframework4.6.2;netframework4.7.2;NET8.0;NET10.0</TargetFrameworks>
-    <IsPackable>false</IsPackable>
-	<LangVersion>12.0</LangVersion>
-	<AssemblyName>Raffinert.$(MSBuildProjectName)</AssemblyName>
-	<RootNamespace>Raffinert.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="FuzzySharp" Version="2.0.2" />
-    <PackageReference Include="nunit" Version="3.14.0" />
-    <PackageReference Include="NUnit.Console" Version="3.20.1" />
-    <PackageReference Include="NUnit3TestAdapter" Version="5.0.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
-    <PackageReference Include="Quickenshtein" Version="1.5.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\FuzzySharp\FuzzySharp.csproj" />
-  </ItemGroup>
-
-</Project>
-```
-
-FuzzySharp.Test/LevenshteinTests.cs
-```
-﻿using NUnit.Framework;
-
-namespace Raffinert.FuzzySharp.Test;
-
-[TestFixture]
-public class LevenshteinTests
-{
-    [Test]
-    [TestCase(
-    "I had two heart attacks, an abortion, did crack... while I was pregnant. Other than that, I'm fine.",
-    "You couldn't even be a vegetable - even artichokes have a heart.",
-    76)]
-    [TestCase("", "", 0)]
-    [TestCase("a", "", 1)]
-    [TestCase("", "a", 1)]
-    [TestCase("kitten", "kitten", 0)]
-    [TestCase("kitten", "sitting", 3)]     // substitution + insertion + insertion
-    [TestCase("flaw", "lawn", 2)]          // substitution + insertion
-    [TestCase("gumbo", "gambol", 2)]       // insertion + substitution
-    [TestCase("book", "back", 2)]          // two substitutions
-    [TestCase("Sunday", "Saturday", 3)]    // insertion + substitution + insertion
-    // Test a few boundary scenarios (longer strings, only one‐character difference)
-    [TestCase("a", "b", 1)]
-    [TestCase("ab", "ba", 2)]
-    [TestCase("abcdef", "azced", 3)]
-    [TestCase("distance", "difference", 5)]
-    public void TestLevenshteinDistance(string s1, string s2, int expectedDistance)
-    {
-        int distance = Levenshtein.Distance(s1, s2);
-        Assert.AreEqual(expectedDistance, distance);
-    }
-
-    [Test]
-    public void TestLevenshteinDistance()
-    {
-        var wordA = new string('A', 4112);
-        var wordB = new string('B', 4112);
-        int maxDistance = Levenshtein.Distance(wordA, wordB);
-        int zeroDistance = Levenshtein.Distance(wordA, wordA);
-        Assert.AreEqual(4112, maxDistance);
-        Assert.AreEqual(0, zeroDistance);
-    }
-
-    [Test, TestCaseSource(typeof(RandomWordPairs), nameof(RandomWordPairs.GetWordPairs))]
-    public void Levenshtein_ShouldBeEqual(string s1, string s2)
-    {
-        var fd = Levenshtein.Distance(s1, s2);
-        var eo = Levenshtein.GetEditOps(s1, s2);
-        //var mb1 = eo.AsMatchingBlocks(s1.Length, s2.Length);
-        //var mb2 = global::FuzzySharp.Levenshtein.GetMatchingBlocks(s1, s2);
-        var qd = Quickenshtein.Levenshtein.GetDistance(s1, s2);
-
-        Assert.That(fd, Is.EqualTo(qd));
-        Assert.That(eo.Length, Is.EqualTo(qd));
-        //Assert.That(mb, Is.EquivalentTo(mb2));
-    }
-}
-```
-
-FuzzySharp.Test/RandomWords.cs
-```
-﻿using NUnit.Framework;
 using System;
-using System.Buffers;
+using System.Threading.Tasks;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
+
+namespace Raffinert.FuzzySharp;
+
+/// <summary>
+/// Fluent builder for configuring fuzzy string matching pipelines.
+/// Call <see cref="Cached()"/> to enable auto-caching, or <see cref="Cached(ICachedRatioScorer)"/>
+/// to provide an external cached scorer.
+/// </summary>
+public sealed class ProcessBuilder
+{
+    private bool _useParallel;
+    private ParallelOptions _parallelOptions;
+    private IRatioScorer _scorer;
+
+    /// <summary>
+    /// Enables caching mode with automatic scorer creation per extraction call.
+    /// Returns a <see cref="CachedProcessBuilder"/> for further configuration.
+    /// Order independent - can be called before or after Parallel().
+    /// </summary>
+    public CachedProcessBuilder Cached()
+    {
+        return new CachedProcessBuilder(_useParallel, _parallelOptions);
+    }
+
+    /// <summary>
+    /// Enables caching mode with an external cached scorer instance for across-run caching.
+    /// Returns a <see cref="CachedScorerProcessBuilder"/> for further configuration.
+    /// When using with parallel execution, the caller is responsible for ensuring the scorer is thread-safe.
+    /// Order independent - can be called before or after Parallel().
+    /// </summary>
+    /// <param name="scorer">The external cached scorer instance. Must not be null.</param>
+    public CachedScorerProcessBuilder Cached(ICachedRatioScorer scorer)
+    {
+        if (scorer == null) throw new ArgumentNullException(nameof(scorer));
+        return new CachedScorerProcessBuilder(scorer, _useParallel, _parallelOptions);
+    }
+
+    /// <summary>
+    /// Enables parallel execution for improved performance on multi-core systems.
+    /// Order independent - can be called before or after Cached().
+    /// </summary>
+    /// <param name="parallelOptions">Optional parallel execution options (max degree of parallelism, cancellation token, etc.)</param>
+    public ProcessBuilder Parallel(ParallelOptions parallelOptions = null)
+    {
+        _useParallel = true;
+        if (parallelOptions != null)
+        {
+            _parallelOptions = parallelOptions;
+        }
+        return this;
+    }
+
+    /// <summary>
+    /// Configures parallel execution options (max degree of parallelism, cancellation token, etc.).
+    /// Implicitly enables parallel mode.
+    /// </summary>
+    /// <param name="parallelOptions">Parallel execution options</param>
+    public ProcessBuilder WithParallelOptions(ParallelOptions parallelOptions)
+    {
+        _parallelOptions = parallelOptions ?? throw new ArgumentNullException(nameof(parallelOptions));
+        _useParallel = true;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the scoring algorithm for fuzzy matching.
+    /// If not set, defaults to <see cref="Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite.WeightedRatioScorer"/>.
+    /// </summary>
+    /// <param name="scorer">The ratio scorer instance to use</param>
+    public ProcessBuilder WithScorer(IRatioScorer scorer)
+    {
+        _scorer = scorer ?? throw new ArgumentNullException(nameof(scorer));
+        return this;
+    }
+
+    /// <summary>
+    /// Builds an immutable ProcessPipeline with the configured options.
+    /// </summary>
+    public ProcessPipeline Build()
+    {
+        return new ProcessPipeline(new ProcessOptions(_useParallel, _parallelOptions, _scorer));
+    }
+}
+
+/// <summary>
+/// Fluent builder for configuring cached fuzzy string matching pipelines with automatic scorer creation.
+/// Produces a <see cref="ProcessPipeline"/> with caching enabled — a
+/// <see cref="Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite.CachedWeightedRatioScorer"/>
+/// is created automatically per extraction call.
+/// </summary>
+public sealed class CachedProcessBuilder
+{
+    private bool _useParallel;
+    private ParallelOptions _parallelOptions;
+
+    internal CachedProcessBuilder(bool useParallel, ParallelOptions parallelOptions)
+    {
+        _useParallel = useParallel;
+        _parallelOptions = parallelOptions;
+    }
+
+    /// <summary>
+    /// Enables parallel execution for improved performance on multi-core systems.
+    /// </summary>
+    /// <param name="parallelOptions">Optional parallel execution options (max degree of parallelism, cancellation token, etc.)</param>
+    public CachedProcessBuilder Parallel(ParallelOptions parallelOptions = null)
+    {
+        _useParallel = true;
+        if (parallelOptions != null)
+        {
+            _parallelOptions = parallelOptions;
+        }
+        return this;
+    }
+
+    /// <summary>
+    /// Configures parallel execution options (max degree of parallelism, cancellation token, etc.).
+    /// Implicitly enables parallel mode.
+    /// </summary>
+    /// <param name="parallelOptions">Parallel execution options</param>
+    public CachedProcessBuilder WithParallelOptions(ParallelOptions parallelOptions)
+    {
+        _parallelOptions = parallelOptions ?? throw new ArgumentNullException(nameof(parallelOptions));
+        _useParallel = true;
+        return this;
+    }
+
+    /// <summary>
+    /// Builds an immutable ProcessPipeline with caching enabled.
+    /// </summary>
+    public ProcessPipeline Build()
+    {
+        return new ProcessPipeline(new ProcessOptions(_useParallel, _parallelOptions, scorer: null, useCaching: true));
+    }
+}
+
+/// <summary>
+/// Fluent builder for configuring cached fuzzy string matching pipelines with an external scorer.
+/// Produces a <see cref="CachedScorerProcessPipeline"/> that reuses the provided
+/// <see cref="ICachedRatioScorer"/> across all extraction calls.
+/// </summary>
+public sealed class CachedScorerProcessBuilder
+{
+    private bool _useParallel;
+    private ParallelOptions _parallelOptions;
+    private readonly ICachedRatioScorer _cachedScorer;
+
+    internal CachedScorerProcessBuilder(ICachedRatioScorer cachedScorer, bool useParallel, ParallelOptions parallelOptions)
+    {
+        _cachedScorer = cachedScorer;
+        _useParallel = useParallel;
+        _parallelOptions = parallelOptions;
+    }
+
+    /// <summary>
+    /// Enables parallel execution for improved performance on multi-core systems.
+    /// </summary>
+    /// <param name="parallelOptions">Optional parallel execution options (max degree of parallelism, cancellation token, etc.)</param>
+    public CachedScorerProcessBuilder Parallel(ParallelOptions parallelOptions = null)
+    {
+        _useParallel = true;
+        if (parallelOptions != null)
+        {
+            _parallelOptions = parallelOptions;
+        }
+        return this;
+    }
+
+    /// <summary>
+    /// Configures parallel execution options (max degree of parallelism, cancellation token, etc.).
+    /// Implicitly enables parallel mode.
+    /// </summary>
+    /// <param name="parallelOptions">Parallel execution options</param>
+    public CachedScorerProcessBuilder WithParallelOptions(ParallelOptions parallelOptions)
+    {
+        _parallelOptions = parallelOptions ?? throw new ArgumentNullException(nameof(parallelOptions));
+        _useParallel = true;
+        return this;
+    }
+
+    /// <summary>
+    /// Builds an immutable CachedScorerProcessPipeline with the configured options.
+    /// </summary>
+    public CachedScorerProcessPipeline Build()
+    {
+        return new CachedScorerProcessPipeline(new CachedScorerProcessOptions(
+            _useParallel,
+            _parallelOptions,
+            _cachedScorer
+        ));
+    }
+}
+```
+
+FuzzySharp/ProcessExecutor.cs
+```
+using System;
 using System.Collections.Generic;
-using System.Linq;
+using Raffinert.FuzzySharp.Extractor;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
 
-namespace Raffinert.FuzzySharp.Test;
+namespace Raffinert.FuzzySharp;
 
-public static class RandomWordPairs
+/// <summary>
+/// Internal execution logic for Process operations.
+/// When <see cref="ProcessOptions.UseCaching"/> is true, creates a
+/// <see cref="CachedWeightedRatioScorer"/> per extraction call and delegates
+/// to <see cref="CachedScorerProcessExecutor"/>.
+/// Otherwise dispatches to sequential or parallel ResultExtractor paths.
+/// </summary>
+internal static class ProcessExecutor
 {
-    public static IEnumerable<TestCaseData> GetWordPairs()
+    #region ExtractAll
+
+    public static IEnumerable<ExtractedResult<string>> ExtractAll(
+        string query,
+        IEnumerable<string> choices,
+        Func<string, string> processor,
+        int cutoff,
+        ProcessOptions options)
     {
-        var words = RandomWords.Create(50, 1024);
+        processor ??= Process.DefaultStringProcessor;
 
-        var result = from word1 in words
-                     from word2 in words
-                     select new TestCaseData(word1, word2);
-
-        return result;
-    }
-}
-
-// original https://github.com/DanHarltey/Fastenshtein/blob/master/benchmarks/Fastenshtein.Benchmarking/RandomWords.cs
-public static class RandomWords
-{
-    private static readonly char[] Chars = Enumerable.Range(char.MinValue, char.MaxValue + 1)
-        .Select(c => (char)c)
-        .Where(char.IsLetterOrDigit)
-        .ToArray();
-
-
-    public static string[] Create(int count, int maxWordSize)
-    {
-        var words = new string[count];
-
-        // using a const seed to make sure runs of the performance tests are consistent.
-        var random = new Random(37);
-
-        for (var i = 0; i < words.Length; i++)
+        if (options.UseCaching)
         {
-            var wordSize = random.Next(3, maxWordSize);
-
-            words[i] = StringCompat.Create(wordSize, random, static (word, r) =>
-            {
-                for (var j = 0; j < word.Length; j++)
-                {
-                    var index = r.Next(0, Chars.Length);
-                    word[j] = Chars[index];
-                }
-            });
+            return ExtractAllCached(processor(query), choices, processor, cutoff, options);
         }
 
-        return words;
-    }
+        var scorer = options.Scorer ?? Process.DefaultScorer;
 
-    public static class StringCompat
-    {
-        public static string Create<TState>(int length, TState state, SpanAction<char, TState> action)
+        if (options.UseParallel)
         {
-#if NETCOREAPP
-            return string.Create(length, state, action);
-#else
-
-            if (length < 0)
-                throw new ArgumentOutOfRangeException(nameof(length));
-            if (action == null)
-                throw new ArgumentNullException(nameof(action));
-
-            var chars = new char[length];
-            action(chars.AsSpan(), state);
-            return new string(chars);
-#endif
+            return ResultExtractor.Parallel.ExtractWithoutOrder(
+                query, choices, processor, scorer, cutoff, options.ParallelOptions);
         }
-    }
-#if !NETCOREAPP
-    public delegate void SpanAction<T, in TArg>(Span<T> span, TArg arg);
-#endif
-}
-```
 
-.github/workflows/development_package.yml
-```
-name: CI Build
-
-on:
-  push:
-    branches: 
-      - development
-
-jobs:
-  build:
-    runs-on: windows-latest
-    name: Build
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v1
-        
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: 3.0.100
-        
-      - name: Build with dotnet
-        run: dotnet build --configuration Release
-
-      - name: Test with dotnet
-        run: dotnet test
-  deploy:
-    needs: [Build]
-    name: Package
-    runs-on: [windows-latest]
-    steps:
-      - uses: actions/checkout@v1
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: 3.0.100
-        
-      - name: Build with dotnet
-        run: dotnet build --configuration Release 
-
-      - name: Pack nuget package
-        run: dotnet pack --configuration Release --include-symbols -p:SymbolPackageFormat=snupkg
-```
-
-.github/workflows/master_package_and_publish.yml
-```
-name: Nuget Package Deploy
-
-on:
-  push:
-    branches: 
-      - master
-
-jobs:
-  build:
-    runs-on: windows-latest
-    name: Build
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v1
-        
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: 3.0.100
-        
-      - name: Build with dotnet
-        run: dotnet build --configuration Release
-
-      - name: Test with dotnet
-        run: dotnet test
-  deploy:
-    needs: [Build]
-    name: Package and Publish
-    runs-on: [windows-latest]
-    steps:
-      - uses: actions/checkout@v1
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: 3.0.100
-        
-      - name: Build with dotnet
-        run: dotnet build --configuration Release
-
-      - name: Pack nuget package
-        run: dotnet pack --configuration Release --include-symbols -p:SymbolPackageFormat=snupkg
-
-      - name: Push package to NuGet
-        run: dotnet nuget push **/*.nupkg
-              --skip-duplicate
-              --api-key ${{ secrets.NUGET_DEPLOY_KEY }}
-              --source https://api.nuget.org/v3/index.json
-```
-
-docs/projects/FuzzySharp.ai-context.md
-```
-# FuzzySharp Technical Context (AI oriented)
-
-This document is derived from the code bundle at `codefetch/projects/FuzzySharp.codebase.md`. It is intended to give an AI agent enough context to work in this repo without deep reverse engineering.
-
-## Scope and purpose
-- Library: `Raffinert.FuzzySharp` provides fast fuzzy string matching and similarity scoring.
-- Entry points: `Fuzz` (single comparisons) and `Process` (matching against choice sets).
-- Core algorithms: Indel, Levenshtein, LCS (LongestCommonSubsequence), and Partial Ratio, with bit-parallel optimizations.
-- Performance: extensive use of pooled buffers, precomputed pattern vectors, and cached scorers.
-
-## Repository map (high signal)
-- `FuzzySharp/` core library
-  - `Fuzz.cs` public scoring API
-  - `Process.cs` and `Process.Cached.cs` extract/best-match APIs
-  - `SimilarityRatio/` scoring strategy and scorer implementations
-  - `PreProcess/` input normalization
-  - `Extractor/` result extraction pipeline
-  - `Edits/` edit operations and matching blocks
-  - `Utils/` low-level data structures and performance helpers
-- `FuzzySharp.Test/` NUnit tests
-- `FuzzySharp.Benchmarks/` BenchmarkDotNet benchmarks
-- `Directory.Build.props` imports SourceLink props
-
-## Key namespaces
-- `Raffinert.FuzzySharp` (public API and distance classes)
-- `Raffinert.FuzzySharp.SimilarityRatio.*` (scorers and strategies)
-- `Raffinert.FuzzySharp.Extractor` (ResultExtractor, ExtractedResult)
-- `Raffinert.FuzzySharp.PreProcess` (PreprocessMode, StringPreprocessorFactory)
-- `Raffinert.FuzzySharp.Utils` (PatternMatchVector, pooled dictionary, heap, etc.)
-
-## Public API entry points
-
-### `Fuzz` (static)
-Location: `FuzzySharp/Fuzz.cs`
-
-Purpose: one-off similarity scores for two strings. Each method has an overload that accepts `PreprocessMode`.
-
-Algorithms exposed:
-- `Ratio` (simple Indel-based similarity)
-- `PartialRatio` (best alignment of shorter in longer)
-- `TokenSortRatio`, `PartialTokenSortRatio`
-- `TokenSetRatio`, `PartialTokenSetRatio`
-- `TokenDifferenceRatio`, `PartialTokenDifferenceRatio`
-- `TokenInitialismRatio`, `PartialTokenInitialismRatio`
-- `TokenAbbreviationRatio`, `PartialTokenAbbreviationRatio`
-- `WeightedRatio` (composite heuristic)
-
-Implementation pattern: `Fuzz.*` methods fetch scorer singletons from `ScorerCache` and call `Score`.
-
-### `Process` (static)
-Location: `FuzzySharp/Process.cs` and `FuzzySharp/Process.Cached.cs`
-
-Purpose: match a query against a set of choices and return scored results.
-
-Key methods:
-- `ExtractAll` (unsorted)
-- `ExtractSorted` (descending by score)
-- `ExtractTop` (top N)
-- `ExtractOne` (best match)
-
-Inputs:
-- `query` (string or generic `T`)
-- `choices` (IEnumerable)
-- `processor` (maps T to string; defaults to `PreprocessMode.Full` for strings)
-- `scorer` (`IRatioScorer` or `ICachedRatioScorer`)
-- `cutoff` (minimum score)
-
-Default behavior:
-- Default scorer = `WeightedRatioScorer`
-- Default string processor = `PreprocessMode.Full`
-
-### `Process.Cached`
-Purpose: optimized for repeated comparisons of many choices against one query.
-
-Behavior:
-- If a cached scorer is provided, it is used directly.
-- Otherwise, creates a `CachedWeightedRatioScorer` for the (processed) query, uses it for all choices, and disposes it.
-
-### Distance APIs
-Location: `FuzzySharp/Indel.*.cs`, `FuzzySharp/Levenshtein.*.cs`, `FuzzySharp/LongestCommonSequence.*.cs`
-
-Public types:
-- `Indel` (static distance/similarity + cached instance class `Indel(string)`).
-- `Levenshtein` (static distance/similarity + cached instance class `Levenshtein(string)`).
-- `LongestCommonSubsequence` (static distance/similarity + cached instance class `LongestCommonSubsequence(string)`).
-- `EditOp`, `MatchingBlock`, `OpCode` for edit/matching output.
-
-These classes are independent of `Fuzz` and can be used directly.
-
-## Scoring pipeline and call flow
-
-Typical flow for `Fuzz.*`:
-
-```
-Fuzz.* -> ScorerCache -> IRatioScorer -> Strategy -> Core algorithm (Indel/LCS/Partial)
-```
-
-Typical flow for `Process.*`:
-
-```
-Process.* -> ResultExtractor -> IRatioScorer or ICachedRatioScorer -> score per choice
-```
-
-Key implications:
-- `ScorerCache` is a singleton factory that returns a single instance per scorer type.
-- `ScorerBase` applies `PreprocessMode` when you call the overload with preprocessing.
-- `Process` defaults to `PreprocessMode.Full` and `WeightedRatioScorer`.
-
-## Preprocessing and tokenization
-
-### `PreprocessMode` and `StringPreprocessorFactory`
-Location: `FuzzySharp/PreProcess/*`
-
-Modes:
-- `Full`: lowercases, keeps only letters or digits, converts others to spaces, and trims.
-- `None`: no preprocessing.
-
-### String token utilities
-Location: `FuzzySharp/Extensions/StringExtensions.cs`
-
-Notable helpers:
-- `ExtractTokens` splits on non-letter characters (letters only, not digits).
-- `SplitByAnySpace` splits on whitespace.
-- `GetSortedWords` splits by whitespace and sorts tokens.
-- `NormalizeSpacesAndSort` joins sorted tokens by single spaces.
-- `GetInitials` builds initialism from the first character of each whitespace-separated token.
-
-## Scorers and strategies (string)
-
-### Simple ratio scorers
-Location: `SimilarityRatio/Scorer/StrategySensitive/Simple/*`
-
-Implementation:
-- `DefaultRatioScorer` -> `DefaultRatioStrategy.Calculate` -> `Indel.NormalizedSimilarity`.
-- `PartialRatioScorer` -> `PartialRatioStrategy.Calculate` -> partial alignment.
-
-### Token sort scorers
-Location: `SimilarityRatio/Scorer/StrategySensitive/TokenSort/*`
-
-Behavior:
-- Sort tokens in each input (`NormalizeSpacesAndSort`), then score the sorted strings.
-- `TokenSortScorer` uses default ratio; `PartialTokenSortScorer` uses partial ratio.
-
-### Token set scorers
-Location: `SimilarityRatio/Scorer/StrategySensitive/TokenSet/*`
-
-Behavior:
-- Tokenize to sets.
-- Compute intersection and remainders.
-- Build three comparison strings:
-  - `sortedIntersection`
-  - `sortedIntersection + tokens1 remainder`
-  - `sortedIntersection + tokens2 remainder`
-- Return the max of three scores.
-
-### Token difference scorers
-Location: `SimilarityRatio/Scorer/StrategySensitive/TokenDifference/*`
-
-Behavior:
-- Split into tokens, sort, then score arrays of strings (not chars).
-- Default uses `DefaultRatioStrategy<string>` (Indel on token arrays).
-- Partial variant uses `PartialRatioStrategy<string>`.
-
-### Token initialism scorers
-Location: `SimilarityRatio/Scorer/StrategySensitive/TokenInitialism/*`
-
-Behavior:
-- Identify longer and shorter input.
-- Only attempt scoring if `longer.Length / shorter.Length >= 3`.
-- Compute initials from longer and score initials vs shorter.
-
-### Token abbreviation scorers
-Location: `SimilarityRatio/Scorer/StrategySensitive/TokenAbbreviation/*`
-
-Behavior:
-- Ensure `shorter` and `longer` ordered by length.
-- Only attempt if length ratio >= 1.5.
-- Tokenize both strings (letters only). If shorter has > 4 tokens, return 0.
-- Generate permutations of longer tokens, compare token-by-token if shorter token is an ordered subsequence of longer token.
-- Score average per permutation and return max.
-
-### Weighted ratio (composite)
-Location: `SimilarityRatio/Scorer/Composite/WeightedRatioScorer.cs`
-
-Behavior:
-- Always compute base `Ratio`.
-- Compute `TokenSortRatio` and `TokenSetRatio` and scale by `UNBASE_SCALE = 0.95`.
-- For large length differences, also consider partial ratios:
-  - Enable partials only when `lenRatio >= 1.5`.
-  - If `lenRatio > 8`, reduce partial scale to 0.6.
-- Return the max of base vs scaled token/partial scores.
-
-## Generic sequence support
-
-Location: `SimilarityRatio/Scorer/Generic/*` and `SimilarityRatio/Strategy/Generic/*`
-
-Purpose:
-- Provide scorer/strategy implementations for `T[]` where `T : IEquatable<T>`.
-- Used by token difference scorers to compare string token arrays.
-
-Key types:
-- `IRatioScorer<T>`, `ICachedRatioScorer<T>`, `ScorerBase<T>`
-- `DefaultRatioStrategy<T>` and `PartialRatioStrategy<T>`
-
-## Cached scoring
-
-Entry points:
-- `Process.Cached` for choice sets.
-- `CachedWeightedRatioScorer` for per-query caching.
-
-Key cached components:
-- `CachedDefaultRatioStrategy` caches `Indel` for a processed query string.
-- `CachedDefaultRatioScorer` wraps a cached strategy.
-- `CachedTokenSortScorer` and `CachedTokenSetScorer` cache token preprocessing for input1.
-
-Disposal:
-- Cached scorers often allocate pooled buffers or hold `PatternMatchVector`.
-- Types implementing `IDisposable` must be disposed when created by callers.
-- `Process.Cached` takes care of disposal only for the scorers it creates internally.
-
-## Extractor pipeline
-
-Location: `FuzzySharp/Extractor/*`
-
-Key types:
-- `ExtractedResult<T>` contains `Value`, `Score`, and `Index` (original position).
-- `ResultExtractor` implements the extract operations.
-
-Algorithms:
-- `ExtractWithoutOrder` yields matching items in input order, filtering by cutoff.
-- `ExtractSorted` sorts by score descending.
-- `ExtractTop` uses `MaxN` (min-heap) for top N selection, then reverses to highest-first.
-- `ExtractOne` returns the max score (ties resolved by `ExtractedResult.CompareTo` which compares only `Score`).
-
-## Core distance algorithms
-
-### Indel
-Location: `FuzzySharp/Indel.*.cs`
-
-Notes:
-- Indel distance = `len(s1) + len(s2) - 2 * LCS(s1, s2)`.
-- `NormalizedSimilarity` returns `1 - normalized distance`.
-- Uses `PatternMatchVector` and `LongestCommonSequence` for bit-parallel computation.
-
-### Levenshtein
-Location: `FuzzySharp/Levenshtein.*.cs`
-
-Notes:
-- Uses Myers bit-parallel algorithm.
-- Dispatches to single-ulong (<= 64) or multi-ulong (> 64) paths.
-- Supports custom insert/delete/replace costs; falls back to generic DP if costs are non-standard.
-- Exposes edit ops and matching blocks (`GetEditOps`, `GetMatchingBlocks`).
-
-### LongestCommonSubsequence (LCS)
-Location: `FuzzySharp/LongestCommonSubsequence.*.cs`
-
-Notes:
-- Bit-parallel LCS for speed.
-- Provides `Distance`, `Similarity`, normalized versions, `MatchingBlocks`, and `Opcodes`.
-
-### Partial ratio
-Location: `SimilarityRatio/Strategy/PartialRatioStrategy.cs` and `Strategy/Generic/PartialRatioStrategyT.cs`
-
-Notes:
-- Finds optimal alignment of shorter span within longer span.
-- Uses `PatternMatchVector` and `Indel.BlockNormalizedSimilarity` to score windows.
-
-## Performance and memory notes
-
-Key primitives:
-- `PatternMatchVector` and `PatternMatchVectorChar` use pooled buffers; `PatternMatchVectorChar` has an ASCII fast path.
-- `DictionarySlimPooled` is a pooled dictionary used for pattern masks.
-- `ArrayPool<T>` is heavily used to reduce allocations in Levenshtein and LCS.
-- `SequenceUtils` trims common prefix/suffix and swaps to keep shorter inputs first.
-- `NumericsPolyfill.PopCount` provides a cross-target popcount implementation.
-
-## Build, test, and benchmark
-
-Targets from project files:
-- Library (`FuzzySharp.csproj`): `netstandard2.0`, `netstandard2.1`, `netcoreapp3.1`, `net45`, `net46`, `net462`, `net472`, `net48`, `NET60`, `NET80`, `NET90`, `NET10.0`
-- Tests (`FuzzySharp.Test.csproj`): `netframework4.6.2`, `netframework4.7.2`, `NET8.0`, `NET10.0`
-- Benchmarks (`FuzzySharp.Benchmarks.csproj`): `NET10.0`
-
-Typical commands:
-```
-dotnet build FuzzySharp.sln
-dotnet test FuzzySharp.Test/FuzzySharp.Test.csproj
-dotnet run --project FuzzySharp.Benchmarks/FuzzySharp.Benchmarks.csproj
-```
-
-## External dependencies (from csproj)
-
-Library (`FuzzySharp/FuzzySharp.csproj`):
-- `IndexRange` 1.0.3 (older frameworks)
-- `System.Memory` 4.5.5 (older frameworks)
-- `Meziantou.Polyfill` 1.0.49 (private assets)
-
-Tests (`FuzzySharp.Test/FuzzySharp.Test.csproj`):
-- `nunit` 3.14.0
-- `NUnit.Console` 3.20.1
-- `NUnit3TestAdapter` 5.0.0
-- `Microsoft.NET.Test.Sdk` 17.14.1
-- `Quickenshtein` 1.5.1
-- `FuzzySharp` 2.0.2 (package reference)
-
-Benchmarks (`FuzzySharp.Benchmarks/FuzzySharp.Benchmarks.csproj`):
-- `BenchmarkDotNet` 0.15.2
-- `Fastenshtein` 1.0.10
-- `Quickenshtein` 1.5.1
-- `FuzzySharp` 2.0.2 (package reference)
-- `Microsoft.VisualStudio.DiagnosticsHub.BenchmarkDotNetDiagnosers` 18.3.36812.1
-
-## Notes and gotchas
-
-- Default preprocessing differs by API:
-  - `Fuzz.*` does no preprocessing unless you pass `PreprocessMode`.
-  - `Process.*` defaults to `PreprocessMode.Full` for strings.
-- `ExtractedResult<T>.CompareTo` compares only `Score`. Use `Index` for stable ordering if needed.
-- `TokenAbbreviation` can be expensive due to permutations; it short-circuits when shorter has more than 4 tokens.
-- Cached scorers (`CachedWeightedRatioScorer`, `CachedDefaultRatioStrategy`, `Indel`, `Levenshtein`, `LongestCommonSequence`) hold pooled buffers and must be disposed when created directly.
-- `TokenInitialism` and `TokenAbbreviation` include length ratio checks; short strings can return 0.
-
-## File-level starting points
-
-If you need to change behavior or add features, start here:
-- Public API: `FuzzySharp/Fuzz.cs`, `FuzzySharp/Process.cs`, `FuzzySharp/Process.Cached.cs`
-- Composite behavior: `SimilarityRatio/Scorer/Composite/WeightedRatioScorer.cs`
-- Core algorithms: `FuzzySharp/Indel.*.cs`, `FuzzySharp/Levenshtein.*.cs`, `FuzzySharp/LongestCommonSubsequence.*.cs`
-- Token logic: `SimilarityRatio/Scorer/StrategySensitive/Token*/*`
-- Preprocessing: `FuzzySharp/PreProcess/StringPreprocessorFactory.cs`
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.ExtractAllBenchmarks-report-github.md
-```
-```
-
-BenchmarkDotNet v0.15.2, Windows 11 (10.0.26200.7623)
-12th Gen Intel Core i9-12900KF 3.20GHz, 1 CPU, 24 logical and 16 physical cores
-.NET SDK 10.0.102
-  [Host]   : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-  ShortRun : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-
-Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-
-```
-| Method                     | Mean      | Error     | StdDev    | Gen0   | Allocated |
-|--------------------------- |----------:|----------:|----------:|-------:|----------:|
-| ExtractAll                 |  6.280 μs | 1.4762 μs | 0.0809 μs | 0.7172 |  11.05 KB |
-| ExtractAllClassic          | 13.620 μs | 3.7008 μs | 0.2029 μs | 1.7090 |  26.31 KB |
-| ExtractAllCached           |  4.922 μs | 0.0016 μs | 0.0001 μs | 0.6027 |   9.34 KB |
-| ExtractAllAcrossRunsCached |  4.638 μs | 0.8236 μs | 0.0451 μs | 0.5493 |   8.48 KB |
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.ExtractAllBenchmarks-report.csv
-```
-Method,Job,AnalyzeLaunchVariance,EvaluateOverhead,MaxAbsoluteError,MaxRelativeError,MinInvokeCount,MinIterationTime,OutlierMode,Affinity,EnvironmentVariables,Jit,LargeAddressAware,Platform,PowerPlanMode,Runtime,AllowVeryLargeObjects,Concurrent,CpuGroups,Force,HeapAffinitizeMask,HeapCount,NoAffinitize,RetainVm,Server,Arguments,BuildConfiguration,Clock,EngineFactory,NuGetReferences,Toolchain,IsMutator,InvocationCount,IterationCount,IterationTime,LaunchCount,MaxIterationCount,MaxWarmupIterationCount,MemoryRandomization,MinIterationCount,MinWarmupIterationCount,RunStrategy,UnrollFactor,WarmupCount,Mean,Error,StdDev,Gen0,Allocated
-ExtractAll,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,6.280 μs,1.4762 μs,0.0809 μs,0.7172,11.05 KB
-ExtractAllClassic,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,13.620 μs,3.7008 μs,0.2029 μs,1.7090,26.31 KB
-ExtractAllCached,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,4.922 μs,0.0016 μs,0.0001 μs,0.6027,9.34 KB
-ExtractAllAcrossRunsCached,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,4.638 μs,0.8236 μs,0.0451 μs,0.5493,8.48 KB
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.ExtractAllBenchmarks-report.html
-```
-<!DOCTYPE html>
-<html lang='en'>
-<head>
-<meta charset='utf-8' />
-<title>Raffinert.FuzzySharp.Benchmarks.ExtractAllBenchmarks-20260203-084535</title>
-
-<style type="text/css">
-	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
-	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
-	tr { background-color: #fff; border-top: 1px solid #ccc; }
-	tr:nth-child(even) { background: #f8f8f8; }
-</style>
-</head>
-<body>
-<pre><code>
-BenchmarkDotNet v0.15.2, Windows 11 (10.0.26200.7623)
-12th Gen Intel Core i9-12900KF 3.20GHz, 1 CPU, 24 logical and 16 physical cores
-.NET SDK 10.0.102
-  [Host]   : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-  ShortRun : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-</code></pre>
-<pre><code>Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-</code></pre>
-
-<table>
-<thead><tr><th>Method              </th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen0</th><th>Allocated</th>
-</tr>
-</thead><tbody><tr><td>ExtractAll</td><td>6.280 &mu;s</td><td>1.4762 &mu;s</td><td>0.0809 &mu;s</td><td>0.7172</td><td>11.05 KB</td>
-</tr><tr><td>ExtractAllClassic</td><td>13.620 &mu;s</td><td>3.7008 &mu;s</td><td>0.2029 &mu;s</td><td>1.7090</td><td>26.31 KB</td>
-</tr><tr><td>ExtractAllCached</td><td>4.922 &mu;s</td><td>0.0016 &mu;s</td><td>0.0001 &mu;s</td><td>0.6027</td><td>9.34 KB</td>
-</tr><tr><td>ExtractAllAcrossRunsCached</td><td>4.638 &mu;s</td><td>0.8236 &mu;s</td><td>0.0451 &mu;s</td><td>0.5493</td><td>8.48 KB</td>
-</tr></tbody></table>
-</body>
-</html>
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.ExtractOneBenchmarks-report-github.md
-```
-```
-
-BenchmarkDotNet v0.15.2, Windows 11 (10.0.26200.7623)
-12th Gen Intel Core i9-12900KF 3.20GHz, 1 CPU, 24 logical and 16 physical cores
-.NET SDK 10.0.102
-  [Host]   : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-  ShortRun : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-
-Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-
-```
-| Method                     | Mean      | Error     | StdDev    | Gen0   | Allocated |
-|--------------------------- |----------:|----------:|----------:|-------:|----------:|
-| ExtractOne                 |  6.245 μs | 1.6429 μs | 0.0901 μs | 0.7095 |  10.97 KB |
-| ExtractOneClassic          | 13.661 μs | 1.5088 μs | 0.0827 μs | 1.7090 |  26.22 KB |
-| ExtractOneCached           |  4.864 μs | 1.8295 μs | 0.1003 μs | 0.5951 |   9.17 KB |
-| ExtractOneAcrossRunsCached |  4.327 μs | 0.8470 μs | 0.0464 μs | 0.5341 |   8.28 KB |
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.ExtractOneBenchmarks-report.csv
-```
-Method,Job,AnalyzeLaunchVariance,EvaluateOverhead,MaxAbsoluteError,MaxRelativeError,MinInvokeCount,MinIterationTime,OutlierMode,Affinity,EnvironmentVariables,Jit,LargeAddressAware,Platform,PowerPlanMode,Runtime,AllowVeryLargeObjects,Concurrent,CpuGroups,Force,HeapAffinitizeMask,HeapCount,NoAffinitize,RetainVm,Server,Arguments,BuildConfiguration,Clock,EngineFactory,NuGetReferences,Toolchain,IsMutator,InvocationCount,IterationCount,IterationTime,LaunchCount,MaxIterationCount,MaxWarmupIterationCount,MemoryRandomization,MinIterationCount,MinWarmupIterationCount,RunStrategy,UnrollFactor,WarmupCount,Mean,Error,StdDev,Gen0,Allocated
-ExtractOne,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,6.245 μs,1.6429 μs,0.0901 μs,0.7095,10.97 KB
-ExtractOneClassic,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,13.661 μs,1.5088 μs,0.0827 μs,1.7090,26.22 KB
-ExtractOneCached,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,4.864 μs,1.8295 μs,0.1003 μs,0.5951,9.17 KB
-ExtractOneAcrossRunsCached,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,4.327 μs,0.8470 μs,0.0464 μs,0.5341,8.28 KB
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.ExtractOneBenchmarks-report.html
-```
-<!DOCTYPE html>
-<html lang='en'>
-<head>
-<meta charset='utf-8' />
-<title>Raffinert.FuzzySharp.Benchmarks.ExtractOneBenchmarks-20260203-084606</title>
-
-<style type="text/css">
-	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
-	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
-	tr { background-color: #fff; border-top: 1px solid #ccc; }
-	tr:nth-child(even) { background: #f8f8f8; }
-</style>
-</head>
-<body>
-<pre><code>
-BenchmarkDotNet v0.15.2, Windows 11 (10.0.26200.7623)
-12th Gen Intel Core i9-12900KF 3.20GHz, 1 CPU, 24 logical and 16 physical cores
-.NET SDK 10.0.102
-  [Host]   : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-  ShortRun : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-</code></pre>
-<pre><code>Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-</code></pre>
-
-<table>
-<thead><tr><th>Method              </th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen0</th><th>Allocated</th>
-</tr>
-</thead><tbody><tr><td>ExtractOne</td><td>6.245 &mu;s</td><td>1.6429 &mu;s</td><td>0.0901 &mu;s</td><td>0.7095</td><td>10.97 KB</td>
-</tr><tr><td>ExtractOneClassic</td><td>13.661 &mu;s</td><td>1.5088 &mu;s</td><td>0.0827 &mu;s</td><td>1.7090</td><td>26.22 KB</td>
-</tr><tr><td>ExtractOneCached</td><td>4.864 &mu;s</td><td>1.8295 &mu;s</td><td>0.1003 &mu;s</td><td>0.5951</td><td>9.17 KB</td>
-</tr><tr><td>ExtractOneAcrossRunsCached</td><td>4.327 &mu;s</td><td>0.8470 &mu;s</td><td>0.0464 &mu;s</td><td>0.5341</td><td>8.28 KB</td>
-</tr></tbody></table>
-</body>
-</html>
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.LevenshteinDistance.LevenshteinLarge-report-github.md
-```
-```
-
-BenchmarkDotNet v0.15.2, Windows 11 (10.0.26200.7623)
-12th Gen Intel Core i9-12900KF 3.20GHz, 1 CPU, 24 logical and 16 physical cores
-.NET SDK 10.0.102
-  [Host]   : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-  ShortRun : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-
-Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-
-```
-| Method            | Mean       | Error      | StdDev    | Ratio | Gen0       | Gen1       | Allocated   | Alloc Ratio |
-|------------------ |-----------:|-----------:|----------:|------:|-----------:|-----------:|------------:|------------:|
-| NaiveDp           | 170.446 ms | 19.8528 ms | 1.0882 ms |  1.00 | 17333.3333 | 12666.6667 | 275312720 B |       1.000 |
-| FuzzySharpClassic | 111.699 ms | 10.6421 ms | 0.5833 ms |  0.66 |          - |          - |   1545632 B |       0.006 |
-| Fastenshtein      |  92.259 ms |  6.2599 ms | 0.3431 ms |  0.54 |          - |          - |     33928 B |       0.000 |
-| Quickenshtein     |   8.771 ms |  3.0122 ms | 0.1651 ms |  0.05 |          - |          - |           - |       0.000 |
-| FuzzySharp        |   3.230 ms |  0.4890 ms | 0.0268 ms |  0.02 |          - |          - |      3520 B |       0.000 |
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.LevenshteinDistance.LevenshteinLarge-report.csv
-```
-Method,Job,AnalyzeLaunchVariance,EvaluateOverhead,MaxAbsoluteError,MaxRelativeError,MinInvokeCount,MinIterationTime,OutlierMode,Affinity,EnvironmentVariables,Jit,LargeAddressAware,Platform,PowerPlanMode,Runtime,AllowVeryLargeObjects,Concurrent,CpuGroups,Force,HeapAffinitizeMask,HeapCount,NoAffinitize,RetainVm,Server,Arguments,BuildConfiguration,Clock,EngineFactory,NuGetReferences,Toolchain,IsMutator,InvocationCount,IterationCount,IterationTime,LaunchCount,MaxIterationCount,MaxWarmupIterationCount,MemoryRandomization,MinIterationCount,MinWarmupIterationCount,RunStrategy,UnrollFactor,WarmupCount,Mean,Error,StdDev,Ratio,Gen0,Gen1,Allocated,Alloc Ratio
-NaiveDp,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,170.446 ms,19.8528 ms,1.0882 ms,1.00,17333.3333,12666.6667,275312720 B,1.000
-FuzzySharpClassic,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,111.699 ms,10.6421 ms,0.5833 ms,0.66,0.0000,0.0000,1545632 B,0.006
-Fastenshtein,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,92.259 ms,6.2599 ms,0.3431 ms,0.54,0.0000,0.0000,33928 B,0.000
-Quickenshtein,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,8.771 ms,3.0122 ms,0.1651 ms,0.05,0.0000,0.0000,0 B,0.000
-FuzzySharp,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,3.230 ms,0.4890 ms,0.0268 ms,0.02,0.0000,0.0000,3520 B,0.000
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.LevenshteinDistance.LevenshteinLarge-report.html
-```
-<!DOCTYPE html>
-<html lang='en'>
-<head>
-<meta charset='utf-8' />
-<title>Raffinert.FuzzySharp.Benchmarks.LevenshteinDistance.LevenshteinLarge-20260203-085141</title>
-
-<style type="text/css">
-	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
-	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
-	tr { background-color: #fff; border-top: 1px solid #ccc; }
-	tr:nth-child(even) { background: #f8f8f8; }
-</style>
-</head>
-<body>
-<pre><code>
-BenchmarkDotNet v0.15.2, Windows 11 (10.0.26200.7623)
-12th Gen Intel Core i9-12900KF 3.20GHz, 1 CPU, 24 logical and 16 physical cores
-.NET SDK 10.0.102
-  [Host]   : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-  ShortRun : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-</code></pre>
-<pre><code>Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-</code></pre>
-
-<table>
-<thead><tr><th>Method     </th><th>Mean</th><th>Error</th><th>StdDev</th><th>Ratio</th><th>Gen0</th><th>Gen1</th><th>Allocated</th><th>Alloc Ratio</th>
-</tr>
-</thead><tbody><tr><td>NaiveDp</td><td>170.446 ms</td><td>19.8528 ms</td><td>1.0882 ms</td><td>1.00</td><td>17333.3333</td><td>12666.6667</td><td>275312720 B</td><td>1.000</td>
-</tr><tr><td>FuzzySharpClassic</td><td>111.699 ms</td><td>10.6421 ms</td><td>0.5833 ms</td><td>0.66</td><td>-</td><td>-</td><td>1545632 B</td><td>0.006</td>
-</tr><tr><td>Fastenshtein</td><td>92.259 ms</td><td>6.2599 ms</td><td>0.3431 ms</td><td>0.54</td><td>-</td><td>-</td><td>33928 B</td><td>0.000</td>
-</tr><tr><td>Quickenshtein</td><td>8.771 ms</td><td>3.0122 ms</td><td>0.1651 ms</td><td>0.05</td><td>-</td><td>-</td><td>-</td><td>0.000</td>
-</tr><tr><td>FuzzySharp</td><td>3.230 ms</td><td>0.4890 ms</td><td>0.0268 ms</td><td>0.02</td><td>-</td><td>-</td><td>3520 B</td><td>0.000</td>
-</tr></tbody></table>
-</body>
-</html>
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.LevenshteinDistance.LevenshteinNormal-report-github.md
-```
-```
-
-BenchmarkDotNet v0.15.2, Windows 11 (10.0.26200.7623)
-12th Gen Intel Core i9-12900KF 3.20GHz, 1 CPU, 24 logical and 16 physical cores
-.NET SDK 10.0.102
-  [Host]   : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-  ShortRun : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-
-Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-
-```
-| Method            | Mean       | Error       | StdDev    | Ratio | RatioSD | Gen0     | Gen1    | Allocated  | Alloc Ratio |
-|------------------ |-----------:|------------:|----------:|------:|--------:|---------:|--------:|-----------:|------------:|
-| NaiveDp           | 6,235.1 μs | 1,902.54 μs | 104.28 μs |  1.00 |    0.02 | 632.8125 | 78.1250 | 10012112 B |       1.000 |
-| FuzzySharpClassic | 3,816.9 μs |   106.03 μs |   5.81 μs |  0.61 |    0.01 |  15.6250 |       - |   300048 B |       0.030 |
-| Fastenshtein      | 3,024.2 μs |   204.81 μs |  11.23 μs |  0.49 |    0.01 |        - |       - |     7064 B |       0.001 |
-| Quickenshtein     | 1,289.3 μs |   102.88 μs |   5.64 μs |  0.21 |    0.00 |        - |       - |          - |       0.000 |
-| FuzzySharp        |   234.6 μs |    21.26 μs |   1.17 μs |  0.04 |    0.00 |        - |       - |     3520 B |       0.000 |
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.LevenshteinDistance.LevenshteinNormal-report.csv
-```
-Method,Job,AnalyzeLaunchVariance,EvaluateOverhead,MaxAbsoluteError,MaxRelativeError,MinInvokeCount,MinIterationTime,OutlierMode,Affinity,EnvironmentVariables,Jit,LargeAddressAware,Platform,PowerPlanMode,Runtime,AllowVeryLargeObjects,Concurrent,CpuGroups,Force,HeapAffinitizeMask,HeapCount,NoAffinitize,RetainVm,Server,Arguments,BuildConfiguration,Clock,EngineFactory,NuGetReferences,Toolchain,IsMutator,InvocationCount,IterationCount,IterationTime,LaunchCount,MaxIterationCount,MaxWarmupIterationCount,MemoryRandomization,MinIterationCount,MinWarmupIterationCount,RunStrategy,UnrollFactor,WarmupCount,Mean,Error,StdDev,Ratio,RatioSD,Gen0,Gen1,Allocated,Alloc Ratio
-NaiveDp,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,"6,235.1 μs","1,902.54 μs",104.28 μs,1.00,0.02,632.8125,78.1250,10012112 B,1.000
-FuzzySharpClassic,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,"3,816.9 μs",106.03 μs,5.81 μs,0.61,0.01,15.6250,0.0000,300048 B,0.030
-Fastenshtein,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,"3,024.2 μs",204.81 μs,11.23 μs,0.49,0.01,0.0000,0.0000,7064 B,0.001
-Quickenshtein,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,"1,289.3 μs",102.88 μs,5.64 μs,0.21,0.00,0.0000,0.0000,0 B,0.000
-FuzzySharp,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,234.6 μs,21.26 μs,1.17 μs,0.04,0.00,0.0000,0.0000,3520 B,0.000
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.LevenshteinDistance.LevenshteinNormal-report.html
-```
-<!DOCTYPE html>
-<html lang='en'>
-<head>
-<meta charset='utf-8' />
-<title>Raffinert.FuzzySharp.Benchmarks.LevenshteinDistance.LevenshteinNormal-20260203-085211</title>
-
-<style type="text/css">
-	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
-	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
-	tr { background-color: #fff; border-top: 1px solid #ccc; }
-	tr:nth-child(even) { background: #f8f8f8; }
-</style>
-</head>
-<body>
-<pre><code>
-BenchmarkDotNet v0.15.2, Windows 11 (10.0.26200.7623)
-12th Gen Intel Core i9-12900KF 3.20GHz, 1 CPU, 24 logical and 16 physical cores
-.NET SDK 10.0.102
-  [Host]   : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-  ShortRun : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-</code></pre>
-<pre><code>Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-</code></pre>
-
-<table>
-<thead><tr><th>Method     </th><th>Mean</th><th>Error</th><th>StdDev</th><th>Ratio</th><th>RatioSD</th><th>Gen0</th><th>Gen1</th><th>Allocated</th><th>Alloc Ratio</th>
-</tr>
-</thead><tbody><tr><td>NaiveDp</td><td>6,235.1 &mu;s</td><td>1,902.54 &mu;s</td><td>104.28 &mu;s</td><td>1.00</td><td>0.02</td><td>632.8125</td><td>78.1250</td><td>10012112 B</td><td>1.000</td>
-</tr><tr><td>FuzzySharpClassic</td><td>3,816.9 &mu;s</td><td>106.03 &mu;s</td><td>5.81 &mu;s</td><td>0.61</td><td>0.01</td><td>15.6250</td><td>-</td><td>300048 B</td><td>0.030</td>
-</tr><tr><td>Fastenshtein</td><td>3,024.2 &mu;s</td><td>204.81 &mu;s</td><td>11.23 &mu;s</td><td>0.49</td><td>0.01</td><td>-</td><td>-</td><td>7064 B</td><td>0.001</td>
-</tr><tr><td>Quickenshtein</td><td>1,289.3 &mu;s</td><td>102.88 &mu;s</td><td>5.64 &mu;s</td><td>0.21</td><td>0.00</td><td>-</td><td>-</td><td>-</td><td>0.000</td>
-</tr><tr><td>FuzzySharp</td><td>234.6 &mu;s</td><td>21.26 &mu;s</td><td>1.17 &mu;s</td><td>0.04</td><td>0.00</td><td>-</td><td>-</td><td>3520 B</td><td>0.000</td>
-</tr></tbody></table>
-</body>
-</html>
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.LevenshteinDistance.LevenshteinSmall-report-github.md
-```
-```
-
-BenchmarkDotNet v0.15.2, Windows 11 (10.0.26200.7623)
-12th Gen Intel Core i9-12900KF 3.20GHz, 1 CPU, 24 logical and 16 physical cores
-.NET SDK 10.0.102
-  [Host]   : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-  ShortRun : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-
-Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-
-```
-| Method            | Mean        | Error      | StdDev    | Ratio | Gen0     | Gen1   | Allocated | Alloc Ratio |
-|------------------ |------------:|-----------:|----------:|------:|---------:|-------:|----------:|------------:|
-| NaiveDp           | 1,292.34 μs | 237.510 μs | 13.019 μs |  1.00 | 148.4375 | 3.9063 | 2335168 B |       1.000 |
-| FuzzySharpClassic |   792.32 μs |  35.923 μs |  1.969 μs |  0.61 |   8.7891 |      - |  149792 B |       0.064 |
-| Fastenshtein      |   594.17 μs |  28.972 μs |  1.588 μs |  0.46 |        - |      - |    3728 B |       0.002 |
-| Quickenshtein     |   412.39 μs |  12.342 μs |  0.677 μs |  0.32 |        - |      - |         - |       0.000 |
-| FuzzySharp        |    40.24 μs |   2.757 μs |  0.151 μs |  0.03 |   0.1831 |      - |    3520 B |       0.002 |
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.LevenshteinDistance.LevenshteinSmall-report.csv
-```
-Method,Job,AnalyzeLaunchVariance,EvaluateOverhead,MaxAbsoluteError,MaxRelativeError,MinInvokeCount,MinIterationTime,OutlierMode,Affinity,EnvironmentVariables,Jit,LargeAddressAware,Platform,PowerPlanMode,Runtime,AllowVeryLargeObjects,Concurrent,CpuGroups,Force,HeapAffinitizeMask,HeapCount,NoAffinitize,RetainVm,Server,Arguments,BuildConfiguration,Clock,EngineFactory,NuGetReferences,Toolchain,IsMutator,InvocationCount,IterationCount,IterationTime,LaunchCount,MaxIterationCount,MaxWarmupIterationCount,MemoryRandomization,MinIterationCount,MinWarmupIterationCount,RunStrategy,UnrollFactor,WarmupCount,Mean,Error,StdDev,Ratio,Gen0,Gen1,Allocated,Alloc Ratio
-NaiveDp,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,"1,292.34 μs",237.510 μs,13.019 μs,1.00,148.4375,3.9063,2335168 B,1.000
-FuzzySharpClassic,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,792.32 μs,35.923 μs,1.969 μs,0.61,8.7891,0.0000,149792 B,0.064
-Fastenshtein,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,594.17 μs,28.972 μs,1.588 μs,0.46,0.0000,0.0000,3728 B,0.002
-Quickenshtein,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,412.39 μs,12.342 μs,0.677 μs,0.32,0.0000,0.0000,0 B,0.000
-FuzzySharp,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,40.24 μs,2.757 μs,0.151 μs,0.03,0.1831,0.0000,3520 B,0.002
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.LevenshteinDistance.LevenshteinSmall-report.html
-```
-<!DOCTYPE html>
-<html lang='en'>
-<head>
-<meta charset='utf-8' />
-<title>Raffinert.FuzzySharp.Benchmarks.LevenshteinDistance.LevenshteinSmall-20260203-085251</title>
-
-<style type="text/css">
-	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
-	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
-	tr { background-color: #fff; border-top: 1px solid #ccc; }
-	tr:nth-child(even) { background: #f8f8f8; }
-</style>
-</head>
-<body>
-<pre><code>
-BenchmarkDotNet v0.15.2, Windows 11 (10.0.26200.7623)
-12th Gen Intel Core i9-12900KF 3.20GHz, 1 CPU, 24 logical and 16 physical cores
-.NET SDK 10.0.102
-  [Host]   : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-  ShortRun : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-</code></pre>
-<pre><code>Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-</code></pre>
-
-<table>
-<thead><tr><th>Method     </th><th>Mean </th><th>Error</th><th>StdDev</th><th>Ratio</th><th>Gen0</th><th>Gen1</th><th>Allocated</th><th>Alloc Ratio</th>
-</tr>
-</thead><tbody><tr><td>NaiveDp</td><td>1,292.34 &mu;s</td><td>237.510 &mu;s</td><td>13.019 &mu;s</td><td>1.00</td><td>148.4375</td><td>3.9063</td><td>2335168 B</td><td>1.000</td>
-</tr><tr><td>FuzzySharpClassic</td><td>792.32 &mu;s</td><td>35.923 &mu;s</td><td>1.969 &mu;s</td><td>0.61</td><td>8.7891</td><td>-</td><td>149792 B</td><td>0.064</td>
-</tr><tr><td>Fastenshtein</td><td>594.17 &mu;s</td><td>28.972 &mu;s</td><td>1.588 &mu;s</td><td>0.46</td><td>-</td><td>-</td><td>3728 B</td><td>0.002</td>
-</tr><tr><td>Quickenshtein</td><td>412.39 &mu;s</td><td>12.342 &mu;s</td><td>0.677 &mu;s</td><td>0.32</td><td>-</td><td>-</td><td>-</td><td>0.000</td>
-</tr><tr><td>FuzzySharp</td><td>40.24 &mu;s</td><td>2.757 &mu;s</td><td>0.151 &mu;s</td><td>0.03</td><td>0.1831</td><td>-</td><td>3520 B</td><td>0.002</td>
-</tr></tbody></table>
-</body>
-</html>
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.LevenshteinDistanceBenchmarks-report-github.md
-```
-```
-
-BenchmarkDotNet v0.15.2, Windows 11 (10.0.26200.7623)
-12th Gen Intel Core i9-12900KF 3.20GHz, 1 CPU, 24 logical and 16 physical cores
-.NET SDK 10.0.102
-  [Host]   : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-  ShortRun : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-
-Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-
-```
-| Method                    | Mean      | Error     | StdDev   | Gen0   | Allocated |
-|-------------------------- |----------:|----------:|---------:|-------:|----------:|
-| FuzzySharpDistance        | 180.47 ns | 32.622 ns | 1.788 ns | 0.0091 |     144 B |
-| FuzzySharpClassicDistance | 526.36 ns | 55.133 ns | 3.022 ns | 0.0200 |     320 B |
-| FastenshteinDistance      | 623.55 ns | 99.975 ns | 5.480 ns |      - |         - |
-| QuickenshteinDistance     | 469.50 ns | 47.252 ns | 2.590 ns |      - |         - |
-| FuzzySharpDistanceFrom    |  74.69 ns |  6.553 ns | 0.359 ns |      - |         - |
-| FastenshteinDistanceFrom  | 523.82 ns | 30.887 ns | 1.693 ns |      - |         - |
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.LevenshteinDistanceBenchmarks-report.csv
-```
-Method,Job,AnalyzeLaunchVariance,EvaluateOverhead,MaxAbsoluteError,MaxRelativeError,MinInvokeCount,MinIterationTime,OutlierMode,Affinity,EnvironmentVariables,Jit,LargeAddressAware,Platform,PowerPlanMode,Runtime,AllowVeryLargeObjects,Concurrent,CpuGroups,Force,HeapAffinitizeMask,HeapCount,NoAffinitize,RetainVm,Server,Arguments,BuildConfiguration,Clock,EngineFactory,NuGetReferences,Toolchain,IsMutator,InvocationCount,IterationCount,IterationTime,LaunchCount,MaxIterationCount,MaxWarmupIterationCount,MemoryRandomization,MinIterationCount,MinWarmupIterationCount,RunStrategy,UnrollFactor,WarmupCount,Mean,Error,StdDev,Gen0,Allocated
-FuzzySharpDistance,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,180.47 ns,32.622 ns,1.788 ns,0.0091,144 B
-FuzzySharpClassicDistance,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,526.36 ns,55.133 ns,3.022 ns,0.0200,320 B
-FastenshteinDistance,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,623.55 ns,99.975 ns,5.480 ns,0.0000,0 B
-QuickenshteinDistance,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,469.50 ns,47.252 ns,2.590 ns,0.0000,0 B
-FuzzySharpDistanceFrom,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,74.69 ns,6.553 ns,0.359 ns,0.0000,0 B
-FastenshteinDistanceFrom,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,523.82 ns,30.887 ns,1.693 ns,0.0000,0 B
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.LevenshteinDistanceBenchmarks-report.html
-```
-<!DOCTYPE html>
-<html lang='en'>
-<head>
-<meta charset='utf-8' />
-<title>Raffinert.FuzzySharp.Benchmarks.LevenshteinDistanceBenchmarks-20260203-084636</title>
-
-<style type="text/css">
-	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
-	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
-	tr { background-color: #fff; border-top: 1px solid #ccc; }
-	tr:nth-child(even) { background: #f8f8f8; }
-</style>
-</head>
-<body>
-<pre><code>
-BenchmarkDotNet v0.15.2, Windows 11 (10.0.26200.7623)
-12th Gen Intel Core i9-12900KF 3.20GHz, 1 CPU, 24 logical and 16 physical cores
-.NET SDK 10.0.102
-  [Host]   : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-  ShortRun : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-</code></pre>
-<pre><code>Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-</code></pre>
-
-<table>
-<thead><tr><th>Method             </th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen0</th><th>Allocated</th>
-</tr>
-</thead><tbody><tr><td>FuzzySharpDistance</td><td>180.47 ns</td><td>32.622 ns</td><td>1.788 ns</td><td>0.0091</td><td>144 B</td>
-</tr><tr><td>FuzzySharpClassicDistance</td><td>526.36 ns</td><td>55.133 ns</td><td>3.022 ns</td><td>0.0200</td><td>320 B</td>
-</tr><tr><td>FastenshteinDistance</td><td>623.55 ns</td><td>99.975 ns</td><td>5.480 ns</td><td>-</td><td>-</td>
-</tr><tr><td>QuickenshteinDistance</td><td>469.50 ns</td><td>47.252 ns</td><td>2.590 ns</td><td>-</td><td>-</td>
-</tr><tr><td>FuzzySharpDistanceFrom</td><td>74.69 ns</td><td>6.553 ns</td><td>0.359 ns</td><td>-</td><td>-</td>
-</tr><tr><td>FastenshteinDistanceFrom</td><td>523.82 ns</td><td>30.887 ns</td><td>1.693 ns</td><td>-</td><td>-</td>
-</tr></tbody></table>
-</body>
-</html>
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.PartialRatioBenchmarks-report-github.md
-```
-```
-
-BenchmarkDotNet v0.15.2, Windows 11 (10.0.26200.7623)
-12th Gen Intel Core i9-12900KF 3.20GHz, 1 CPU, 24 logical and 16 physical cores
-.NET SDK 10.0.102
-  [Host]   : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-  ShortRun : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-
-Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-
-```
-| Method              | Mean     | Error     | StdDev   | Gen0   | Allocated |
-|-------------------- |---------:|----------:|---------:|-------:|----------:|
-| PartialRatio        | 296.6 ns |   8.83 ns |  0.48 ns | 0.0091 |     144 B |
-| PartialRatioClassic | 642.8 ns | 457.17 ns | 25.06 ns | 0.2146 |    3368 B |
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.PartialRatioBenchmarks-report.csv
-```
-Method,Job,AnalyzeLaunchVariance,EvaluateOverhead,MaxAbsoluteError,MaxRelativeError,MinInvokeCount,MinIterationTime,OutlierMode,Affinity,EnvironmentVariables,Jit,LargeAddressAware,Platform,PowerPlanMode,Runtime,AllowVeryLargeObjects,Concurrent,CpuGroups,Force,HeapAffinitizeMask,HeapCount,NoAffinitize,RetainVm,Server,Arguments,BuildConfiguration,Clock,EngineFactory,NuGetReferences,Toolchain,IsMutator,InvocationCount,IterationCount,IterationTime,LaunchCount,MaxIterationCount,MaxWarmupIterationCount,MemoryRandomization,MinIterationCount,MinWarmupIterationCount,RunStrategy,UnrollFactor,WarmupCount,Mean,Error,StdDev,Gen0,Allocated
-PartialRatio,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,296.6 ns,8.83 ns,0.48 ns,0.0091,144 B
-PartialRatioClassic,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,642.8 ns,457.17 ns,25.06 ns,0.2146,3368 B
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.PartialRatioBenchmarks-report.html
-```
-<!DOCTYPE html>
-<html lang='en'>
-<head>
-<meta charset='utf-8' />
-<title>Raffinert.FuzzySharp.Benchmarks.PartialRatioBenchmarks-20260203-084718</title>
-
-<style type="text/css">
-	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
-	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
-	tr { background-color: #fff; border-top: 1px solid #ccc; }
-	tr:nth-child(even) { background: #f8f8f8; }
-</style>
-</head>
-<body>
-<pre><code>
-BenchmarkDotNet v0.15.2, Windows 11 (10.0.26200.7623)
-12th Gen Intel Core i9-12900KF 3.20GHz, 1 CPU, 24 logical and 16 physical cores
-.NET SDK 10.0.102
-  [Host]   : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-  ShortRun : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-</code></pre>
-<pre><code>Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-</code></pre>
-
-<table>
-<thead><tr><th>Method       </th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen0</th><th>Allocated</th>
-</tr>
-</thead><tbody><tr><td>PartialRatio</td><td>296.6 ns</td><td>8.83 ns</td><td>0.48 ns</td><td>0.0091</td><td>144 B</td>
-</tr><tr><td>PartialRatioClassic</td><td>642.8 ns</td><td>457.17 ns</td><td>25.06 ns</td><td>0.2146</td><td>3368 B</td>
-</tr></tbody></table>
-</body>
-</html>
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.RatioBenchmarks-report-github.md
-```
-```
-
-BenchmarkDotNet v0.15.2, Windows 11 (10.0.26200.7623)
-12th Gen Intel Core i9-12900KF 3.20GHz, 1 CPU, 24 logical and 16 physical cores
-.NET SDK 10.0.102
-  [Host]   : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-  ShortRun : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-
-Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-
-```
-| Method                | Mean      | Error     | StdDev   | Gen0   | Allocated |
-|---------------------- |----------:|----------:|---------:|-------:|----------:|
-| Ratio                 |  98.92 ns | 55.384 ns | 3.036 ns | 0.0092 |     144 B |
-| RatioClassic          | 162.62 ns | 38.227 ns | 2.095 ns | 0.0203 |     320 B |
-| RatioCached           | 130.74 ns | 62.343 ns | 3.417 ns | 0.0153 |     240 B |
-| RatioAcrossRunsCached |  39.29 ns |  3.065 ns | 0.168 ns |      - |         - |
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.RatioBenchmarks-report.csv
-```
-Method,Job,AnalyzeLaunchVariance,EvaluateOverhead,MaxAbsoluteError,MaxRelativeError,MinInvokeCount,MinIterationTime,OutlierMode,Affinity,EnvironmentVariables,Jit,LargeAddressAware,Platform,PowerPlanMode,Runtime,AllowVeryLargeObjects,Concurrent,CpuGroups,Force,HeapAffinitizeMask,HeapCount,NoAffinitize,RetainVm,Server,Arguments,BuildConfiguration,Clock,EngineFactory,NuGetReferences,Toolchain,IsMutator,InvocationCount,IterationCount,IterationTime,LaunchCount,MaxIterationCount,MaxWarmupIterationCount,MemoryRandomization,MinIterationCount,MinWarmupIterationCount,RunStrategy,UnrollFactor,WarmupCount,Mean,Error,StdDev,Gen0,Allocated
-Ratio,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,98.92 ns,55.384 ns,3.036 ns,0.0092,144 B
-RatioClassic,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,162.62 ns,38.227 ns,2.095 ns,0.0203,320 B
-RatioCached,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,130.74 ns,62.343 ns,3.417 ns,0.0153,240 B
-RatioAcrossRunsCached,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,39.29 ns,3.065 ns,0.168 ns,0.0000,0 B
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.RatioBenchmarks-report.html
-```
-<!DOCTYPE html>
-<html lang='en'>
-<head>
-<meta charset='utf-8' />
-<title>Raffinert.FuzzySharp.Benchmarks.RatioBenchmarks-20260203-084844</title>
-
-<style type="text/css">
-	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
-	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
-	tr { background-color: #fff; border-top: 1px solid #ccc; }
-	tr:nth-child(even) { background: #f8f8f8; }
-</style>
-</head>
-<body>
-<pre><code>
-BenchmarkDotNet v0.15.2, Windows 11 (10.0.26200.7623)
-12th Gen Intel Core i9-12900KF 3.20GHz, 1 CPU, 24 logical and 16 physical cores
-.NET SDK 10.0.102
-  [Host]   : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-  ShortRun : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-</code></pre>
-<pre><code>Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-</code></pre>
-
-<table>
-<thead><tr><th>Method         </th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen0</th><th>Allocated</th>
-</tr>
-</thead><tbody><tr><td>Ratio</td><td>98.92 ns</td><td>55.384 ns</td><td>3.036 ns</td><td>0.0092</td><td>144 B</td>
-</tr><tr><td>RatioClassic</td><td>162.62 ns</td><td>38.227 ns</td><td>2.095 ns</td><td>0.0203</td><td>320 B</td>
-</tr><tr><td>RatioCached</td><td>130.74 ns</td><td>62.343 ns</td><td>3.417 ns</td><td>0.0153</td><td>240 B</td>
-</tr><tr><td>RatioAcrossRunsCached</td><td>39.29 ns</td><td>3.065 ns</td><td>0.168 ns</td><td>-</td><td>-</td>
-</tr></tbody></table>
-</body>
-</html>
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.WeightedRatioBenchmarks-report-github.md
-```
-```
-
-BenchmarkDotNet v0.15.2, Windows 11 (10.0.26200.7623)
-12th Gen Intel Core i9-12900KF 3.20GHz, 1 CPU, 24 logical and 16 physical cores
-.NET SDK 10.0.102
-  [Host]   : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-  ShortRun : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-
-Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-
-```
-| Method                        | Mean     | Error     | StdDev    | Gen0   | Gen1   | Allocated |
-|------------------------------ |---------:|----------:|----------:|-------:|-------:|----------:|
-| WeightedRatio                 | 3.078 μs | 0.2422 μs | 0.0133 μs | 0.3014 |      - |   4.67 KB |
-| WeightedRatioClassic          | 6.720 μs | 4.2698 μs | 0.2340 μs | 0.7477 |      - |  11.53 KB |
-| WeightedRatioCached           | 2.613 μs | 0.2979 μs | 0.0163 μs | 0.5836 | 0.0114 |   8.99 KB |
-| WeightedRatioAcrossRunsCached | 2.143 μs | 0.4156 μs | 0.0228 μs | 0.2213 |      - |   3.44 KB |
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.WeightedRatioBenchmarks-report.csv
-```
-Method,Job,AnalyzeLaunchVariance,EvaluateOverhead,MaxAbsoluteError,MaxRelativeError,MinInvokeCount,MinIterationTime,OutlierMode,Affinity,EnvironmentVariables,Jit,LargeAddressAware,Platform,PowerPlanMode,Runtime,AllowVeryLargeObjects,Concurrent,CpuGroups,Force,HeapAffinitizeMask,HeapCount,NoAffinitize,RetainVm,Server,Arguments,BuildConfiguration,Clock,EngineFactory,NuGetReferences,Toolchain,IsMutator,InvocationCount,IterationCount,IterationTime,LaunchCount,MaxIterationCount,MaxWarmupIterationCount,MemoryRandomization,MinIterationCount,MinWarmupIterationCount,RunStrategy,UnrollFactor,WarmupCount,Mean,Error,StdDev,Gen0,Gen1,Allocated
-WeightedRatio,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,3.078 μs,0.2422 μs,0.0133 μs,0.3014,0.0000,4.67 KB
-WeightedRatioClassic,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,6.720 μs,4.2698 μs,0.2340 μs,0.7477,0.0000,11.53 KB
-WeightedRatioCached,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,2.613 μs,0.2979 μs,0.0163 μs,0.5836,0.0114,8.99 KB
-WeightedRatioAcrossRunsCached,ShortRun,False,Default,Default,Default,Default,Default,Default,111111111111111111111111,Empty,RyuJit,Default,X64,8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c,.NET 10.0,False,True,False,True,Default,Default,False,False,False,Default,Default,Default,Default,Default,Default,Default,Default,3,Default,1,Default,Default,Default,Default,Default,Default,16,3,2.143 μs,0.4156 μs,0.0228 μs,0.2213,0.0000,3.44 KB
-```
-
-BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.WeightedRatioBenchmarks-report.html
-```
-<!DOCTYPE html>
-<html lang='en'>
-<head>
-<meta charset='utf-8' />
-<title>Raffinert.FuzzySharp.Benchmarks.WeightedRatioBenchmarks-20260203-085111</title>
-
-<style type="text/css">
-	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
-	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
-	tr { background-color: #fff; border-top: 1px solid #ccc; }
-	tr:nth-child(even) { background: #f8f8f8; }
-</style>
-</head>
-<body>
-<pre><code>
-BenchmarkDotNet v0.15.2, Windows 11 (10.0.26200.7623)
-12th Gen Intel Core i9-12900KF 3.20GHz, 1 CPU, 24 logical and 16 physical cores
-.NET SDK 10.0.102
-  [Host]   : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-  ShortRun : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX2
-</code></pre>
-<pre><code>Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-</code></pre>
-
-<table>
-<thead><tr><th>Method                 </th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen0</th><th>Gen1</th><th>Allocated</th>
-</tr>
-</thead><tbody><tr><td>WeightedRatio</td><td>3.078 &mu;s</td><td>0.2422 &mu;s</td><td>0.0133 &mu;s</td><td>0.3014</td><td>-</td><td>4.67 KB</td>
-</tr><tr><td>WeightedRatioClassic</td><td>6.720 &mu;s</td><td>4.2698 &mu;s</td><td>0.2340 &mu;s</td><td>0.7477</td><td>-</td><td>11.53 KB</td>
-</tr><tr><td>WeightedRatioCached</td><td>2.613 &mu;s</td><td>0.2979 &mu;s</td><td>0.0163 &mu;s</td><td>0.5836</td><td>0.0114</td><td>8.99 KB</td>
-</tr><tr><td>WeightedRatioAcrossRunsCached</td><td>2.143 &mu;s</td><td>0.4156 &mu;s</td><td>0.0228 &mu;s</td><td>0.2213</td><td>-</td><td>3.44 KB</td>
-</tr></tbody></table>
-</body>
-</html>
-```
-
-FuzzySharp.Benchmarks/LevenshteinDistance/LevenshteinLarge.cs
-```
-﻿using BenchmarkDotNet.Attributes;
-using Raffinert.FuzzySharp.Benchmarks.Utils;
-using FastLevenshtein = Fastenshtein.Levenshtein;
-using FuzzLevenshtein = Raffinert.FuzzySharp.Levenshtein;
-using FuzzLevenshteinClassic = FuzzySharp.Levenshtein;
-using QuickLevenshtein = Quickenshtein.Levenshtein;
-
-namespace Raffinert.FuzzySharp.Benchmarks.LevenshteinDistance;
-
-[MemoryDiagnoser]
-public class LevenshteinLarge
-{
-    private string[] _words;
-
-    [GlobalSetup]
-    public void SetUp()
-    {
-        _words = RandomWords.Create(20, 1024);
+        return ResultExtractor.ExtractWithoutOrder(query, choices, processor, scorer, cutoff);
     }
 
-    [Benchmark(Baseline = true)]
-    public void NaiveDp()
+    public static IEnumerable<ExtractedResult<T>> ExtractAll<T>(
+        T query,
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        int cutoff,
+        ProcessOptions options)
     {
-        for (var i = 0; i < _words.Length; i++)
+        if (processor == null) throw new ArgumentNullException(nameof(processor));
+
+        if (options.UseCaching)
         {
-            for (int j = 0; j < _words.Length; j++)
-            {
-                LevenshteinBaseline.GetDistance(_words[i], _words[j]);
-            }
+            return ExtractAllCached(processor(query), choices, processor, cutoff, options);
+        }
+
+        var scorer = options.Scorer ?? Process.DefaultScorer;
+
+        if (options.UseParallel)
+        {
+            return ResultExtractor.Parallel.ExtractWithoutOrder(
+                query, choices, processor, scorer, cutoff, options.ParallelOptions);
+        }
+
+        return ResultExtractor.ExtractWithoutOrder(query, choices, processor, scorer, cutoff);
+    }
+
+    public static IEnumerable<ExtractedResult<T>> ExtractAll<T>(
+        string query,
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        int cutoff,
+        ProcessOptions options)
+    {
+        if (processor == null) throw new ArgumentNullException(nameof(processor));
+
+        if (options.UseCaching)
+        {
+            return ExtractAllCached(query, choices, processor, cutoff, options);
+        }
+
+        var scorer = options.Scorer ?? Process.DefaultScorer;
+
+        if (options.UseParallel)
+        {
+            return ResultExtractor.Parallel.ExtractWithoutOrder(
+                query, choices, processor, scorer, cutoff, options.ParallelOptions);
+        }
+
+        return ResultExtractor.ExtractWithoutOrder(query, choices, processor, scorer, cutoff);
+    }
+
+    private static IEnumerable<ExtractedResult<T>> ExtractAllCached<T>(
+        string processedQuery,
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        int cutoff,
+        ProcessOptions options)
+    {
+        using var scorer = new CachedWeightedRatioScorer(processedQuery);
+        var results = CachedScorerProcessExecutor.ExtractAll(
+            choices, processor, scorer, cutoff,
+            options.UseParallel, options.ParallelOptions);
+
+        foreach (var result in results)
+        {
+            yield return result;
         }
     }
 
-    [Benchmark]
-    public void FuzzySharpClassic()
+    #endregion
+
+    #region ExtractTop
+
+    public static IEnumerable<ExtractedResult<string>> ExtractTop(
+        string query,
+        IEnumerable<string> choices,
+        Func<string, string> processor,
+        int limit,
+        int cutoff,
+        ProcessOptions options)
     {
-        for (var i = 0; i < _words.Length; i++)
+        processor ??= Process.DefaultStringProcessor;
+
+        if (options.UseCaching)
         {
-            for (int j = 0; j < _words.Length; j++)
-            {
-                FuzzLevenshteinClassic.EditDistance(_words[i], _words[j]);
-            }
+            return ExtractTopCached(processor(query), choices, processor, limit, cutoff, options);
+        }
+
+        var scorer = options.Scorer ?? Process.DefaultScorer;
+
+        if (options.UseParallel)
+        {
+            return ResultExtractor.Parallel.ExtractTop(
+                query, choices, processor, scorer, limit, cutoff, options.ParallelOptions);
+        }
+
+        return ResultExtractor.ExtractTop(query, choices, processor, scorer, limit, cutoff);
+    }
+
+    public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(
+        T query,
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        int limit,
+        int cutoff,
+        ProcessOptions options)
+    {
+        if (processor == null) throw new ArgumentNullException(nameof(processor));
+
+        if (options.UseCaching)
+        {
+            return ExtractTopCached(processor(query), choices, processor, limit, cutoff, options);
+        }
+
+        var scorer = options.Scorer ?? Process.DefaultScorer;
+
+        if (options.UseParallel)
+        {
+            return ResultExtractor.Parallel.ExtractTop(
+                query, choices, processor, scorer, limit, cutoff, options.ParallelOptions);
+        }
+
+        return ResultExtractor.ExtractTop(query, choices, processor, scorer, limit, cutoff);
+    }
+
+    private static IEnumerable<ExtractedResult<T>> ExtractTopCached<T>(
+        string processedQuery,
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        int limit,
+        int cutoff,
+        ProcessOptions options)
+    {
+        using var scorer = new CachedWeightedRatioScorer(processedQuery);
+        var results = CachedScorerProcessExecutor.ExtractTop(
+            choices, processor, scorer, limit, cutoff,
+            options.UseParallel, options.ParallelOptions);
+
+        foreach (var result in results)
+        {
+            yield return result;
         }
     }
 
-    [Benchmark]
-    public void Fastenshtein()
+    #endregion
+
+    #region ExtractSorted
+
+    public static IEnumerable<ExtractedResult<string>> ExtractSorted(
+        string query,
+        IEnumerable<string> choices,
+        Func<string, string> processor,
+        int cutoff,
+        ProcessOptions options)
     {
-        for (var i = 0; i < _words.Length; i++)
+        processor ??= Process.DefaultStringProcessor;
+
+        if (options.UseCaching)
         {
-            var levenshtein = new FastLevenshtein(_words[i]);
-            for (int j = 0; j < _words.Length; j++)
-            {
-                levenshtein.DistanceFrom(_words[j]);
-            }
+            return ExtractSortedCached(processor(query), choices, processor, cutoff, options);
+        }
+
+        var scorer = options.Scorer ?? Process.DefaultScorer;
+
+        if (options.UseParallel)
+        {
+            return ResultExtractor.Parallel.ExtractSorted(
+                query, choices, processor, scorer, cutoff, options.ParallelOptions);
+        }
+
+        return ResultExtractor.ExtractSorted(query, choices, processor, scorer, cutoff);
+    }
+
+    public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(
+        T query,
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        int cutoff,
+        ProcessOptions options)
+    {
+        if (processor == null) throw new ArgumentNullException(nameof(processor));
+
+        if (options.UseCaching)
+        {
+            return ExtractSortedCached(processor(query), choices, processor, cutoff, options);
+        }
+
+        var scorer = options.Scorer ?? Process.DefaultScorer;
+
+        if (options.UseParallel)
+        {
+            return ResultExtractor.Parallel.ExtractSorted(
+                query, choices, processor, scorer, cutoff, options.ParallelOptions);
+        }
+
+        return ResultExtractor.ExtractSorted(query, choices, processor, scorer, cutoff);
+    }
+
+    private static IEnumerable<ExtractedResult<T>> ExtractSortedCached<T>(
+        string processedQuery,
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        int cutoff,
+        ProcessOptions options)
+    {
+        using var scorer = new CachedWeightedRatioScorer(processedQuery);
+        var results = CachedScorerProcessExecutor.ExtractSorted(
+            choices, processor, scorer, cutoff,
+            options.UseParallel, options.ParallelOptions);
+
+        foreach (var result in results)
+        {
+            yield return result;
         }
     }
 
-    [Benchmark]
-    public void Quickenshtein()
+    #endregion
+
+    #region ExtractOne
+
+    public static ExtractedResult<string> ExtractOne(
+        string query,
+        IEnumerable<string> choices,
+        Func<string, string> processor,
+        int cutoff,
+        ProcessOptions options)
     {
-        for (var i = 0; i < _words.Length; i++)
+        processor ??= Process.DefaultStringProcessor;
+
+        if (options.UseCaching)
         {
-            for (int j = 0; j < _words.Length; j++)
-            {
-                QuickLevenshtein.GetDistance(_words[i], _words[j]);
-            }
+            var processedQuery = processor(query);
+            using var cachedScorer = new CachedWeightedRatioScorer(processedQuery);
+            return CachedScorerProcessExecutor.ExtractOne(
+                choices, processor, cachedScorer, cutoff,
+                options.UseParallel, options.ParallelOptions);
         }
+
+        var scorer = options.Scorer ?? Process.DefaultScorer;
+
+        if (options.UseParallel)
+        {
+            return ResultExtractor.Parallel.ExtractOne(
+                query, choices, processor, scorer, cutoff, options.ParallelOptions);
+        }
+
+        return ResultExtractor.ExtractOne(query, choices, processor, scorer, cutoff);
     }
 
-    [Benchmark]
-    public void FuzzySharp()
+    public static ExtractedResult<T> ExtractOne<T>(
+        T query,
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        int cutoff,
+        ProcessOptions options)
     {
-        for (var i = 0; i < _words.Length; i++)
+        if (processor == null) throw new ArgumentNullException(nameof(processor));
+
+        if (options.UseCaching)
         {
-            using var lev = new FuzzLevenshtein(_words[i]);
-            for (int j = 0; j < _words.Length; j++)
-            {
-                lev.DistanceFrom(_words[j]);
-            }
+            var processedQuery = processor(query);
+            using var cachedScorer = new CachedWeightedRatioScorer(processedQuery);
+            return CachedScorerProcessExecutor.ExtractOne(
+                choices, processor, cachedScorer, cutoff,
+                options.UseParallel, options.ParallelOptions);
         }
+
+        var scorer = options.Scorer ?? Process.DefaultScorer;
+
+        if (options.UseParallel)
+        {
+            return ResultExtractor.Parallel.ExtractOne(
+                query, choices, processor, scorer, cutoff, options.ParallelOptions);
+        }
+
+        return ResultExtractor.ExtractOne(query, choices, processor, scorer, cutoff);
     }
+
+    #endregion
 }
 ```
 
-FuzzySharp.Benchmarks/LevenshteinDistance/LevenshteinNormal.cs
+FuzzySharp/ProcessOptions.cs
 ```
-﻿using BenchmarkDotNet.Attributes;
-using Raffinert.FuzzySharp.Benchmarks.Utils;
-using FastLevenshtein = Fastenshtein.Levenshtein;
-using FuzzLevenshtein = Raffinert.FuzzySharp.Levenshtein;
-using FuzzLevenshteinClassic = FuzzySharp.Levenshtein;
-using QuickLevenshtein = Quickenshtein.Levenshtein;
+using System.Threading.Tasks;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
 
+namespace Raffinert.FuzzySharp;
 
-namespace Raffinert.FuzzySharp.Benchmarks.LevenshteinDistance;
-
-[MemoryDiagnoser]
-public class LevenshteinNormal
+/// <summary>
+/// Internal options for process execution.
+/// When <see cref="UseCaching"/> is true, the executor creates a
+/// <see cref="Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite.CachedWeightedRatioScorer"/>
+/// per extraction call automatically.
+/// </summary>
+internal readonly struct ProcessOptions
 {
-    private string[] _words;
-
-    [GlobalSetup]
-    public void SetUp()
+    public ProcessOptions(bool useParallel, ParallelOptions parallelOptions, IRatioScorer scorer, bool useCaching = false)
     {
-        _words = RandomWords.Create(20, 128);
+        UseParallel = useParallel;
+        ParallelOptions = parallelOptions;
+        Scorer = scorer;
+        UseCaching = useCaching;
     }
 
-    [Benchmark(Baseline = true)]
-    public void NaiveDp()
+    public bool UseParallel { get; }
+    public ParallelOptions ParallelOptions { get; }
+    public IRatioScorer Scorer { get; }
+    public bool UseCaching { get; }
+}
+
+/// <summary>
+/// Internal options for cached process execution with an external scorer.
+/// </summary>
+internal readonly struct CachedScorerProcessOptions
+{
+    public CachedScorerProcessOptions(bool useParallel, ParallelOptions parallelOptions, ICachedRatioScorer cachedScorer)
     {
-        for (var i = 0; i < _words.Length; i++)
-        {
-            for (int j = 0; j < _words.Length; j++)
-            {
-                LevenshteinBaseline.GetDistance(_words[i], _words[j]);
-            }
-        }
+        UseParallel = useParallel;
+        ParallelOptions = parallelOptions;
+        CachedScorer = cachedScorer;
     }
 
-    [Benchmark]
-    public void FuzzySharpClassic()
-    {
-        for (var i = 0; i < _words.Length; i++)
-        {
-            for (int j = 0; j < _words.Length; j++)
-            {
-                FuzzLevenshteinClassic.EditDistance(_words[i], _words[j]);
-            }
-        }
-    }
-
-    [Benchmark]
-    public void Fastenshtein()
-    {
-        for (var i = 0; i < _words.Length; i++)
-        {
-            var levenshtein = new FastLevenshtein(_words[i]);
-            for (int j = 0; j < _words.Length; j++)
-            {
-                levenshtein.DistanceFrom(_words[j]);
-            }
-        }
-    }
-
-    [Benchmark]
-    public void Quickenshtein()
-    {
-        for (var i = 0; i < _words.Length; i++)
-        {
-            for (int j = 0; j < _words.Length; j++)
-            {
-                QuickLevenshtein.GetDistance(_words[i], _words[j]);
-            }
-        }
-    }
-
-    [Benchmark]
-    public void FuzzySharp()
-    {
-        for (var i = 0; i < _words.Length; i++)
-        {
-            using var lev = new FuzzLevenshtein(_words[i]);
-            for (int j = 0; j < _words.Length; j++)
-            {
-                lev.DistanceFrom(_words[j]);
-            }
-        }
-    }
+    public bool UseParallel { get; }
+    public ParallelOptions ParallelOptions { get; }
+    public ICachedRatioScorer CachedScorer { get; }
 }
 ```
 
-FuzzySharp.Benchmarks/LevenshteinDistance/LevenshteinSmall.cs
+FuzzySharp/ProcessPipeline.cs
 ```
-﻿using BenchmarkDotNet.Attributes;
-using Raffinert.FuzzySharp.Benchmarks.Utils;
-using FastLevenshtein = Fastenshtein.Levenshtein;
-using FuzzLevenshtein = Raffinert.FuzzySharp.Levenshtein;
-using FuzzLevenshteinClassic = FuzzySharp.Levenshtein;
-using QuickLevenshtein = Quickenshtein.Levenshtein;
+using System;
+using System.Collections.Generic;
+using Raffinert.FuzzySharp.Extractor;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
 
-namespace Raffinert.FuzzySharp.Benchmarks.LevenshteinDistance;
+namespace Raffinert.FuzzySharp;
 
-[MemoryDiagnoser]
-public class LevenshteinSmall
+/// <summary>
+/// Immutable fuzzy string matching pipeline.
+/// The scoring algorithm is configured at build time via <see cref="ProcessBuilder.WithScorer"/>.
+/// When <see cref="ProcessOptions.UseCaching"/> is true, extraction methods automatically create
+/// a cached scorer per call for improved performance.
+/// </summary>
+public readonly struct ProcessPipeline
 {
-    private string[] _words;
+    private readonly ProcessOptions _options;
 
-    [GlobalSetup]
-    public void SetUp()
+    internal ProcessPipeline(ProcessOptions options)
     {
-        _words = RandomWords.Create(20, 64);
+        _options = options;
     }
 
-    [Benchmark(Baseline = true)]
-    public void NaiveDp()
+    #region ExtractAll
+
+    /// <summary>
+    /// Creates a list of ExtractedResult which contain all the choices with
+    /// their corresponding score where higher is more similar
+    /// </summary>
+    public IEnumerable<ExtractedResult<string>> ExtractAll(
+        string query,
+        IEnumerable<string> choices,
+        Func<string, string> processor = null,
+        int cutoff = 0)
     {
-        for (var i = 0; i < _words.Length; i++)
-        {
-            for (int j = 0; j < _words.Length; j++)
-            {
-                LevenshteinBaseline.GetDistance(_words[i], _words[j]);
-            }
-        }
+        return ProcessExecutor.ExtractAll(query, choices, processor, cutoff, _options);
     }
 
-    [Benchmark]
-    public void FuzzySharpClassic()
+    /// <summary>
+    /// Creates a list of ExtractedResult which contain all the choices with
+    /// their corresponding score where higher is more similar
+    /// </summary>
+    public IEnumerable<ExtractedResult<T>> ExtractAll<T>(
+        T query,
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        int cutoff = 0)
     {
-        for (var i = 0; i < _words.Length; i++)
-        {
-            for (int j = 0; j < _words.Length; j++)
-            {
-                FuzzLevenshteinClassic.EditDistance(_words[i], _words[j]);
-            }
-        }
+        return ProcessExecutor.ExtractAll(query, choices, processor, cutoff, _options);
     }
 
-    [Benchmark]
-    public void Fastenshtein()
+    /// <summary>
+    /// Creates a list of ExtractedResult which contain all the choices with
+    /// their corresponding score where higher is more similar
+    /// </summary>
+    public IEnumerable<ExtractedResult<T>> ExtractAll<T>(
+        string query,
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        int cutoff = 0)
     {
-        for (var i = 0; i < _words.Length; i++)
-        {
-            var levenshtein = new FastLevenshtein(_words[i]);
-            for (int j = 0; j < _words.Length; j++)
-            {
-                levenshtein.DistanceFrom(_words[j]);
-            }
-        }
+        return ProcessExecutor.ExtractAll(query, choices, processor, cutoff, _options);
     }
 
-    [Benchmark]
-    public void Quickenshtein()
+    #endregion
+
+    #region ExtractTop
+
+    /// <summary>
+    /// Creates a sorted list of ExtractedResult which contain the
+    /// top limit most similar choices
+    /// </summary>
+    public IEnumerable<ExtractedResult<string>> ExtractTop(
+        string query,
+        IEnumerable<string> choices,
+        Func<string, string> processor = null,
+        int limit = 5,
+        int cutoff = 0)
     {
-        for (var i = 0; i < _words.Length; i++)
-        {
-            for (int j = 0; j < _words.Length; j++)
-            {
-                QuickLevenshtein.GetDistance(_words[i], _words[j]);
-            }
-        }
+        return ProcessExecutor.ExtractTop(query, choices, processor, limit, cutoff, _options);
     }
 
-    [Benchmark]
-    public void FuzzySharp()
+    /// <summary>
+    /// Creates a sorted list of ExtractedResult which contain the
+    /// top limit most similar choices
+    /// </summary>
+    public IEnumerable<ExtractedResult<T>> ExtractTop<T>(
+        T query,
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        int limit = 5,
+        int cutoff = 0)
     {
-        for (var i = 0; i < _words.Length; i++)
-        {
-            using var lev = new FuzzLevenshtein(_words[i]);
-            for (int j = 0; j < _words.Length; j++)
-            {
-                lev.DistanceFrom(_words[j]);
-            }
-        }
+        return ProcessExecutor.ExtractTop(query, choices, processor, limit, cutoff, _options);
     }
+
+    #endregion
+
+    #region ExtractSorted
+
+    /// <summary>
+    /// Creates a sorted list of ExtractedResult with the closest matches first
+    /// </summary>
+    public IEnumerable<ExtractedResult<string>> ExtractSorted(
+        string query,
+        IEnumerable<string> choices,
+        Func<string, string> processor = null,
+        int cutoff = 0)
+    {
+        return ProcessExecutor.ExtractSorted(query, choices, processor, cutoff, _options);
+    }
+
+    /// <summary>
+    /// Creates a sorted list of ExtractedResult with the closest matches first
+    /// </summary>
+    public IEnumerable<ExtractedResult<T>> ExtractSorted<T>(
+        T query,
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        int cutoff = 0)
+    {
+        return ProcessExecutor.ExtractSorted(query, choices, processor, cutoff, _options);
+    }
+
+    #endregion
+
+    #region ExtractOne
+
+    /// <summary>
+    /// Find the single best match above a score in a list of choices.
+    /// </summary>
+    public ExtractedResult<string> ExtractOne(
+        string query,
+        IEnumerable<string> choices,
+        Func<string, string> processor = null,
+        int cutoff = 0)
+    {
+        return ProcessExecutor.ExtractOne(query, choices, processor, cutoff, _options);
+    }
+
+    /// <summary>
+    /// Find the single best match above a score in a list of choices.
+    /// </summary>
+    public ExtractedResult<T> ExtractOne<T>(
+        T query,
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        int cutoff = 0)
+    {
+        return ProcessExecutor.ExtractOne(query, choices, processor, cutoff, _options);
+    }
+
+    /// <summary>
+    /// Find the single best match above a score in a list of choices.
+    /// </summary>
+    public ExtractedResult<string> ExtractOne(string query, params string[] choices)
+    {
+        return ProcessExecutor.ExtractOne(query, choices, null, 0, _options);
+    }
+
+    #endregion
 }
-```
 
-FuzzySharp.Benchmarks/Utils/LevenshteinBaseline.cs
-```
-namespace Raffinert.FuzzySharp.Benchmarks.Utils;
-
-public static class LevenshteinBaseline
+/// <summary>
+/// Immutable cached fuzzy string matching pipeline with an external <see cref="ICachedRatioScorer"/>.
+/// The scorer is provided at build time and reused across all extraction calls.
+/// The caller owns the scorer's lifecycle (creation and disposal).
+/// </summary>
+public readonly struct CachedScorerProcessPipeline
 {
-    public static int GetDistance(string source, string target)
+    private readonly CachedScorerProcessOptions _options;
+
+    internal CachedScorerProcessPipeline(CachedScorerProcessOptions options)
     {
-        var costMatrix = Enumerable
-            .Range(0, source.Length + 1)
-            .Select(line => new int[target.Length + 1])
-            .ToArray();
-
-        for (var rowIndex = 1; rowIndex <= source.Length; rowIndex++)
-        {
-            costMatrix[rowIndex][0] = rowIndex;
-        }
-
-        for (var columnIndex = 1; columnIndex <= target.Length; columnIndex++)
-        {
-            costMatrix[0][columnIndex] = columnIndex;
-        }
-
-        for (var rowIndex = 1; rowIndex <= source.Length; rowIndex++)
-        {
-            for (var columnIndex = 1; columnIndex <= target.Length; columnIndex++)
-            {
-                var insertion = costMatrix[rowIndex][columnIndex - 1] + 1;
-                var deletion = costMatrix[rowIndex - 1][columnIndex] + 1;
-                var substitution = costMatrix[rowIndex - 1][columnIndex - 1] + (source[rowIndex - 1] == target[columnIndex - 1] ? 0 : 1);
-
-                costMatrix[rowIndex][columnIndex] = Math.Min(Math.Min(insertion, deletion), substitution);
-            }
-        }
-
-        return costMatrix[source.Length][target.Length];
+        _options = options;
     }
-}
-```
 
-FuzzySharp.Benchmarks/Utils/RandomWords.cs
-```
-﻿namespace Raffinert.FuzzySharp.Benchmarks.Utils;
+    #region ExtractAll
 
-// original https://github.com/DanHarltey/Fastenshtein/blob/master/benchmarks/Fastenshtein.Benchmarking/RandomWords.cs
-public static class RandomWords
-{
-    private static readonly char[] Letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-
-    public static string[] Create(int count, int maxWordSize)
+    /// <summary>
+    /// Creates a list of ExtractedResult which contain all the choices with
+    /// their corresponding score where higher is more similar
+    /// </summary>
+    public IEnumerable<ExtractedResult<string>> ExtractAll(
+        IEnumerable<string> choices,
+        Func<string, string> processor = null,
+        int cutoff = 0)
     {
-        var words = new string[count];
-
-        // using a const seed to make sure runs of the performance tests are consistent.
-        var random = new Random(37);
-
-        for (var i = 0; i < words.Length; i++)
-        {
-            var wordSize = random.Next(3, maxWordSize);
-
-            words[i] = string.Create(wordSize, random, static (word, r) =>
-            {
-                for (var j = 0; j < word.Length; j++)
-                {
-                    var index = r.Next(0, Letters.Length);
-                    word[j] = Letters[index];
-                }
-            });
-        }
-
-        return words;
+        return CachedScorerProcessExecutor.ExtractAll(
+            choices, processor ?? Process.DefaultStringProcessor, _options.CachedScorer, cutoff,
+            _options.UseParallel, _options.ParallelOptions);
     }
+
+    /// <summary>
+    /// Creates a list of ExtractedResult which contain all the choices with
+    /// their corresponding score where higher is more similar
+    /// </summary>
+    public IEnumerable<ExtractedResult<T>> ExtractAll<T>(
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        int cutoff = 0)
+    {
+        if (processor == null) throw new ArgumentNullException(nameof(processor));
+        return CachedScorerProcessExecutor.ExtractAll(
+            choices, processor, _options.CachedScorer, cutoff,
+            _options.UseParallel, _options.ParallelOptions);
+    }
+
+    #endregion
+
+    #region ExtractTop
+
+    /// <summary>
+    /// Creates a sorted list of ExtractedResult which contain the
+    /// top limit most similar choices
+    /// </summary>
+    public IEnumerable<ExtractedResult<string>> ExtractTop(
+        IEnumerable<string> choices,
+        Func<string, string> processor = null,
+        int limit = 5,
+        int cutoff = 0)
+    {
+        return CachedScorerProcessExecutor.ExtractTop(
+            choices, processor ?? Process.DefaultStringProcessor, _options.CachedScorer, limit, cutoff,
+            _options.UseParallel, _options.ParallelOptions);
+    }
+
+    /// <summary>
+    /// Creates a sorted list of ExtractedResult which contain the
+    /// top limit most similar choices
+    /// </summary>
+    public IEnumerable<ExtractedResult<T>> ExtractTop<T>(
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        int limit = 5,
+        int cutoff = 0)
+    {
+        if (processor == null) throw new ArgumentNullException(nameof(processor));
+        return CachedScorerProcessExecutor.ExtractTop(
+            choices, processor, _options.CachedScorer, limit, cutoff,
+            _options.UseParallel, _options.ParallelOptions);
+    }
+
+    #endregion
+
+    #region ExtractSorted
+
+    /// <summary>
+    /// Creates a sorted list of ExtractedResult with the closest matches first
+    /// </summary>
+    public IEnumerable<ExtractedResult<string>> ExtractSorted(
+        IEnumerable<string> choices,
+        Func<string, string> processor = null,
+        int cutoff = 0)
+    {
+        return CachedScorerProcessExecutor.ExtractSorted(
+            choices, processor ?? Process.DefaultStringProcessor, _options.CachedScorer, cutoff,
+            _options.UseParallel, _options.ParallelOptions);
+    }
+
+    /// <summary>
+    /// Creates a sorted list of ExtractedResult with the closest matches first
+    /// </summary>
+    public IEnumerable<ExtractedResult<T>> ExtractSorted<T>(
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        int cutoff = 0)
+    {
+        if (processor == null) throw new ArgumentNullException(nameof(processor));
+        return CachedScorerProcessExecutor.ExtractSorted(
+            choices, processor, _options.CachedScorer, cutoff,
+            _options.UseParallel, _options.ParallelOptions);
+    }
+
+    #endregion
+
+    #region ExtractOne
+
+    /// <summary>
+    /// Find the single best match above a score in a list of choices.
+    /// </summary>
+    public ExtractedResult<string> ExtractOne(
+        IEnumerable<string> choices,
+        Func<string, string> processor = null,
+        int cutoff = 0)
+    {
+        return CachedScorerProcessExecutor.ExtractOne(
+            choices, processor ?? Process.DefaultStringProcessor, _options.CachedScorer, cutoff,
+            _options.UseParallel, _options.ParallelOptions);
+    }
+
+    /// <summary>
+    /// Find the single best match above a score in a list of choices.
+    /// </summary>
+    public ExtractedResult<T> ExtractOne<T>(
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        int cutoff = 0)
+    {
+        if (processor == null) throw new ArgumentNullException(nameof(processor));
+        return CachedScorerProcessExecutor.ExtractOne(
+            choices, processor, _options.CachedScorer, cutoff,
+            _options.UseParallel, _options.ParallelOptions);
+    }
+
+    /// <summary>
+    /// Find the single best match above a score in a list of choices.
+    /// </summary>
+    public ExtractedResult<string> ExtractOne(params string[] choices)
+    {
+        return CachedScorerProcessExecutor.ExtractOne(
+            choices, Process.DefaultStringProcessor, _options.CachedScorer, 0,
+            _options.UseParallel, _options.ParallelOptions);
+    }
+
+    #endregion
 }
 ```
 
@@ -5097,7 +3764,6 @@ FuzzySharp/Extensions/StringExtensions.cs
 ```
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Raffinert.FuzzySharp.Extensions;
@@ -5166,7 +3832,7 @@ internal static class StringExtensions
         if (string.IsNullOrWhiteSpace(input))
             return [];
 
-        var words = input.Split(EmptyArray<char>(), StringSplitOptions.RemoveEmptyEntries);
+        var words = input.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
 
         return words;
     }
@@ -5185,12 +3851,6 @@ internal static class StringExtensions
         var words = GetSortedWords(input);
 
         return string.Join(" ", words);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static T[] EmptyArray<T>()
-    {
-        return [];
     }
 }
 ```
@@ -5227,17 +3887,63 @@ public class ExtractedResult<T>(T value, int score, int index) : IComparable<Ext
 }
 ```
 
-FuzzySharp/Extractor/ResultExtractor.cs
+FuzzySharp/Extractor/ResultExtractor.Cached.cs
 ```
-﻿using System;
+﻿using Raffinert.FuzzySharp.Extensions;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Raffinert.FuzzySharp.Extensions;
-using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
 
 namespace Raffinert.FuzzySharp.Extractor;
 
-public static class ResultExtractor
+public static partial class ResultExtractor
+{
+    public static class Cached
+    {
+        public static IEnumerable<ExtractedResult<T>> ExtractWithoutOrder<T>(IEnumerable<T> choices, Func<T, string> processor, ICachedRatioScorer scorer, int cutoff = 0)
+        {
+            int index = 0;
+            foreach (var choice in choices)
+            {
+                int score = scorer.Score(processor(choice));
+                if (score >= cutoff)
+                {
+                    yield return new ExtractedResult<T>(choice, score, index);
+                }
+                index++;
+            }
+        }
+
+        public static ExtractedResult<T> ExtractOne<T>(IEnumerable<T> choices, Func<T, string> processor, ICachedRatioScorer calculator, int cutoff = 0)
+        {
+            return ExtractWithoutOrder(choices, processor, calculator, cutoff).Max();
+        }
+
+        public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(IEnumerable<T> choices, Func<T, string> processor, ICachedRatioScorer calculator, int cutoff = 0)
+        {
+            return ExtractWithoutOrder(choices, processor, calculator, cutoff).OrderByDescending(r => r.Score);
+        }
+
+        public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(IEnumerable<T> choices, Func<T, string> processor, ICachedRatioScorer calculator, int limit, int cutoff = 0)
+        {
+            return ExtractWithoutOrder(choices, processor, calculator, cutoff).MaxN(limit).Reverse();
+        }
+    }
+}
+```
+
+FuzzySharp/Extractor/ResultExtractor.cs
+```
+﻿using Raffinert.FuzzySharp.Extensions;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Raffinert.FuzzySharp.Extractor;
+
+public static partial class ResultExtractor
 {
     public static IEnumerable<ExtractedResult<T>> ExtractWithoutOrder<T>(string query, IEnumerable<T> choices, Func<T, string> processor, IRatioScorer scorer, int cutoff = 0)
     {
@@ -5273,35 +3979,114 @@ public static class ResultExtractor
     {
         return ExtractWithoutOrder(query, choices, processor, calculator, cutoff).MaxN(limit).Reverse();
     }
+}
+```
 
+FuzzySharp/Extractor/ResultExtractor.Parallel.Cached.cs
+```
+﻿using Raffinert.FuzzySharp.Extensions;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-    public static IEnumerable<ExtractedResult<T>> ExtractWithoutOrder<T>(IEnumerable<T> choices, Func<T, string> processor, ICachedRatioScorer scorer, int cutoff = 0)
+namespace Raffinert.FuzzySharp.Extractor;
+
+public static partial class ResultExtractor
+{
+    public static partial class Parallel
     {
-        int index = 0;
-        foreach (var choice in choices)
+        public static class Cached
         {
-            int score = scorer.Score(processor(choice));
-            if (score >= cutoff)
+            public static IEnumerable<ExtractedResult<T>> ExtractWithoutOrder<T>(IEnumerable<T> choices, Func<T, string> processor, ICachedRatioScorer scorer, int cutoff = 0, ParallelOptions parallelOptions = null)
             {
-                yield return new ExtractedResult<T>(choice, score, index);
+                var materializedChoices = choices.ToList();
+                var result = new ExtractedResult<T>[materializedChoices.Count];
+
+                System.Threading.Tasks.Parallel.ForEach(materializedChoices, parallelOptions ?? DefaultParallelOptions, (choice, _, index) =>
+                {
+                    int score = scorer.Score(processor(choice));
+                    if (score >= cutoff)
+                    {
+                        result[index] = new ExtractedResult<T>(choice, score, (int)index);
+                    }
+                });
+                return result.Where(r => r != null);
             }
-            index++;
+
+            public static ExtractedResult<T> ExtractOne<T>(IEnumerable<T> choices, Func<T, string> processor, ICachedRatioScorer calculator, int cutoff = 0, ParallelOptions parallelOptions = null)
+            {
+                return ExtractWithoutOrder(choices, processor, calculator, cutoff, parallelOptions).Max();
+            }
+
+            public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(IEnumerable<T> choices, Func<T, string> processor, ICachedRatioScorer calculator, int cutoff = 0, ParallelOptions parallelOptions = null)
+            {
+                return ExtractWithoutOrder(choices, processor, calculator, cutoff, parallelOptions).OrderByDescending(r => r.Score);
+            }
+
+            public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(IEnumerable<T> choices, Func<T, string> processor, ICachedRatioScorer calculator, int limit, int cutoff = 0, ParallelOptions parallelOptions = null)
+            {
+                return ExtractWithoutOrder(choices, processor, calculator, cutoff, parallelOptions).MaxN(limit).Reverse();
+            }
         }
     }
+}
+```
 
-    public static ExtractedResult<T> ExtractOne<T>(IEnumerable<T> choices, Func<T, string> processor, ICachedRatioScorer calculator, int cutoff = 0)
-    {
-        return ExtractWithoutOrder(choices, processor, calculator, cutoff).Max();
-    }
+FuzzySharp/Extractor/ResultExtractor.Parallel.cs
+```
+﻿using Raffinert.FuzzySharp.Extensions;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-    public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(IEnumerable<T> choices, Func<T, string> processor, ICachedRatioScorer calculator, int cutoff = 0)
-    {
-        return ExtractWithoutOrder(choices, processor, calculator, cutoff).OrderByDescending(r => r.Score);
-    }
+namespace Raffinert.FuzzySharp.Extractor;
 
-    public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(IEnumerable<T> choices, Func<T, string> processor, ICachedRatioScorer calculator, int limit, int cutoff = 0)
+public static partial class ResultExtractor
+{
+    private static readonly ParallelOptions DefaultParallelOptions = new ParallelOptions();
+
+    public static partial class Parallel
     {
-        return ExtractWithoutOrder(choices, processor, calculator, cutoff).MaxN(limit).Reverse();
+        public static IEnumerable<ExtractedResult<T>> ExtractWithoutOrder<T>(string query, IEnumerable<T> choices, Func<T, string> processor, IRatioScorer scorer, int cutoff = 0, ParallelOptions parallelOptions = null)
+        {
+            var materializedChoices = choices.ToList();
+            var result = new ExtractedResult<T>[materializedChoices.Count];
+
+            System.Threading.Tasks.Parallel.ForEach(materializedChoices, parallelOptions ?? DefaultParallelOptions, (choice, _, index) =>
+            {
+                int score = scorer.Score(query, processor(choice));
+                if (score >= cutoff)
+                {
+                    result[index] = new ExtractedResult<T>(choice, score, (int)index);
+                }
+            });
+            return result.Where(r => r != null);
+        }
+
+        public static IEnumerable<ExtractedResult<T>> ExtractWithoutOrder<T>(T query, IEnumerable<T> choices, Func<T, string> processor, IRatioScorer scorer, int cutoff = 0, ParallelOptions parallelOptions = null)
+        {
+            var processedQuery = processor(query);
+            return ExtractWithoutOrder(processedQuery, choices, processor, scorer, cutoff);
+        }
+
+        public static ExtractedResult<T> ExtractOne<T>(T query, IEnumerable<T> choices, Func<T, string> processor, IRatioScorer calculator, int cutoff = 0, ParallelOptions parallelOptions = null)
+        {
+            return ExtractWithoutOrder(query, choices, processor, calculator, cutoff, parallelOptions).Max();
+        }
+
+        public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(T query, IEnumerable<T> choices, Func<T, string> processor, IRatioScorer calculator, int cutoff = 0, ParallelOptions parallelOptions = null)
+        {
+            return ExtractWithoutOrder(query, choices, processor, calculator, cutoff, parallelOptions).OrderByDescending(r => r.Score);
+        }
+
+        public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(T query, IEnumerable<T> choices, Func<T, string> processor, IRatioScorer calculator, int limit, int cutoff = 0, ParallelOptions parallelOptions = null)
+        {
+            return ExtractWithoutOrder(query, choices, processor, calculator, cutoff, parallelOptions).MaxN(limit).Reverse();
+        }
     }
 }
 ```
@@ -5999,30 +4784,6 @@ public class MinHeap<T> : Heap<T>
 }
 ```
 
-FuzzySharp/Utils/NumericsPolyfill.cs
-```
-﻿using System.Runtime.CompilerServices;
-
-namespace Raffinert.FuzzySharp.Utils;
-
-internal static class NumericsPolyfill
-{
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int PopCount(ulong value)
-    {
-
-#if NET6_0_OR_GREATER
-        return System.Numerics.BitOperations.PopCount(value);
-#else
-        value -= value >> 1 & 6148914691236517205UL /*0x5555555555555555*/;
-        value = (ulong)(((long)value & 3689348814741910323L /*0x3333333333333333*/) + ((long)(value >> 2) & 3689348814741910323L /*0x3333333333333333*/));
-        value = (ulong)(((long)value + (long)(value >> 4) & 1085102592571150095L) * 72340172838076673L >>> 56);
-        return (int)value;
-#endif
-    }
-}
-```
-
 FuzzySharp/Utils/PatternMatchVector.cs
 ```
 ﻿using System;
@@ -6519,6 +5280,54 @@ public static class Permutation
 }
 ```
 
+FuzzySharp/Utils/Polyfill.cs
+```
+﻿using System;
+using System.Runtime.CompilerServices;
+
+namespace Raffinert.FuzzySharp.Utils;
+
+internal static class Polyfill
+{
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int PopCount(ulong value)
+    {
+
+#if NET6_0_OR_GREATER
+        return System.Numerics.BitOperations.PopCount(value);
+#else
+        value -= value >> 1 & 6148914691236517205UL /*0x5555555555555555*/;
+        value = (ulong)(((long)value & 3689348814741910323L /*0x3333333333333333*/) + ((long)(value >> 2) & 3689348814741910323L /*0x3333333333333333*/));
+        value = (ulong)(((long)value + (long)(value >> 4) & 1085102592571150095L) * 72340172838076673L >>> 56);
+        return (int)value;
+#endif
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ArrayFill<T>(T[] array, T value, int startIndex, int count)
+    {
+#if NETCOREAPP2_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+        Array.Fill(array, value, startIndex, count);
+        return;
+#endif
+
+        if (array == null)
+            throw new ArgumentNullException(nameof(array));
+
+        if ((uint)startIndex > (uint)array.Length)
+            throw new ArgumentOutOfRangeException(nameof(startIndex));
+
+        if ((uint)count > (uint)(array.Length - startIndex))
+            throw new ArgumentOutOfRangeException(nameof(count));
+
+        for (var i = startIndex; i < startIndex + count; i++)
+        {
+            array[i] = value;
+        }
+    }
+}
+```
+
 FuzzySharp/Utils/SequenceUtils.cs
 ```
 ﻿using System;
@@ -6674,889 +5483,6 @@ internal static class ThrowHelper
         throw new ArgumentOutOfRangeException("capacity");
     }
 }
-```
-
-FuzzySharp.Test/EvaluationTests/EvaluationTests.cs
-```
-﻿using NUnit.Framework;
-using Raffinert.FuzzySharp.PreProcess;
-using Raffinert.FuzzySharp.SimilarityRatio;
-using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
-using Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
-
-namespace Raffinert.FuzzySharp.Test.EvaluationTests;
-
-[TestFixture]
-public class EvaluationTests
-{
-    [Test]
-    public void Evaluate()
-    {
-        var a1 = Fuzz.Ratio("mysmilarstring", "myawfullysimilarstirng");
-        var a2 = Fuzz.Ratio("mysmilarstring", "mysimilarstring");
-
-        var b1 = Fuzz.PartialRatio("similar", "somewhresimlrbetweenthisstring");
-
-        var c1 = Fuzz.TokenSortRatio("order words out of", "  words out of order");
-        var c2 = Fuzz.PartialTokenSortRatio("order words out of", "  words out of order");
-
-        var d1 = Fuzz.TokenSetRatio("fuzzy was a bear", "fuzzy fuzzy fuzzy bear");
-        var d2 = Fuzz.PartialTokenSetRatio("fuzzy was a bear", "fuzzy fuzzy fuzzy bear");
-
-        var e1 = Fuzz.WeightedRatio("The quick brown fox jimps ofver the small lazy dog", "the quick brown fox jumps over the small lazy dog");
-
-        var f1 = Fuzz.TokenInitialismRatio("NASA", "National Aeronautics and Space Administration");
-        var f2 = Fuzz.TokenInitialismRatio("NASA", "National Aeronautics Space Administration");
-
-        var f3 = Fuzz.TokenInitialismRatio("NASA", "National Aeronautics Space Administration, Kennedy Space Center, Cape Canaveral, Florida 32899");
-        var f4 = Fuzz.PartialTokenInitialismRatio("NASA", "National Aeronautics Space Administration, Kennedy Space Center, Cape Canaveral, Florida 32899");
-
-        var g1 = Fuzz.TokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessMode.Full);
-        var g2 = Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessMode.Full);
-
-
-
-        var h1 = Process.ExtractOne("cowboys", ["Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys"]);
-        var h11 = Process.Cached.ExtractOne("cowboys", ["Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys"]);
-        var h2 = string.Join(", ", Process.ExtractTop("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"], limit: 3));
-        var h21 = string.Join(", ", Process.Cached.ExtractTop("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"], limit: 3));
-        var h3 = string.Join(", ", Process.ExtractAll("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"]));
-        var h31 = string.Join(", ", Process.Cached.ExtractAll("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"]));
-        var h4 = string.Join(", ", Process.ExtractAll("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"], cutoff: 40));
-        var h41 = string.Join(", ", Process.Cached.ExtractAll("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"], cutoff: 40));
-        var h5 = string.Join(", ", Process.ExtractSorted("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"]));
-        var h51 = string.Join(", ", Process.Cached.ExtractSorted("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"]));
-
-        var i1 = Process.ExtractOne("cowboys", ["Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys"], s => s, ScorerCache.Get<DefaultRatioScorer>());
-        var i11 = Process.Cached.ExtractOne("cowboys",["Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys"], s => s, new CachedDefaultRatioScorer("cowboys"));
-
-        string[][] events =
-        [
-            ["chicago cubs vs new york mets", "CitiField", "2011-05-11", "8pm"],
-            ["new york yankees vs boston red sox", "Fenway Park", "2011-05-11", "8pm"],
-            ["atlanta braves vs pittsburgh pirates", "PNC Park", "2011-05-11", "8pm"]
-        ];
-        var query = new[] { "new york mets vs chicago cubs", "CitiField", "2017-03-19", "8pm" };
-
-        var best = Process.ExtractOne(query, events, strings => strings[0]);
-        var best1 = Process.Cached.ExtractOne(query, events, strings => strings[0]);
-
-        var ratio = ScorerCache.Get<DefaultRatioScorer>();
-        var partial = ScorerCache.Get<PartialRatioScorer>();
-        var tokenSet = ScorerCache.Get<TokenSetScorer>();
-        var partialTokenSet = ScorerCache.Get<PartialTokenSetScorer>();
-        var tokenSort = ScorerCache.Get<TokenSortScorer>();
-        var partialTokenSort = ScorerCache.Get<PartialTokenSortScorer>();
-        var tokenAbbreviation = ScorerCache.Get<TokenAbbreviationScorer>();
-        var partialTokenAbbreviation = ScorerCache.Get<PartialTokenAbbreviationScorer>();
-        var weighted = ScorerCache.Get<WeightedRatioScorer>();
-    }
-
-    [Test]
-    public void TokenInitialismScorer_WhenGivenStringWithTrailingSpaces_DoesNotBreak()
-    {
-        // arrange
-        var longer = "lusiki plaza share block ";
-        var shorter = "jmft";
-
-        // act
-        var ratio = Fuzz.TokenInitialismRatio(shorter, longer);
-
-        // assert
-        Assert.IsTrue(ratio >= 0);
-    }
-}
-```
-
-FuzzySharp.Test/FuzzyTests/ProcessTests.cs
-```
-﻿using System.Collections.Generic;
-using System.Linq;
-using NUnit.Framework;
-using Raffinert.FuzzySharp.SimilarityRatio;
-using Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
-
-namespace Raffinert.FuzzySharp.Test.FuzzyTests;
-
-[TestFixture]
-public class ProcessTests
-{
-    private string   _s1;
-    private string   _s1A;
-    private string   _s2;
-    private string   _s3;
-    private string   _s4;
-    private string   _s5;
-    private string   _s6;
-    private string[] _cirqueStrings;
-    private string[] _baseballStrings;
-
-    [SetUp]
-    public void Setup()
-    {
-        _s1  = "new york mets";
-        _s1A = "new york mets";
-        _s2  = "new YORK mets";
-        _s3  = "the wonderful new york mets";
-        _s4  = "new york mets vs atlanta braves";
-        _s5  = "atlanta braves vs new york mets";
-        _s6  = "new york mets - atlanta braves";
-        _cirqueStrings = new[]
-        {
-            "cirque du soleil - zarkana - las vegas",
-            "cirque du soleil ",
-            "cirque du soleil las vegas",
-            "zarkana las vegas",
-            "las vegas cirque du soleil at the bellagio",
-            "zarakana - cirque du soleil - bellagio"
-        };
-
-        _baseballStrings = new[]
-        {
-            "new york mets vs chicago cubs",
-            "chicago cubs vs chicago white sox",
-            "philladelphia phillies vs atlanta braves",
-            "braves vs mets",
-        };
-    }
-
-    [Test]
-    public void TestGetBestChoice1()
-    {
-        var query = "new york mets at atlanta braves";
-        var best  = Process.ExtractOne(query, _baseballStrings);
-        Assert.AreEqual(best.Value, "braves vs mets");
-
-    }
-
-    [Test]
-    public void TestGetBestChoice2()
-    {
-        var query = "philadelphia phillies at atlanta braves";
-        var best  = Process.ExtractOne(query, _baseballStrings);
-        Assert.AreEqual(best.Value, _baseballStrings[2]);
-
-    }
-
-    [Test]
-    public void TestGetBestChoice3()
-    {
-        var query = "atlanta braves at philadelphia phillies";
-        var best  = Process.ExtractOne(query, _baseballStrings);
-        Assert.AreEqual(best.Value, _baseballStrings[2]);
-
-    }
-
-    [Test]
-    public void TestGetBestChoice4()
-    {
-        var query = "chicago cubs vs new york mets";
-        var best  = Process.ExtractOne(query, _baseballStrings);
-        Assert.AreEqual(best.Value, _baseballStrings[0]);
-
-    }
-
-    [Test]
-    public void TestWithProcessor()
-    {
-        var events = new[]
-        {
-            new[] { "chicago cubs vs new york mets", "CitiField", "2011-05-11", "8pm" },
-            new[] { "new york yankees vs boston red sox", "Fenway Park", "2011-05-11", "8pm" },
-            new[] { "atlanta braves vs pittsburgh pirates", "PNC Park", "2011-05-11", "8pm" },
-        };
-        var query = new[] { "new york mets vs chicago cubs", "CitiField", "2017-03-19", "8pm" };
-
-        var best = Process.ExtractOne(query, events, strings => strings[0]);
-        Assert.AreEqual(best.Value, events[0]);
-    }
-
-    [Test]
-    public void TestWithScorer()
-    {
-        var choices = new[]
-        {
-            "new york mets vs chicago cubs",
-            "chicago cubs at new york mets",
-            "atlanta braves vs pittsbugh pirates",
-            "new york yankees vs boston red sox"
-        };
-
-        var choicesDict = new Dictionary<int, string>
-        {
-            [1] = "new york mets vs chicago cubs",
-            [2] = "chicago cubs vs chicago white sox",
-            [3] = "philladelphia phillies vs atlanta braves",
-            [4] = "braves vs mets"
-        };
-
-        // in this hypothetical example we care about ordering, so we use quick ratio
-        var query = "new york mets at chicago cubs";
-
-        // first, as an example, the normal way would select the "more
-        // 'complete' match of choices[1]"
-
-        var best = Process.ExtractOne(query, choices);
-        Assert.AreEqual(best.Value, choices[1]);
-
-        // now, use the custom scorer
-
-        best = Process.ExtractOne(query, choices, null, ScorerCache.Get<DefaultRatioScorer>());
-        Assert.AreEqual(best.Value, choices[0]);
-
-        best = Process.ExtractOne(query, choicesDict.Select(k => k.Value));
-        Assert.AreEqual(best.Value, choicesDict[1]);
-
-    }
-
-    [Test]
-    public void TestWithCutoff()
-    {
-        var choices = new[]
-        {
-            "new york mets vs chicago cubs",
-            "chicago cubs at new york mets",
-            "atlanta braves vs pittsbugh pirates",
-            "new york yankees vs boston red sox"
-        };
-
-        var query = "los angeles dodgers vs san francisco giants";
-
-        // in this situation, this is an event that does not exist in the list
-        // we don't want to randomly match to something, so we use a reasonable cutoff
-
-        var best = Process.ExtractSorted(query, choices, cutoff: 50);
-        Assert.IsTrue(!best.Any());
-        // .assertIsNone(best) // unittest.TestCase did not have assertIsNone until Python 2.7
-
-        // however if we had no cutoff, something would get returned
-
-        // best = Process.ExtractOne(query, choices)
-        // .assertIsNotNone(best)
-
-    }
-
-    [Test]
-    public void TestWithCutoff2()
-    {
-        var choices = new[]
-        {
-            "new york mets vs chicago cubs",
-            "chicago cubs at new york mets",
-            "atlanta braves vs pittsbugh pirates",
-            "new york yankees vs boston red sox"
-        };
-
-        var query = "new york mets vs chicago cubs";
-        // Only find 100-score cases
-        var res = Process.ExtractSorted(query, choices, cutoff: 100);
-        Assert.IsTrue(res.Any());
-        var bestMatch = res.First();
-        Assert.IsTrue(bestMatch.Value == choices[0]);
-
-    }
-
-    [Test]
-    public void TestEmptyStrings()
-    {
-        var choices = new[]
-        {
-            "",
-            "new york mets vs chicago cubs",
-            "new york yankees vs boston red sox",
-            "",
-            ""
-        };
-
-        var query = "new york mets at chicago cubs";
-
-        var best = Process.ExtractOne(query, choices);
-        Assert.AreEqual(best.Value, choices[1]);
-    }
-
-//[Test]
-//public void  generate_choices() {
-//            choices = ['a', 'Bb', 'CcC']
-//            for choice in choices {
-//                yield choice
-//        search = 'aaa'
-//        result = [(value, confidence) for value, confidence in
-//                  Process.Extract(search, generate_choices())]
-//        .assertTrue(len(result) > 0)
-
-//    }
-
-//[Test]
-//public void  test_dict_like_Extract() {
-//        """We should be able to use a dict-like object for choices, not only a
-//        dict, and still get dict-like output.
-//        """
-//        try {
-//            from UserDict import UserDict
-//        except ImportError {
-//            from collections import UserDict
-//        choices = UserDict({ 'aa' { 'bb', 'a1' { None})
-//        search = 'aaa'
-//        result = Process.Extract(search, choices)
-//        .assertTrue(len(result) > 0)
-//        for value, confidence, key in result {
-//            .assertTrue(value in choices.values())
-
-//    }
-
-//[Test]
-//public void  test_dedupe() {
-//        """We should be able to use a list-like object for contains_dupes
-//        """
-//        // Test 1
-//        contains_dupes = ['Frodo Baggins', 'Tom Sawyer', 'Bilbo Baggin', 'Samuel L. Jackson', 'F. Baggins', 'Frody Baggins', 'Bilbo Baggins']
-
-//        result = Process.dedupe(contains_dupes)
-//        .assertTrue(len(result) < len(contains_dupes))
-
-//        // Test 2
-//        contains_dupes = ['Tom', 'Dick', 'Harry']
-
-//// we should end up with the same list since no duplicates are contained in the list (e.g. original list is returned)
-//        deduped_list = ['Tom', 'Dick', 'Harry']
-
-//        result = Process.dedupe(contains_dupes)
-//        Assert.AreEqual(result, deduped_list)
-
-//    }
-
-//[Test]
-//public void  test_simplematch() {
-//        basic_string = 'a, b'
-//        match_strings = ['a, b']
-
-//        result = Process.ExtractOne(basic_string, match_strings, scorer=fuzz.ratio)
-//        part_result = Process.ExtractOne(basic_string, match_strings, scorer=fuzz.partial_ratio)
-
-//        Assert.AreEqual(result, ('a, b', 100))
-//        Assert.AreEqual(part_result, ('a, b', 100))
-
-//    }
-}
-```
-
-FuzzySharp.Test/FuzzyTests/RatioIssuesTests.cs
-```
-﻿using NUnit.Framework;
-using Raffinert.FuzzySharp.SimilarityRatio.Strategy.Generic;
-using System;
-
-namespace Raffinert.FuzzySharp.Test.FuzzyTests;
-
-// Original code https://github.com/rapidfuzz/RapidFuzz/blob/main/tests/test_fuzz.py
-public class RatioIssuesTests
-{
-    [Test]
-    public void Issue76()
-    {
-        Assert.That(Fuzz.PartialRatio("physics 2 vid", "study physics physics 2"), Is.EqualTo(82));
-        Assert.That(Fuzz.PartialRatio("physics 2 vid", "study physics physics 2 video"), Is.EqualTo(100));
-    }
-
-    [Test]
-    public void Issue90()
-    {
-        Assert.That(Fuzz.PartialRatio("ax b", "a b a c b"), Is.EqualTo(86));
-    }
-
-    [Test]
-    public void Issue138()
-    {
-        var str1 = new string('a', 65);
-        var str2 = "a" + (char)256 + new string('a', 63);
-        Assert.That(Fuzz.PartialRatio(str1, str2), Is.EqualTo(99));
-    }
-
-    [Test]
-    public void PartialRatioAlignment()
-    {
-        var a = "a certain string".AsSpan();
-        var s = "certain".AsSpan();
-
-        var align1 = PartialRatioStrategy<char>.PartialRatioAlignment(s, a);
-
-        Assert.That(align1.Score, Is.EqualTo(100));
-        Assert.That(align1.SrcStart, Is.EqualTo(0));
-        Assert.That(align1.SrcEnd, Is.EqualTo(s.Length));
-        Assert.That(align1.DestStart, Is.EqualTo(2));
-        Assert.That(align1.DestEnd, Is.EqualTo(2 + s.Length));
-
-        var align2 = PartialRatioStrategy<char>.PartialRatioAlignment(a, s);
-        Assert.That(align2.Score, Is.EqualTo(100));
-        Assert.That(align2.SrcStart, Is.EqualTo(2));
-        Assert.That(align2.SrcEnd, Is.EqualTo(2 + s.Length));
-        Assert.That(align2.DestStart, Is.EqualTo(0));
-        Assert.That(align2.DestEnd, Is.EqualTo(s.Length));
-
-        Assert.That(PartialRatioStrategy<char>.PartialRatioAlignment(null, "test".AsSpan()).Score, Is.EqualTo(0));
-        Assert.That(PartialRatioStrategy<char>.PartialRatioAlignment("test".AsSpan(), null).Score, Is.EqualTo(0));
-        Assert.That(PartialRatioStrategy<char>.PartialRatioAlignment("test".AsSpan(), "tesx".AsSpan(), scoreCutoff: 90).Score, Is.EqualTo(0));
-    }
-
-    [Test]
-    public void Issue196()
-    {
-        Assert.That(Fuzz.WeightedRatio("South Korea", "North Korea"), Is.EqualTo(82));
-    }
-
-    [Test]
-    public void Issue231()
-    {
-        var str1 = "er merkantilismus förderte handle und verkehr mit teils marktkonformen, teils dirigistischen maßnahmen.";
-        var str2 = "ils marktkonformen, teils dirigistischen maßnahmen. an der schwelle zum 19. jahrhundert entstand ein neu";
-
-        var alignment = PartialRatioStrategy<char>.PartialRatioAlignment(str1.AsSpan(), str2.AsSpan());
-
-        Assert.That(alignment, Is.Not.Null);
-        Assert.That(alignment.SrcStart, Is.EqualTo(0));
-        Assert.That(alignment.SrcEnd, Is.EqualTo(103));
-        Assert.That(alignment.DestStart, Is.EqualTo(0));
-        Assert.That(alignment.DestEnd, Is.EqualTo(51));
-    }
-}
-```
-
-FuzzySharp.Test/FuzzyTests/RatioTests.cs
-```
-using NUnit.Framework;
-using Raffinert.FuzzySharp.PreProcess;
-
-namespace Raffinert.FuzzySharp.Test.FuzzyTests;
-
-[TestFixture]
-public class RatioTests
-{
-    #region Private Fields
-    private string _s1,
-        _s1A,
-        _s2,
-        _s3,
-        _s4,
-        _s5,
-        _s6,
-        _s7,
-        _s8,
-        _s8A,
-        _s9,
-        _s9A,
-        _s10,
-        _s10A;
-
-    private string[] _cirqueStrings, _baseballStrings;
-    #endregion
-
-    [SetUp]
-    public void Setup()
-    {
-        _s1  = "new york mets";
-        _s1A = "new york mets";
-        _s2  = "new YORK mets";
-        _s3  = "the wonderful new york mets";
-        _s4  = "new york mets vs atlanta braves";
-        _s5  = "atlanta braves vs new york mets";
-        _s6  = "new york mets - atlanta braves";
-        _s7  = "new york city mets - atlanta braves";
-        // Edge cases
-        _s8   = "{";
-        _s8A  = "{";
-        _s9   = "{a";
-        _s9A  = "{a";
-        _s10  = "a{";
-        _s10A = "{b";
-    }
-
-    [Test]
-    public void Test_Equal()
-    {
-        Assert.AreEqual(Fuzz.Ratio(_s1, _s1A), 100);
-        Assert.AreEqual(Fuzz.Ratio(_s8, _s8A), 100);
-        Assert.AreEqual(Fuzz.Ratio(_s9, _s9A), 100);
-    }
-
-    [Test]
-    public void Test_Case_Insensitive()
-    {
-        Assert.AreNotEqual(Fuzz.Ratio(_s1, _s2), 100);
-        Assert.AreEqual(Fuzz.Ratio(_s1, _s2, PreprocessMode.Full), 100);
-    }
-
-    [Test]
-    public void Test_Partial()
-    {
-        Assert.AreEqual(Fuzz.PartialRatio(_s1, _s3), 100);
-    }
-
-    [Test]
-    public void TestTokenSortRatio()
-    {
-        Assert.AreEqual(Fuzz.TokenSortRatio(_s1, _s1A), 100);
-    }
-
-    [Test]
-    public void TestPartialTokenSortRatio()
-    {
-        Assert.AreEqual(Fuzz.PartialTokenSortRatio(_s1, _s1A, PreprocessMode.Full), 100);
-        Assert.AreEqual(Fuzz.PartialTokenSortRatio(_s4, _s5, PreprocessMode.Full), 100);
-        Assert.AreEqual(Fuzz.PartialTokenSortRatio(_s8, _s8A), 100);
-        Assert.AreEqual(Fuzz.PartialTokenSortRatio(_s9, _s9A, PreprocessMode.Full), 100);
-        Assert.AreEqual(Fuzz.PartialTokenSortRatio(_s9, _s9A), 100);
-
-        //var al =  Fuzz1.PartialRatioAlignment("a certain string".AsSpan(), "cetain".AsSpan());
-            
-        Assert.AreEqual(Fuzz.PartialTokenSortRatio(_s10, _s10A), 67);
-        Assert.AreEqual(Fuzz.PartialTokenSortRatio(_s10, _s10A, PreprocessMode.Full), 0);
-    }
-
-    [Test]
-    public void TestTokenSetRatio()
-    {
-        Assert.AreEqual(Fuzz.TokenSetRatio(_s4, _s5, PreprocessMode.Full), 100);
-        Assert.AreEqual(Fuzz.TokenSetRatio(_s8, _s8A), 100);
-        Assert.AreEqual(Fuzz.TokenSetRatio(_s9, _s9A, PreprocessMode.Full), 100);
-        Assert.AreEqual(Fuzz.TokenSetRatio(_s9, _s9A), 100);
-        Assert.AreEqual(Fuzz.TokenSetRatio(_s10, _s10A), 50);
-    }
-
-    [Test]
-    public void TestTokenAbbreviationRatio()
-    {
-        Assert.AreEqual(Fuzz.TokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessMode.Full), 40);
-        Assert.AreEqual(Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessMode.Full), 67);
-    }
-
-    [Test]
-    public void TestPartialTokenSetRatio()
-    {
-        Assert.AreEqual(Fuzz.PartialTokenSetRatio(_s4, _s7), 100);
-    }
-
-    [Test]
-    public void TestWeightedRatioEqual()
-    {
-        Assert.AreEqual(Fuzz.WeightedRatio(_s1, _s1A), 100);
-    }
-
-    [Test]
-    public void TestWeightedRatioCaseInsensitive()
-    {
-        Assert.AreEqual(Fuzz.WeightedRatio(_s1, _s2, PreprocessMode.Full), 100);
-    }
-
-    [Test]
-    public void TestWeightedRatioPartialMatch()
-    {
-        Assert.AreEqual(Fuzz.WeightedRatio(_s1, _s3), 90);
-    }
-
-    [Test]
-    public void TestWeightedRatioMisorderedMatch()
-    {
-        Assert.AreEqual(Fuzz.WeightedRatio(_s4, _s5), 95);
-    }
-
-    [Test]
-    public void TestEmptyStringsScore0()
-    {
-        Assert.That(Fuzz.Ratio("test_string", ""), Is.EqualTo(0));
-        Assert.That(Fuzz.PartialRatio("test_string", ""), Is.EqualTo(0));
-        Assert.That(Fuzz.Ratio("", ""), Is.EqualTo(0));
-        Assert.That(Fuzz.PartialRatio("", ""), Is.EqualTo(0));
-    }
-
-    [Test]
-    public void TestIssueSeven()
-    {
-        _s1 = "HSINCHUANG";
-        _s2 = "SINJHUAN";
-        _s3 = "LSINJHUANG DISTRIC";
-        _s4 = "SINJHUANG DISTRICT";
-
-        Assert.IsTrue(Fuzz.PartialRatio(_s1, _s2) > 75);
-        Assert.IsTrue(Fuzz.PartialRatio(_s1, _s3) > 75);
-        Assert.IsTrue(Fuzz.PartialRatio(_s1, _s4) > 75);
-    }
-
-    [Test]
-    public void TestIssueEight()
-    {
-        // https://github.com/JakeBayer/FuzzySharp/issues/8
-        Assert.AreEqual(100, Fuzz.PartialRatio("Partnernummer", "Partne\nrnum\nmerASDFPartnernummerASDF")); // was 85 
-        Assert.AreEqual(100, Fuzz.PartialRatio("Partnernummer", "PartnerrrrnummerASDFPartnernummerASDF"));  // was 77
-
-        // https://github.com/xdrop/fuzzywuzzy/issues/39
-        Assert.AreEqual(100, Fuzz.PartialRatio("kaution", "kdeffxxxiban:de1110010060046666666datum:16.11.17zeit:01:12uft0000899999tan076601testd.-20-maisonette-z4-jobas-hagkautionauszug")); // was 57
-
-        // https://github.com/seatgeek/fuzzywuzzy/issues/79
-        Assert.AreEqual(100, Fuzz.PartialRatio("this is a test", "is this is a not really thing this is a test!")); // was 92 (actually 93)
-
-        // https://github.com/Raffinert/FuzzySharp/issues/2
-        Assert.AreEqual(100, Fuzz.PartialRatio("sh", "Growing eshops without a popular platform", PreprocessMode.Full));
-        Assert.AreEqual(100, Fuzz.PartialRatio("shop", "Growing eshops without a popular platform", PreprocessMode.Full));
-    }
-
-    [Test]
-    public void MorePartialRatio()
-    {
-        Assert.AreEqual(100, Fuzz.PartialRatio("geeks for geeks", "geeks for geeks!"));
-        Assert.AreEqual(71, Fuzz.PartialRatio("geeks for geeks", "geeks geeks"));
-        Assert.AreEqual(100, Fuzz.TokenSortRatio("geeks for geeks", "for geeks geeks"));
-    }
-
-    [Test]
-    public void TestPartialRatioUnicodeString()
-    {
-        _s1 = "\u00C1";
-        _s2 = "ABCD";
-        var score = Fuzz.PartialRatio(_s1, _s2);
-        Assert.AreEqual(0, score);
-    }
-
-    [Test]
-    public void TestZeroRatio()
-    {
-        var ratio = Fuzz.PartialTokenSortRatio("abc", "def");
-
-        Assert.True(ratio == 0);
-    }
-
-    [Test]
-    public void Test03()
-    {
-        var ratio = Fuzz.PartialTokenSortRatio("new york mets", "atlanta braves vs new york mets");
-
-        Assert.True(ratio == 77);
-    }
-
-    [Test]
-    public void TestRatioUnicodeString()
-    {
-        _s1 = "\u00C1";
-        _s2 = "ABCD";
-        var score = Fuzz.WeightedRatio(_s1, _s2);
-        Assert.AreEqual(0, score);
-
-        // Cyrillic.
-        _s1   = "\u043f\u0441\u0438\u0445\u043e\u043b\u043e\u0433";
-        _s2   = "\u043f\u0441\u0438\u0445\u043e\u0442\u0435\u0440\u0430\u043f\u0435\u0432\u0442";
-        score = Fuzz.WeightedRatio(_s1, _s2);
-        Assert.AreNotEqual(0, score);
-
-        // Chinese.
-        _s1   = "\u6211\u4e86\u89e3\u6570\u5b66";
-        _s2   = "\u6211\u5b66\u6570\u5b66";
-        score = Fuzz.WeightedRatio(_s1, _s2);
-        Assert.AreNotEqual(0, score);
-    }
-}
-```
-
-FuzzySharp.Test/FuzzyTests/RegressionTests.cs
-```
-﻿using System;
-using System.Linq;
-using System.Reflection;
-using NUnit.Framework;
-using Raffinert.FuzzySharp.SimilarityRatio;
-using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
-
-namespace Raffinert.FuzzySharp.Test.FuzzyTests;
-
-[TestFixture]
-public class RegressionTests
-{
-
-    /// <summary>
-    /// Test to ensure that all IRatioScorer implementations handle scoring empty strings & whitespace strings
-    /// </summary>
-    [Test]
-    public void TestScoringEmptyString()
-    {
-        var scorerType = typeof(IRatioScorer);
-        var assemblies = AppDomain.CurrentDomain.GetAssemblies().ToList();
-        var types = assemblies.SelectMany(s =>
-        {
-            try
-            {
-                return s.GetTypes();
-            }
-            catch {}
-            return [];
-        }).ToList();
-        var scorerTypes = types.Where(t => scorerType.IsAssignableFrom(t) && !t.IsAbstract && t.IsClass).ToList();
-            
-        string nullString = null;  //Null doesn't seem to be handled by any scorer
-        string emptyString = "";
-        string whitespaceString = " ";
-
-        string[] nullOrWhitespaceStrings = [emptyString, whitespaceString];
-        MethodInfo getScorerCacheMethodInfo = typeof(ScorerCache).GetMethod("Get");
-
-        foreach (var t in scorerTypes)
-        {
-            System.Diagnostics.Debug.WriteLine($"Testing {t.Name}");
-            MethodInfo m = getScorerCacheMethodInfo.MakeGenericMethod(t);
-            IRatioScorer scorer = m.Invoke(this, []) as IRatioScorer;
-
-            foreach(string s in nullOrWhitespaceStrings)
-            {
-                System.Diagnostics.Debug.WriteLine($"Testing string '{s}'");
-                try
-                {
-                    scorer.Score(s, "TEST");
-                }
-                catch (InvalidOperationException e)
-                {
-                    Assert.Fail($"{t.Name}.score failed with empty string as first parameter");
-                }
-                try
-                {
-                    scorer.Score("TEST", s);
-                } catch (InvalidOperationException e)
-                {
-                    Assert.Fail($"{t.Name}.score failed with empty string as second parameter");
-                }
-                try
-                {
-                    scorer.Score(s, s);
-                }
-                catch (InvalidOperationException e)
-                {
-                    Assert.Fail($"{t.Name}.score failed with empty string as both parameters");
-                }
-
-            }
-
-        }
-
-    }
-        
-}
-```
-
-FuzzySharp.Benchmarks/BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.BenchmarkAll-report-github.md
-```
-```
-
-BenchmarkDotNet v0.15.2, Windows 11 (10.0.22621.6060/22H2/2022Update/SunValley2)
-11th Gen Intel Core i7-1185G7 3.00GHz, 1 CPU, 8 logical and 4 physical cores
-.NET SDK 10.0.102
-  [Host]   : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
-  ShortRun : .NET 10.0.2 (10.0.225.61305), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
-
-Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-
-```
-| Method                               | Mean        | Error        | StdDev      | Gen0   | Gen1   | Allocated |
-|------------------------------------- |------------:|-------------:|------------:|-------:|-------:|----------:|
-| Ratio                                |    215.9 ns |     74.36 ns |     4.08 ns | 0.0215 |      - |     136 B |
-| PartialRatio                         |    535.3 ns |    177.34 ns |     9.72 ns | 0.0210 |      - |     136 B |
-| TokenSortRatio                       |    689.3 ns |    206.17 ns |    11.30 ns | 0.1116 |      - |     704 B |
-| PartialTokenSortRatio                |  1,396.4 ns |    169.09 ns |     9.27 ns | 0.1106 |      - |     704 B |
-| TokenSetRatio                        |    989.6 ns |    516.62 ns |    28.32 ns | 0.3443 |      - |    2160 B |
-| PartialTokenSetRatio                 |  1,978.6 ns |  1,130.70 ns |    61.98 ns | 0.3433 |      - |    2160 B |
-| WeightedRatio                        |  5,205.4 ns |    638.30 ns |    34.99 ns | 0.7553 |      - |    4744 B |
-| TokenInitialismRatio1                |    115.3 ns |     24.10 ns |     1.32 ns | 0.0535 |      - |     336 B |
-| TokenInitialismRatio2                |    111.8 ns |     81.31 ns |     4.46 ns | 0.0522 |      - |     328 B |
-| TokenInitialismRatio3                |    169.9 ns |    256.42 ns |    14.06 ns | 0.0713 |      - |     448 B |
-| PartialTokenInitialismRatio          |    324.6 ns |    133.84 ns |     7.34 ns | 0.0710 |      - |     448 B |
-| TokenAbbreviationRatio               |    740.9 ns |    100.13 ns |     5.49 ns | 0.2766 |      - |    1736 B |
-| PartialTokenAbbreviationRatio        |    788.4 ns |    308.15 ns |    16.89 ns | 0.2766 |      - |    1736 B |
-| RatioClassic                         |    241.3 ns |    243.95 ns |    13.37 ns | 0.0508 |      - |     320 B |
-| PartialRatioClassic                  |  1,031.1 ns |    966.09 ns |    52.95 ns | 0.5360 | 0.0019 |    3368 B |
-| TokenSortRatioClassic                |  1,447.5 ns |     29.62 ns |     1.62 ns | 0.3166 |      - |    1992 B |
-| PartialTokenSortRatioClassic         |  1,610.8 ns |  1,316.67 ns |    72.17 ns | 0.3719 |      - |    2344 B |
-| TokenSetRatioClassic                 |  1,973.8 ns |      6.18 ns |     0.34 ns | 0.6523 |      - |    4096 B |
-| PartialTokenSetRatioClassic          |  2,295.7 ns |    108.17 ns |     5.93 ns | 0.8888 |      - |    5584 B |
-| WeightedRatioClassic                 | 10,215.0 ns |  1,556.91 ns |    85.34 ns | 1.8768 |      - |   11810 B |
-| TokenInitialismRatio1Classic         |    517.4 ns |    331.45 ns |    18.17 ns | 0.1440 |      - |     904 B |
-| TokenInitialismRatio2Classic         |    422.7 ns |     89.43 ns |     4.90 ns | 0.1173 |      - |     736 B |
-| TokenInitialismRatio3Classic         |    984.3 ns |    108.68 ns |     5.96 ns | 0.2460 |      - |    1552 B |
-| PartialTokenInitialismRatioClassic   |  1,161.2 ns |     65.47 ns |     3.59 ns | 0.3414 |      - |    2144 B |
-| TokenAbbreviationRatioClassic        |  1,280.0 ns |  1,027.15 ns |    56.30 ns | 0.4749 |      - |    2984 B |
-| PartialTokenAbbreviationRatioClassic |  1,477.3 ns |     44.82 ns |     2.46 ns | 0.6199 |      - |    3896 B |
-| ExtractOne                           | 11,357.7 ns | 25,407.46 ns | 1,392.67 ns | 1.7700 |      - |   11112 B |
-| ExtractOneClassic                    | 21,436.8 ns | 12,252.42 ns |   671.60 ns | 4.2725 |      - |   26851 B |
-| FuzzySharpClassicDistance            |    816.4 ns |    236.72 ns |    12.98 ns | 0.0505 |      - |     320 B |
-| FuzzySharpDistance                   |    326.8 ns |     58.85 ns |     3.23 ns | 0.0215 |      - |     136 B |
-| FastenshteinDistance                 |    995.6 ns |  2,066.03 ns |   113.25 ns |      - |      - |         - |
-| FuzzySharpDistanceFrom               |    134.4 ns |    160.56 ns |     8.80 ns |      - |      - |         - |
-| FastenshteinDistanceFrom             |    787.2 ns |     79.49 ns |     4.36 ns |      - |      - |         - |
-| QuickenshteinDistance                |    582.8 ns |    279.24 ns |    15.31 ns |      - |      - |         - |
-```
-
-FuzzySharp.Benchmarks/BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.LevenshteinDistance.LevenshteinLarge-report-github.md
-```
-```
-
-BenchmarkDotNet v0.15.1, Windows 11 (10.0.26100.4351/24H2/2024Update/HudsonValley)
-12th Gen Intel Core i7-1255U 2.60GHz, 1 CPU, 12 logical and 10 physical cores
-.NET SDK 9.0.301
-  [Host]   : .NET 9.0.6 (9.0.625.26613), X64 RyuJIT AVX2
-  ShortRun : .NET 9.0.6 (9.0.625.26613), X64 RyuJIT AVX2
-
-Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-
-```
-| Method            | Mean       | Error      | StdDev    | Ratio | RatioSD | Gen0       | Gen1       | Allocated   | Alloc Ratio |
-|------------------ |-----------:|-----------:|----------:|------:|--------:|-----------:|-----------:|------------:|------------:|
-| NaiveDp           | 231.563 ms | 57.5403 ms | 3.1540 ms |  1.00 |    0.02 | 43500.0000 | 34500.0000 | 275312920 B |       1.000 |
-| FuzzySharpClassic | 141.820 ms |  4.0905 ms | 0.2242 ms |  0.61 |    0.01 |          - |          - |   1545732 B |       0.006 |
-| Fastenshtein      | 123.356 ms | 13.0959 ms | 0.7178 ms |  0.53 |    0.01 |          - |          - |     34028 B |       0.000 |
-| Quickenshtein     |  12.918 ms | 12.8046 ms | 0.7019 ms |  0.06 |    0.00 |          - |          - |        12 B |       0.000 |
-| FuzzySharp        |   4.970 ms |  0.3311 ms | 0.0181 ms |  0.02 |    0.00 |          - |          - |      3051 B |       0.000 |
-```
-
-FuzzySharp.Benchmarks/BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.LevenshteinDistance.LevenshteinNormal-report-github.md
-```
-```
-
-BenchmarkDotNet v0.15.1, Windows 11 (10.0.26100.4351/24H2/2024Update/HudsonValley)
-12th Gen Intel Core i7-1255U 2.60GHz, 1 CPU, 12 logical and 10 physical cores
-.NET SDK 9.0.301
-  [Host]   : .NET 9.0.6 (9.0.625.26613), X64 RyuJIT AVX2
-  ShortRun : .NET 9.0.6 (9.0.625.26613), X64 RyuJIT AVX2
-
-Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-
-```
-| Method            | Mean       | Error       | StdDev    | Ratio | RatioSD | Gen0      | Gen1     | Allocated  | Alloc Ratio |
-|------------------ |-----------:|------------:|----------:|------:|--------:|----------:|---------:|-----------:|------------:|
-| NaiveDp           | 8,613.1 μs | 4,977.60 μs | 272.84 μs |  1.00 |    0.04 | 1593.7500 | 203.1250 | 10012124 B |       1.000 |
-| FuzzySharpClassic | 4,866.5 μs |   866.89 μs |  47.52 μs |  0.57 |    0.02 |   46.8750 |        - |   300051 B |       0.030 |
-| Fastenshtein      | 4,076.7 μs | 1,265.24 μs |  69.35 μs |  0.47 |    0.01 |         - |        - |     7070 B |       0.001 |
-| Quickenshtein     | 1,330.2 μs |   111.30 μs |   6.10 μs |  0.15 |    0.00 |         - |        - |        2 B |       0.000 |
-| FuzzySharp        |   588.2 μs |    83.65 μs |   4.59 μs |  0.07 |    0.00 |         - |        - |     3041 B |       0.000 |
-```
-
-FuzzySharp.Benchmarks/BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.LevenshteinDistance.LevenshteinSmall-report-github.md
-```
-```
-
-BenchmarkDotNet v0.15.1, Windows 11 (10.0.26100.4351/24H2/2024Update/HudsonValley)
-12th Gen Intel Core i7-1255U 2.60GHz, 1 CPU, 12 logical and 10 physical cores
-.NET SDK 9.0.301
-  [Host]   : .NET 9.0.6 (9.0.625.26613), X64 RyuJIT AVX2
-  ShortRun : .NET 9.0.6 (9.0.625.26613), X64 RyuJIT AVX2
-
-Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
-
-```
-| Method            | Mean       | Error     | StdDev   | Ratio | RatioSD | Gen0     | Gen1   | Allocated | Alloc Ratio |
-|------------------ |-----------:|----------:|---------:|------:|--------:|---------:|-------:|----------:|------------:|
-| NaiveDp           | 1,841.4 μs | 753.15 μs | 41.28 μs |  1.00 |    0.03 | 371.0938 | 9.7656 | 2335169 B |       1.000 |
-| FuzzySharpClassic | 1,090.0 μs |  23.48 μs |  1.29 μs |  0.59 |    0.01 |  23.4375 |      - |  149793 B |       0.064 |
-| Fastenshtein      |   860.4 μs |  80.93 μs |  4.44 μs |  0.47 |    0.01 |        - |      - |    3728 B |       0.002 |
-| Quickenshtein     |   531.9 μs |  52.00 μs |  2.85 μs |  0.29 |    0.01 |        - |      - |       1 B |       0.000 |
-| FuzzySharp        |   117.7 μs |  11.88 μs |  0.65 μs |  0.06 |    0.00 |   0.3662 |      - |    3040 B |       0.001 |
 ```
 
 FuzzySharp/SimilarityRatio/Scorer/CachedScorerBase.cs
@@ -7871,6 +5797,26 @@ public abstract class ScorerBase<T> : IRatioScorer<T> where T : IEquatable<T>
 }
 ```
 
+FuzzySharp/SimilarityRatio/Scorer/StrategySensitive/CachedStrategySensitiveScorerBase.cs
+```
+﻿namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
+
+public abstract class CachedStrategySensitiveScorerBase : CachedScorerBase
+{
+    protected abstract CachedScorer Scorer { get; }
+}
+```
+
+FuzzySharp/SimilarityRatio/Scorer/StrategySensitive/StrategySensitiveScorerBase.cs
+```
+﻿namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
+
+public abstract class StrategySensitiveScorerBase : ScorerBase
+{
+    protected abstract FuzzySharp.Scorer Scorer { get; }
+}
+```
+
 FuzzySharp/SimilarityRatio/Strategy/Generic/CachedDefaultRatioStrategyT.cs
 ```
 ﻿using System;
@@ -7927,6 +5873,8 @@ FuzzySharp/SimilarityRatio/Strategy/Generic/PartialRatioStrategyT.cs
 ```
 ﻿using Raffinert.FuzzySharp.Utils;
 using System;
+using System.Buffers;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace Raffinert.FuzzySharp.SimilarityRatio.Strategy.Generic;
@@ -7968,7 +5916,7 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
         }
 
         // 2) Normalize cutoff to 0…100
-        double cutoff100 = scoreCutoff.GetValueOrDefault(0.0);
+        double cutoff100 = scoreCutoff.GetValueOrDefault();
 
         // 3) Handle both empty → perfect match
         if (shorter.IsEmpty && longer.IsEmpty)
@@ -8066,6 +6014,99 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
 
         double cutoff = scoreCutoff ?? 0.0;
 
+        if (len2 > len1)
+        {
+            int maximum = len1 + len1;
+            int windowCount = len2 - len1;
+            int cutoffDist = (int)Math.Ceiling(maximum * (1.0 - cutoff));
+            int bestDist = int.MaxValue;
+            int[] scores = ArrayPool<int>.Shared.Rent(windowCount);
+
+            Polyfill.ArrayFill(scores, int.MaxValue, 0, windowCount);
+
+            try
+            {
+                var windows = new List<(int First, int Second)>(4) { (0, windowCount - 1) };
+                var newWindows = new List<(int First, int Second)>(4);
+
+                while (windows.Count > 0)
+                {
+                    foreach (var window in windows)
+                    {
+                        int first = window.First;
+                        int second = window.Second;
+
+                        if (scores[first] == int.MaxValue)
+                        {
+                            int dist = Indel.DistanceImpl(s1, s2.Slice(first, len1), patternMatchVector);
+                            scores[first] = dist;
+                            if (dist < cutoffDist)
+                            {
+                                cutoffDist = bestDist = dist;
+                                res.DestStart = first;
+                                res.DestEnd = first + len1;
+                                if (bestDist == 0)
+                                {
+                                    res.Score = 100.0;
+                                    return res;
+                                }
+                            }
+                        }
+
+                        if (scores[second] == int.MaxValue)
+                        {
+                            int dist = Indel.DistanceImpl(s1, s2.Slice(second, len1), patternMatchVector);
+                            scores[second] = dist;
+                            if (dist < cutoffDist)
+                            {
+                                cutoffDist = bestDist = dist;
+                                res.DestStart = second;
+                                res.DestEnd = second + len1;
+                                if (bestDist == 0)
+                                {
+                                    res.Score = 100.0;
+                                    return res;
+                                }
+                            }
+                        }
+
+                        int cellDiff = second - first;
+                        if (cellDiff == 1)
+                            continue;
+
+                        int knownEdits = Math.Abs(scores[first] - scores[second]);
+                        int maxScoreImprovement = ((cellDiff - knownEdits / 2) / 2) * 2;
+                        int minScore = Math.Min(scores[first], scores[second]) - maxScoreImprovement;
+                        if (minScore < cutoffDist)
+                        {
+                            int center = cellDiff / 2;
+                            newWindows.Add((first, first + center));
+                            newWindows.Add((first + center, second));
+                        }
+                    }
+
+                    if (newWindows.Count == 0)
+                        break;
+
+                    windows.Clear();
+                    (windows, newWindows) = (newWindows, windows);
+                }
+
+                if (bestDist != int.MaxValue)
+                {
+                    double score = 1.0 - (bestDist / (double)maximum);
+                    if (score >= cutoff)
+                    {
+                        cutoff = res.Score = score;
+                    }
+                }
+            }
+            finally
+            {
+                ArrayPool<int>.Shared.Return(scores);
+            }
+        }
+
         // 1) Prefixes shorter than len1
         for (int i = 1; i < len1; i++)
         {
@@ -8082,24 +6123,8 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
             }
         }
 
-        // 2) Full-width windows of length len1
-        for (int i = 0; i <= len2 - len1; i++)
-        {
-            if (!patternMatchVector.ContainsKey(s2[i + len1 - 1])) continue;
-            var window = s2[i..(i + len1)];
-            double sim = Indel.BlockNormalizedSimilarity(patternMatchVector, s1, window);
-            if (sim > res.Score && sim >= cutoff)
-            {
-                res.Score = sim;
-                cutoff = sim;
-                res.DestStart = i;
-                res.DestEnd = i + len1;
-                if (sim >= .995) { res.Score = 100.0; return res; }
-            }
-        }
-
-        // 3) Suffixes shorter than len1
-        for (int i = len2 - len1 + 1; i < len2; i++)
+        // 2) Suffixes up to len1 (includes the last full-width window)
+        for (int i = len2 - len1; i < len2; i++)
         {
             if (!patternMatchVector.ContainsKey(s2[i])) continue;
             var tail = s2[i..];
@@ -8120,26 +6145,6 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
     }
 
     internal record struct ScoreAlignment(double Score, int SrcStart, int SrcEnd, int DestStart, int DestEnd);
-}
-```
-
-FuzzySharp/SimilarityRatio/Scorer/StrategySensitive/CachedStrategySensitiveScorerBase.cs
-```
-﻿namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
-
-public abstract class CachedStrategySensitiveScorerBase : CachedScorerBase
-{
-    protected abstract CachedScorer Scorer { get; }
-}
-```
-
-FuzzySharp/SimilarityRatio/Scorer/StrategySensitive/StrategySensitiveScorerBase.cs
-```
-﻿namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
-
-public abstract class StrategySensitiveScorerBase : ScorerBase
-{
-    protected abstract FuzzySharp.Scorer Scorer { get; }
 }
 ```
 
