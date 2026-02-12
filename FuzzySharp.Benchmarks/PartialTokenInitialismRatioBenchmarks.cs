@@ -1,5 +1,4 @@
 using BenchmarkDotNet.Attributes;
-using Raffinert.FuzzySharp.PreProcess;
 using Classic = FuzzySharp;
 
 namespace Raffinert.FuzzySharp.Benchmarks;

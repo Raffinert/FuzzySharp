@@ -1,4 +1,4 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using Raffinert.FuzzySharp.PreProcess;
 using Raffinert.FuzzySharp.SimilarityRatio;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
@@ -34,21 +34,23 @@ public class EvaluationTests
         var g1 = Fuzz.TokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessMode.Full);
         var g2 = Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessMode.Full);
 
-
+        var cached = Process.Configure().Cached().Build();
 
         var h1 = Process.ExtractOne("cowboys", ["Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys"]);
-        var h11 = Process.Cached.ExtractOne("cowboys", ["Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys"]);
+        var h11 = cached.ExtractOne("cowboys", ["Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys"]);
         var h2 = string.Join(", ", Process.ExtractTop("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"], limit: 3));
-        var h21 = string.Join(", ", Process.Cached.ExtractTop("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"], limit: 3));
+        var h21 = string.Join(", ", cached.ExtractTop("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"], limit: 3));
         var h3 = string.Join(", ", Process.ExtractAll("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"]));
-        var h31 = string.Join(", ", Process.Cached.ExtractAll("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"]));
+        var h31 = string.Join(", ", cached.ExtractAll("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"]));
         var h4 = string.Join(", ", Process.ExtractAll("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"], cutoff: 40));
-        var h41 = string.Join(", ", Process.Cached.ExtractAll("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"], cutoff: 40));
+        var h41 = string.Join(", ", cached.ExtractAll("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"], cutoff: 40));
         var h5 = string.Join(", ", Process.ExtractSorted("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"]));
-        var h51 = string.Join(", ", Process.Cached.ExtractSorted("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"]));
+        var h51 = string.Join(", ", cached.ExtractSorted("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"]));
 
         var i1 = Process.ExtractOne("cowboys", ["Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys"], s => s, ScorerCache.Get<DefaultRatioScorer>());
-        var i11 = Process.Cached.ExtractOne("cowboys",["Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys"], s => s, new CachedDefaultRatioScorer("cowboys"));
+        using var cachedRatioScorer = new CachedDefaultRatioScorer("cowboys");
+        var i11 = Process.Configure().Cached(cachedRatioScorer).Build()
+            .ExtractOne(["Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys"], s => s);
 
         string[][] events =
         [
@@ -59,7 +61,7 @@ public class EvaluationTests
         var query = new[] { "new york mets vs chicago cubs", "CitiField", "2017-03-19", "8pm" };
 
         var best = Process.ExtractOne(query, events, strings => strings[0]);
-        var best1 = Process.Cached.ExtractOne(query, events, strings => strings[0]);
+        var best1 = cached.ExtractOne(query, events, strings => strings[0]);
 
         var ratio = ScorerCache.Get<DefaultRatioScorer>();
         var partial = ScorerCache.Get<PartialRatioScorer>();

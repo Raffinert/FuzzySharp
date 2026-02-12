@@ -36,6 +36,11 @@ public class ExtractAllLargeChoicesBenchmarks
     private ParallelOptions _parallelOptions = null!;
     private string[][] _events = null!;
     private string[] _query = null!;
+    private CachedScorerProcessPipeline _acrossRunsCachedPipeline;
+    private CachedScorerProcessPipeline _acrossRunsParallelCachedPipeline;
+    private ProcessPipeline _parallelPipeline;
+    private ProcessPipeline _cachedPipeline;
+    private ProcessPipeline _parallelCachedPipeline;
 
     [Params(64, 256, 1024)]
     public int ChoiceCount { get; set; }
@@ -50,6 +55,28 @@ public class ExtractAllLargeChoicesBenchmarks
         {
             MaxDegreeOfParallelism = Environment.ProcessorCount
         };
+
+        _acrossRunsCachedPipeline = Process.Configure()
+            .Cached(_extractScorer)
+            .Build();
+
+        _acrossRunsParallelCachedPipeline = Process.Configure()
+            .Cached(_extractScorer)
+            .Parallel(_parallelOptions)
+            .Build();
+
+        _parallelPipeline = Process.Configure()
+            .Parallel(_parallelOptions)
+            .Build();
+
+        _cachedPipeline = Process.Configure()
+            .Cached()
+            .Build();
+
+        _parallelCachedPipeline = Process.Configure()
+            .Cached()
+            .Parallel(_parallelOptions)
+            .Build();
     }
 
     [Benchmark]
@@ -67,31 +94,31 @@ public class ExtractAllLargeChoicesBenchmarks
     [Benchmark]
     public List<ExtractedResult<string[]>> ExtractAllParallel()
     {
-        return Process.Parallel.ExtractAll(_query, _events, static strings => strings[0], parallelOptions: _parallelOptions).ToList();
+        return _parallelPipeline.ExtractAll(_query, _events, static strings => strings[0]).ToList();
     }
 
     [Benchmark]
     public List<ExtractedResult<string[]>> ExtractAllCached()
     {
-        return Process.Cached.ExtractAll(_query, _events, static strings => strings[0]).ToList();
+        return _cachedPipeline.ExtractAll(_query, _events, static strings => strings[0]).ToList();
     }
 
     [Benchmark]
     public List<ExtractedResult<string[]>> ExtractAllParallelCached()
     {
-        return Process.Parallel.Cached.ExtractAll(_query, _events, static strings => strings[0], parallelOptions: _parallelOptions).ToList();
+        return _parallelCachedPipeline.ExtractAll(_query, _events, static strings => strings[0]).ToList();
     }
 
     [Benchmark]
     public List<ExtractedResult<string[]>> ExtractAllAcrossRunsCached()
     {
-        return Process.Cached.ExtractAll(_query, _events, static strings => strings[0], _extractScorer).ToList();
+        return _acrossRunsCachedPipeline.ExtractAll(_events, static strings => strings[0]).ToList();
     }
 
     [Benchmark]
     public List<ExtractedResult<string[]>> ExtractAllAcrossRunsParallelCached()
     {
-        return Process.Parallel.Cached.ExtractAll(_query, _events, static strings => strings[0], _extractScorer, parallelOptions: _parallelOptions).ToList();
+        return _acrossRunsParallelCachedPipeline.ExtractAll(_events, static strings => strings[0]).ToList();
     }
 
     private static string[][] BuildEvents(int count)

@@ -20,6 +20,11 @@ public class ExtractOneBenchmarks
     private static readonly string[] Query = ["new york mets vs chicago cubs", "CitiField", "2017-03-19", "8pm"];
     private ICachedRatioScorer _extractScorer = null!;
     private ParallelOptions _parallelOptions = null!;
+    private ProcessPipeline _parallelPipeline;
+    private ProcessPipeline _cachedPipeline;
+    private ProcessPipeline _parallelCachedPipeline;
+    private CachedScorerProcessPipeline _acrossRunsCachedPipeline;
+    private CachedScorerProcessPipeline _acrossRunsParallelCachedPipeline;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -29,6 +34,28 @@ public class ExtractOneBenchmarks
         {
             MaxDegreeOfParallelism = 4
         };
+
+        _parallelPipeline = Process.Configure()
+            .Parallel(_parallelOptions)
+            .Build();
+
+        _cachedPipeline = Process.Configure()
+            .Cached()
+            .Build();
+
+        _parallelCachedPipeline = Process.Configure()
+            .Cached()
+            .Parallel(_parallelOptions)
+            .Build();
+
+        _acrossRunsCachedPipeline = Process.Configure()
+            .Cached(_extractScorer)
+            .Build();
+
+        _acrossRunsParallelCachedPipeline = Process.Configure()
+            .Cached(_extractScorer)
+            .Parallel(_parallelOptions)
+            .Build();
     }
 
     [Benchmark]
@@ -46,30 +73,30 @@ public class ExtractOneBenchmarks
     [Benchmark]
     public ExtractedResult<string[]> ExtractOneParallel()
     {
-        return Process.Parallel.ExtractOne(Query, Events, static strings => strings[0], parallelOptions: _parallelOptions);
+        return _parallelPipeline.ExtractOne(Query, Events, static strings => strings[0]);
     }
 
     [Benchmark]
     public ExtractedResult<string[]> ExtractOneCached()
     {
-        return Process.Cached.ExtractOne(Query, Events, static strings => strings[0]);
+        return _cachedPipeline.ExtractOne(Query, Events, static strings => strings[0]);
     }
 
     [Benchmark]
     public ExtractedResult<string[]> ExtractOneParallelCached()
     {
-        return Process.Parallel.Cached.ExtractOne(Query, Events, static strings => strings[0], parallelOptions: _parallelOptions);
+        return _parallelCachedPipeline.ExtractOne(Query, Events, static strings => strings[0]);
     }
 
     [Benchmark]
     public ExtractedResult<string[]> ExtractOneAcrossRunsCached()
     {
-        return Process.Cached.ExtractOne(Query, Events, static strings => strings[0], _extractScorer);
+        return _acrossRunsCachedPipeline.ExtractOne(Events, static strings => strings[0]);
     }
 
     [Benchmark]
     public ExtractedResult<string[]> ExtractOneAcrossRunsParallelCached()
     {
-        return Process.Parallel.Cached.ExtractOne(Query, Events, static strings => strings[0], _extractScorer, parallelOptions: _parallelOptions);
+        return _acrossRunsParallelCachedPipeline.ExtractOne(Events, static strings => strings[0]);
     }
 }

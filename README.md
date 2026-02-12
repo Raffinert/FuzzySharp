@@ -16,7 +16,7 @@ To learn more about the war and how you can help, [click here](https://stand-wit
 [![nuget version](https://img.shields.io/nuget/v/Raffinert.FuzzySharp.svg?style=flat-square)](https://www.nuget.org/packages/Raffinert.FuzzySharp)
 [![nuget downloads](https://img.shields.io/nuget/dt/Raffinert.FuzzySharp?label=Downloads)](https://www.nuget.org/packages/Raffinert.FuzzySharp)
 
-C# .NET fast fuzzy string matching implementation of Seat Geek's well known python FuzzyWuzzy algorithm. 
+C# .NET fast fuzzy string matching implementation of Seat Geek's well known python FuzzyWuzzy algorithm.
 
 ~~Nitrous-boosted~~ Bit-parallel accelerated version of the original [FuzzySharp](https://github.com/JakeBayer/FuzzySharp).
 
@@ -32,138 +32,112 @@ Random words of 3 to 1024 random chars (LevenshteinLarge.cs):
 | [Quickenshtein](https://github.com/Turnerj/Quickenshtein)       |  12.918 ms | 12.8046 ms | 0.7019 ms |  0.06 |    0.00 |          - |          - |        12 B |       0.000 |
 | [Raffinert.FuzzySharp](https://github.com/Raffinert/FuzzySharp) |   4.970 ms |  0.3311 ms | 0.0181 ms |  0.02 |    0.00 |          - |          - |      3051 B |       0.000 |
 
+## Installation
 
-# Release Notes:
-v3.0.9 – Implemented RapidFuzz-style window pruning for the full-width partial ratio scan so it avoids evaluating every window when len2 > len1, and adjusted the suffix loop to cover the last full-width window.
+```
+Install-Package Raffinert.FuzzySharp
+```
 
-v3.0.8 – Removed finalizers from CharMaskBuffer and DictionarySlimPooled as they don't use unmanaged resources.
+or
 
-v3.0.7 – Improved LongestCommonSequence for faster execution. This caused the PartialRatioStrategy speedup.
-
-v3.0.6 – Optimized TokenInitialismRatio for faster execution and reduced memory allocations.
-
-v3.0.5  – Return netstandard20 support, small code cleanup.
-
-v3.0.4  – Remove unnecessary dependency, thanks to @laicasaane.
-
-v3.0.3  – Fix partial ratio issue with empty strings, more tests.
-
-v3.0.1, 3.0.2  – Fix critical issue with strings that contain more than 64 unique characters. The issue was introduced in v3.0.0.
-
-v3.0.0 – *Partial Ratio Accuracy and Performance Update*  
-
-- **Fixes multiple bugs in the Partial Ratio implementation** In earlier versions, `Fuzz.PartialRatio` could return suboptimal scores in certain cases (for example, when a short string appeared multiple times in a longer string, it didn’t always pick the highest scoring match).
-
-- **Performance Optimizations:** All distance calculations were rewritten to use bit-parallel algorithms. Additionally, the Levenshtein.Instance, Indel.Instance and LongestCommonSequence.Instance classes may help get max speedup - see [BenchmarkAll.FuzzySharpDistanceFrom](https://github.com/Raffinert/FuzzySharp/blob/master/FuzzySharp.Benchmarks/BenchmarkAll.cs#L213).
-
-- Bit-parallel implementations are highly borrowed from the MIT-licensed Python library [RapidFuzz](https://github.com/rapidfuzz/RapidFuzz).
-
-v.2.0.3
-
-Accent to performance and allocations. See [Benchmark](https://github.com/Raffinert/FuzzySharp/blob/dc2b858dc4cc56d8cdf26411904e255a019b0549/FuzzySharp.Benchmarks/BenchmarkDotNet.Artifacts/results/Raffinert.FuzzySharp.Benchmarks.BenchmarkAll-report-github.md).
-Support local languages more naturally (removed regexps "a-zA-Z"). All regexps were replaced with string manipulations (fixes [PR!7](https://github.com/JakeBayer/FuzzySharp/pull/7)).
-Extra performance improvement, reused approach [Dmitry Sushchevsky](https://github.com/blowin) - see [PR!42](https://github.com/JakeBayer/FuzzySharp/pull/42).
-Implemented new Process.ExtractAll method, see [Issue!46](https://github.com/JakeBayer/FuzzySharp/issues/46).
-Remove support of outdated/vulnerable platforms netcoreapp2.0;netcoreapp2.1;netstandard1.6.
-
-v.2.0.0
-
-As of 2.0.0, all empty strings will return a score of 0. Prior, the partial scoring system would return a score of 100, regardless if the other input had correct value or not. This was a result of the partial scoring system returning an empty set for the matching blocks As a result, this led to incorrrect values in the composite scores; several of them (token set, token sort), relied on the prior value of empty strings.
-
-As a result, many 1.X.X unit test may be broken with the 2.X.X upgrade, but it is within the expertise fo all the 1.X.X developers to recommednd the upgrade to the 2.X.X series regardless, should their version accommodate it or not, as it is closer to the ideal behavior of the library.
-
+```
+dotnet add package Raffinert.FuzzySharp
+```
 
 ## Usage
 
-Install-Package Raffinert.FuzzySharp
+### Simple Ratios
 
-#### Simple Ratio
 ```csharp
-Fuzz.Ratio("mysmilarstring","myawfullysimilarstirng")
-72
-Fuzz.Ratio("mysmilarstring","mysimilarstring")
-97
+Fuzz.Ratio("mysmilarstring", "myawfullysimilarstirng");
+// 72
+Fuzz.Ratio("mysmilarstring", "mysimilarstring");
+// 97
 ```
 
 #### Partial Ratio
 ```csharp
-Fuzz.PartialRatio("similar", "somewhresimlrbetweenthisstring")
-71
+Fuzz.PartialRatio("similar", "somewhresimlrbetweenthisstring");
+// 71
 ```
 
 #### Token Sort Ratio
 ```csharp
-Fuzz.TokenSortRatio("order words out of","  words out of order")
-100
-Fuzz.PartialTokenSortRatio("order words out of","  words out of order")
-100
+Fuzz.TokenSortRatio("order words out of", "  words out of order");
+// 100
+Fuzz.PartialTokenSortRatio("order words out of", "  words out of order");
+// 100
 ```
 
 #### Token Set Ratio
 ```csharp
-Fuzz.TokenSetRatio("fuzzy was a bear", "fuzzy fuzzy fuzzy bear")
-100
-Fuzz.PartialTokenSetRatio("fuzzy was a bear", "fuzzy fuzzy fuzzy bear")
-100
+Fuzz.TokenSetRatio("fuzzy was a bear", "fuzzy fuzzy fuzzy bear");
+// 100
+Fuzz.PartialTokenSetRatio("fuzzy was a bear", "fuzzy fuzzy fuzzy bear");
+// 100
 ```
 
 #### Token Initialism Ratio
 ```csharp
 Fuzz.TokenInitialismRatio("NASA", "National Aeronautics and Space Administration");
-89
+// 89
 Fuzz.TokenInitialismRatio("NASA", "National Aeronautics Space Administration");
-100
+// 100
 
 Fuzz.TokenInitialismRatio("NASA", "National Aeronautics Space Administration, Kennedy Space Center, Cape Canaveral, Florida 32899");
-53
+// 53
 Fuzz.PartialTokenInitialismRatio("NASA", "National Aeronautics Space Administration, Kennedy Space Center, Cape Canaveral, Florida 32899");
-100
+// 100
 ```
 
 #### Token Abbreviation Ratio
 ```csharp
 Fuzz.TokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessMode.Full);
-40
+// 40
 Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessMode.Full);
-67      
+// 67
 ```
-
 
 #### Weighted Ratio
 ```csharp
-Fuzz.WeightedRatio("The quick brown fox jimps ofver the small lazy dog", "the quick brown fox jumps over the small lazy dog")
-95
+Fuzz.WeightedRatio("The quick brown fox jimps ofver the small lazy dog", "the quick brown fox jumps over the small lazy dog");
+// 95
 ```
 
-#### Process
+### Process Extraction
+
+Find the best match(es) from a collection of choices.
+
 ```csharp
-Process.ExtractOne("cowboys", new[] { "Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys"})
-(string: Dallas Cowboys, score: 90, index: 3)
+Process.ExtractOne("cowboys", new[] { "Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys" });
+// (string: Dallas Cowboys, score: 90, index: 3)
 ```
 ```csharp
 Process.ExtractTop("goolge", new[] { "google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl" }, limit: 3);
-[(string: google, score: 83, index: 0), (string: googleplus, score: 75, index: 5), (string: plexoogl, score: 43, index: 7)]
+// [(string: google, score: 83, index: 0), (string: googleplus, score: 75, index: 5), (string: plexoogl, score: 43, index: 7)]
 ```
 ```csharp
-Process.ExtractAll("goolge", new [] {"google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl" })
-[(string: google, score: 83, index: 0), (string: bing, score: 22, index: 1), (string: facebook, score: 29, index: 2), (string: linkedin, score: 29, index: 3), (string: twitter, score: 15, index: 4), (string: googleplus, score: 75, index: 5), (string: bingnews, score: 29, index: 6), (string: plexoogl, score: 43, index: 7)]
-// score cutoff
-Process.ExtractAll("goolge", new[] { "google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl" }, cutoff: 40)
-[(string: google, score: 83, index: 0), (string: googleplus, score: 75, index: 5), (string: plexoogl, score: 43, index: 7)]
+Process.ExtractAll("goolge", new[] { "google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl" });
+// [(string: google, score: 83, index: 0), (string: bing, score: 22, index: 1), ...]
+
+// With score cutoff
+Process.ExtractAll("goolge", new[] { "google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl" }, cutoff: 40);
+// [(string: google, score: 83, index: 0), (string: googleplus, score: 75, index: 5), (string: plexoogl, score: 43, index: 7)]
 ```
 ```csharp
-Process.ExtractSorted("goolge", new [] {"google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl" })
-[(string: google, score: 83, index: 0), (string: googleplus, score: 75, index: 5), (string: plexoogl, score: 43, index: 7), (string: facebook, score: 29, index: 2), (string: linkedin, score: 29, index: 3), (string: bingnews, score: 29, index: 6), (string: bing, score: 22, index: 1), (string: twitter, score: 15, index: 4)]
+Process.ExtractSorted("goolge", new[] { "google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl" });
+// [(string: google, score: 83, index: 0), (string: googleplus, score: 75, index: 5), (string: plexoogl, score: 43, index: 7), ...]
 ```
 
-Extraction will use `WeightedRatio` and `full process` by default. Override these in the method parameters to use different scorers and processing.
-Here we use the Fuzz.Ratio scorer and keep the strings as is, instead of Full Process (which will .ToLowercase() before comparing)
+Extraction uses `WeightedRatio` and `Full` preprocessing by default. Override these in the method parameters to use different scorers and processing:
 ```csharp
 Process.ExtractOne("cowboys", new[] { "Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys" }, s => s, ScorerCache.Get<DefaultRatioScorer>());
-(string: Dallas Cowboys, score: 57, index: 3)
+// (string: Dallas Cowboys, score: 57, index: 3)
 ```
 
-Extraction can operate on objects of similar type. Use the "process" parameter to reduce the object to the string which it should be compared on. In the following example, the object is an array that contains the matchup, the arena, the date, and the time. We are matching on the first (0 index) parameter, the matchup.
+#### Generic Type Extraction
+
+Extraction can operate on objects of any type. Use the `processor` parameter to reduce the object to the string it should be compared on:
 ```csharp
 var events = new[]
 {
@@ -173,26 +147,214 @@ var events = new[]
 };
 var query = new[] { "new york mets vs chicago cubs", "CitiField", "2017-03-19", "8pm" };
 var best = Process.ExtractOne(query, events, strings => strings[0]);
+// (value: { "chicago cubs vs new york mets", "CitiField", "2011-05-11", "8pm" }, score: 95, index: 0)
+```
 
-best: (value: { "chicago cubs vs new york mets", "CitiField", "2011-05-11", "8pm" }, score: 95, index: 0)
+### Fluent Pipeline API
+
+The `Process.Configure()` fluent builder creates reusable, immutable pipelines with preconfigured scoring, caching, and parallel execution.
+
+#### Basic Pipeline
+
+Equivalent to the static `Process` methods, but reusable across multiple queries:
+```csharp
+var pipeline = Process.Configure().Build();
+
+var result1 = pipeline.ExtractOne("cowboys", new[] { "Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys" });
+var result2 = pipeline.ExtractOne("chicago cubs", baseballStrings);
+```
+
+#### Custom Scorer
+
+```csharp
+var pipeline = Process.Configure()
+    .WithScorer(ScorerCache.Get<DefaultRatioScorer>())
+    .Build();
+
+var result = pipeline.ExtractOne("cowboys", new[] { "Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys" });
+```
+
+#### Parallel Execution
+
+Enable multi-threaded processing for large choice sets:
+```csharp
+var pipeline = Process.Configure()
+    .Parallel()
+    .Build();
+
+var results = pipeline.ExtractAll("goolge", largeChoicesList);
+```
+
+With `ParallelOptions` for fine-grained control:
+```csharp
+var pipeline = Process.Configure()
+    .Parallel(new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount })
+    .Build();
+```
+
+#### Cached Execution
+
+Automatic caching creates a `CachedWeightedRatioScorer` per extraction call, pre-initializing internal data structures for the query string:
+```csharp
+var pipeline = Process.Configure()
+    .Cached()
+    .Build();
+
+var result = pipeline.ExtractOne("cowboys", new[] { "Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys" });
+```
+
+#### Cached + Parallel
+
+Combine caching and parallelism. Builder methods are **order independent** -- `.Cached().Parallel()` and `.Parallel().Cached()` produce identical results:
+```csharp
+var pipeline = Process.Configure()
+    .Cached()
+    .Parallel(new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount })
+    .Build();
+
+var results = pipeline.ExtractAll("goolge", largeChoicesList);
+```
+
+#### External Cached Scorer (Across-Run Caching)
+
+For maximum performance when running the same query against different choice sets, provide an externally managed `ICachedRatioScorer`. The scorer pre-initializes once and is reused across all extraction calls:
+```csharp
+using var scorer = new CachedWeightedRatioScorer("new york mets at atlanta braves");
+
+var pipeline = Process.Configure()
+    .Cached(scorer)
+    .Parallel()
+    .Build();
+
+var results1 = pipeline.ExtractAll(choiceSet1);
+var results2 = pipeline.ExtractAll(choiceSet2);
+```
+
+> **Note:** External cached scorers implement `IDisposable`. Use `using` to ensure proper cleanup.
+
+#### CancellationToken Support
+
+Pass a `CancellationToken` via `ParallelOptions` to cancel long-running parallel extractions:
+```csharp
+var cts = new CancellationTokenSource();
+
+var pipeline = Process.Configure()
+    .Cached()
+    .Parallel(new ParallelOptions { CancellationToken = cts.Token })
+    .Build();
+
+// Throws OperationCanceledException if cancelled
+var results = pipeline.ExtractAll(query, largeChoicesList).ToList();
 ```
 
 ### Using Different Scorers
-Scoring strategies are stateless, and as such should be static. However, in order to get them to share all the code they have in common via inheritance, making them static was not possible.
-Currently one way around having to new up an instance everytime you want to use one is to use the cache. This will ensure only one instance of each scorer ever exists.
+
+#### Non-Cached Scorers (`IRatioScorer`)
+
+Stateless scorers for use with `Process` static methods and the `WithScorer()` builder method:
 ```csharp
-var ratio = ScorerCache.Get<DefaultRatioScorer>();
-var partialRatio = ScorerCache.Get<PartialRatioScorer>();
-var tokenSet = ScorerCache.Get<TokenSetScorer>();
-var partialTokenSet = ScorerCache.Get<PartialTokenSetScorer>();
-var tokenSort = ScorerCache.Get<TokenSortScorer>();
-var partialTokenSort = ScorerCache.Get<PartialTokenSortScorer>();
-var tokenAbbreviation = ScorerCache.Get<TokenAbbreviationScorer>();
-var partialTokenAbbreviation = ScorerCache.Get<PartialTokenAbbreviationScorer>();
-var weighted = ScorerCache.Get<WeightedRatioScorer>();
+var ratio              = ScorerCache.Get<DefaultRatioScorer>();
+var partialRatio       = ScorerCache.Get<PartialRatioScorer>();
+var tokenSet           = ScorerCache.Get<TokenSetScorer>();
+var partialTokenSet    = ScorerCache.Get<PartialTokenSetScorer>();
+var tokenSort          = ScorerCache.Get<TokenSortScorer>();
+var partialTokenSort   = ScorerCache.Get<PartialTokenSortScorer>();
+var tokenAbbreviation  = ScorerCache.Get<TokenAbbreviationScorer>();
+var partialTokenAbbrev = ScorerCache.Get<PartialTokenAbbreviationScorer>();
+var weighted           = ScorerCache.Get<WeightedRatioScorer>();
 ```
 
-🍪 Support the project through [GitHub Sponsors](https://github.com/sponsors/ycherkes) or via [PayPal](https://www.paypal.com/donate/?business=KXGF7CMW8Y8WJ).
+#### Cached Scorers (`ICachedRatioScorer`)
+
+Pre-initialize with a query string for repeated comparisons. These implement `IDisposable`:
+```csharp
+using var scorer = new CachedWeightedRatioScorer("search query");
+int score = scorer.Score("candidate string");
+```
+
+Available cached scorers:
+- `CachedWeightedRatioScorer` -- weighted combination (default for `.Cached()`)
+- `CachedDefaultRatioScorer` -- simple Levenshtein ratio
+- `CachedTokenSortScorer` -- token sort ratio
+- `CachedTokenSetScorer` -- token set ratio
+- `CachedPartialTokenSetScorer` -- partial token set ratio
+- `CachedTokenDifferenceScorer` -- token difference ratio
+
+### Levenshtein Distance API
+
+Low-level access to the bit-parallel Levenshtein distance implementation:
+
+```csharp
+// Edit distance
+int distance = Levenshtein.Distance("kitten", "sitting");
+// 3
+
+// Normalized similarity (1.0 = identical, 0.0 = completely different)
+double similarity = Levenshtein.NormalizedSimilarity("kitten", "sitting");
+
+// Edit operations to transform one string into another
+EditOp[] ops = Levenshtein.GetEditOps("kitten", "sitting");
+// [Replace(0->0), Equal, Equal, Equal, Insert(4->4), Replace(5->6)]
+```
+
+### Instance Distance Classes
+
+The `Levenshtein`, `Indel`, and `LongestCommonSubsequence` classes also offer an **instance API** for one-to-many comparisons. The constructor pre-computes a bit-parallel pattern match vector from the source string, which is then reused across all subsequent calls. This avoids rebuilding the internal data structure on every comparison, giving a significant speedup when comparing one source against many targets.
+
+All three implement `IDisposable` -- use `using` to return pooled arrays.
+
+#### Levenshtein Instance
+
+```csharp
+using var lev = new Levenshtein("chicago cubs vs new york mets");
+
+int d1 = lev.DistanceFrom("new york mets vs chicago cubs");
+int d2 = lev.DistanceFrom("atlanta braves vs pittsburgh pirates");
+```
+
+#### Indel Instance
+
+Indel distance counts only insertions and deletions (no replacements). `NormalizedSimilarityWith` returns a value between 0.0 (completely different) and 1.0 (identical):
+
+```csharp
+using var indel = new Indel("chicago cubs");
+
+int distance = indel.DistanceFrom("chicago white sox");
+double similarity = indel.NormalizedSimilarityWith("chicago white sox");
+```
+
+A generic variant `IndelT<T>` is available for comparing sequences of any `IEquatable<T>`:
+
+```csharp
+using var indel = new IndelT<string>(new[] { "hello", "world" });
+
+int distance = indel.DistanceFrom(new[] { "hello", "there" });
+double similarity = indel.NormalizedSimilarityWith(new[] { "hello", "there" });
+```
+
+#### LongestCommonSubsequence Instance
+
+LCS distance is defined as `max(len1, len2) - LCS_length`:
+
+```csharp
+using var lcs = new LongestCommonSubsequence("chicago cubs");
+
+int distance = lcs.DistanceFrom("chicago white sox");
+```
+
+### PreprocessMode
+
+By default, `Fuzz` methods compare strings as-is. Pass `PreprocessMode.Full` to normalize whitespace, lowercase, and strip non-alphanumeric characters before comparing:
+
+```csharp
+Fuzz.Ratio("new york mets", "NEW YORK METS");
+// < 100 (case sensitive)
+
+Fuzz.Ratio("new york mets", "NEW YORK METS", PreprocessMode.Full);
+// 100 (case insensitive after preprocessing)
+```
+
+`Process` extraction methods use `PreprocessMode.Full` by default. Pass a custom `processor` function to override this behavior.
 
 ## Credits
 
@@ -203,3 +365,9 @@ var weighted = ScorerCache.Get<WeightedRatioScorer>();
 - [Max Bachmann (RapidFuzz)](https://github.com/rapidfuzz/RapidFuzz)
 - [Mikko Ohtamaa (python-Levenshtein)](https://github.com/miohtama/python-Levenshtein)
 - [Panayiotis (Java implementation I heavily borrowed from)](https://github.com/xdrop)
+
+## Support
+
+Support the project through [GitHub Sponsors](https://github.com/sponsors/ycherkes) or via [PayPal](https://www.paypal.com/donate/?business=KXGF7CMW8Y8WJ).
+
+See [CHANGELOG.md](CHANGELOG.md) for release history.

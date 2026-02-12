@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Raffinert.FuzzySharp.Extractor;
 using Raffinert.FuzzySharp.PreProcess;
@@ -8,10 +8,17 @@ using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
 
 namespace Raffinert.FuzzySharp;
 
-public static partial class Process
+public static class Process
 {
-    private static readonly IRatioScorer DefaultScorer = ScorerCache.Get<WeightedRatioScorer>();
-    private static readonly Func<string, string> DefaultStringProcessor = StringPreprocessorFactory.GetPreprocessor(PreprocessMode.Full);
+    internal static readonly IRatioScorer DefaultScorer = ScorerCache.Get<WeightedRatioScorer>();
+    internal static readonly Func<string, string> DefaultStringProcessor = StringPreprocessorFactory.GetPreprocessor(PreprocessMode.Full);
+
+    /// <summary>
+    /// Creates a new fluent builder for configuring a fuzzy string matching pipeline.
+    /// Supports caching, parallel execution, and custom configuration.
+    /// </summary>
+    /// <returns>A new ProcessBuilder instance</returns>
+    public static ProcessBuilder Configure() => new ProcessBuilder();
 
     #region ExtractAll
     /// <summary>
