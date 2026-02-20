@@ -18,7 +18,7 @@ To learn more about the war and how you can help, [click here](https://stand-wit
 
 C# .NET fast fuzzy string matching implementation of Seat Geek's well known python FuzzyWuzzy algorithm.
 
-~~Nitrous-boosted~~ Bit-parallel accelerated version of the original [FuzzySharp](https://github.com/JakeBayer/FuzzySharp) with fixed multiple bugs in the [partial_ratio implementation](https://github.com/rapidfuzz/RapidFuzz/blob/main/api_differences.md#partial_ratio-implementation).
+~~Nitrous-boosted~~ Bit-parallel accelerated version of the original [FuzzySharp](https://github.com/JakeBayer/FuzzySharp) with multiple bugs fixed in the [partial_ratio implementation](https://github.com/rapidfuzz/RapidFuzz/blob/main/api_differences.md#partial_ratio-implementation).
 
 Benchmark comparison of naive DP Levenshtein distance calculation (baseline), FuzzySharp, Fastenshtein and Quickenshtein:
 
