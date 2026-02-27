@@ -344,6 +344,7 @@ int distance = lcs.DistanceFrom("chicago white sox");
 ```
 
 ### PreprocessMode
+<p align="right"><a href="https://dotnetfiddle.net/cIQ6PB">Run .NET fiddle</a></p>
 
 By default, `Fuzz` methods compare strings as-is. Pass `PreprocessMode.Full` to normalize whitespace, lowercase, and strip non-alphanumeric characters before comparing:
 
