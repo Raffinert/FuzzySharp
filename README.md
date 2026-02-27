@@ -229,6 +229,8 @@ var pipeline = Process.Configure()
 
 #### Cached Execution
 
+<p align="right"><a href="https://dotnetfiddle.net/y6qMJm">Run .NET fiddle</a></p>
+
 Automatic caching creates a `CachedWeightedRatioScorer` per extraction call, pre-initializing internal data structures for the query string:
 ```csharp
 var pipeline = Process.Configure()
