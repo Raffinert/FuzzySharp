@@ -57,6 +57,8 @@ Fuzz.Ratio("mysmilarstring", "mysimilarstring");
 ```
 
 #### Partial Ratio
+<p align="right"><a href="https://dotnetfiddle.net/rk0dIO">Run .NET fiddle</a></p>
+
 ```csharp
 Fuzz.PartialRatio("similar", "somewhresimlrbetweenthisstring");
 // 71
