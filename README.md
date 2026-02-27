@@ -319,6 +319,8 @@ Available cached scorers:
 
 ### Levenshtein Distance API
 
+<p align="right"><a href="https://dotnetfiddle.net/JzzcwS">Run .NET fiddle</a></p>
+
 Low-level access to the bit-parallel Levenshtein distance implementation:
 
 ```csharp
@@ -328,10 +330,11 @@ int distance = Levenshtein.Distance("kitten", "sitting");
 
 // Normalized similarity (1.0 = identical, 0.0 = completely different)
 double similarity = Levenshtein.NormalizedSimilarity("kitten", "sitting");
+// 0.5714285714285714
 
 // Edit operations to transform one string into another
 EditOp[] ops = Levenshtein.GetEditOps("kitten", "sitting");
-// [Replace(0->0), Equal, Equal, Equal, Insert(4->4), Replace(5->6)]
+// [REPLACE(0, 0), REPLACE(4, 4), INSERT(6, 6)]
 ```
 
 ### Instance Distance Classes
