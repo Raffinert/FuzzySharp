@@ -47,6 +47,7 @@ dotnet add package Raffinert.FuzzySharp
 ## Usage
 
 ### Simple Ratios
+<p align="right"><a href="https://dotnetfiddle.net/9JpFTQ">Run .NET fiddle</a></p>
 
 ```csharp
 Fuzz.Ratio("mysmilarstring", "myawfullysimilarstirng");
