@@ -394,6 +394,7 @@ LCS distance is defined as `max(len1, len2) - LCS_length`:
 using var lcs = new LongestCommonSubsequence("chicago cubs");
 
 int distance = lcs.DistanceFrom("chicago white sox");
+// 8
 ```
 
 ### PreprocessMode
