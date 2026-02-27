@@ -65,6 +65,8 @@ Fuzz.PartialRatio("similar", "somewhresimlrbetweenthisstring");
 ```
 
 #### Token Sort Ratio
+<p align="right"><a href="https://dotnetfiddle.net/b5RVp2">Run .NET fiddle</a></p>
+
 ```csharp
 Fuzz.TokenSortRatio("order words out of", "  words out of order");
 // 100
@@ -73,6 +75,8 @@ Fuzz.PartialTokenSortRatio("order words out of", "  words out of order");
 ```
 
 #### Token Set Ratio
+<p align="right"><a href="https://dotnetfiddle.net/ZfZRGb">Run .NET fiddle</a></p>
+
 ```csharp
 Fuzz.TokenSetRatio("fuzzy was a bear", "fuzzy fuzzy fuzzy bear");
 // 100
@@ -81,6 +85,8 @@ Fuzz.PartialTokenSetRatio("fuzzy was a bear", "fuzzy fuzzy fuzzy bear");
 ```
 
 #### Token Initialism Ratio
+<p align="right"><a href="https://dotnetfiddle.net/87181A">Run .NET fiddle</a></p>
+
 ```csharp
 Fuzz.TokenInitialismRatio("NASA", "National Aeronautics and Space Administration");
 // 89
@@ -94,6 +100,8 @@ Fuzz.PartialTokenInitialismRatio("NASA", "National Aeronautics Space Administrat
 ```
 
 #### Token Abbreviation Ratio
+<p align="right"><a href="https://dotnetfiddle.net/MVlwrW">Run .NET fiddle</a></p>
+
 ```csharp
 Fuzz.TokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessMode.Full);
 // 40
@@ -102,6 +110,8 @@ Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessM
 ```
 
 #### Weighted Ratio
+<p align="right"><a href="https://dotnetfiddle.net/n9QxAk">Run .NET fiddle</a></p>
+
 ```csharp
 Fuzz.WeightedRatio("The quick brown fox jimps ofver the small lazy dog", "the quick brown fox jumps over the small lazy dog");
 // 95
@@ -110,6 +120,8 @@ Fuzz.WeightedRatio("The quick brown fox jimps ofver the small lazy dog", "the qu
 ### Process Extraction
 
 Find the best match(es) from a collection of choices.
+
+<p align="right"><a href="https://dotnetfiddle.net/8lEzk3">Run .NET fiddle</a></p>
 
 ```csharp
 Process.ExtractOne("cowboys", new[] { "Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys" });
@@ -121,7 +133,7 @@ Process.ExtractTop("goolge", new[] { "google", "bing", "facebook", "linkedin", "
 ```
 ```csharp
 Process.ExtractAll("goolge", new[] { "google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl" });
-// [(string: google, score: 83, index: 0), (string: bing, score: 22, index: 1), ...]
+// [(string: google, score: 83, index: 0), (string: bing, score: 36, index: 1), ...]
 
 // With score cutoff
 Process.ExtractAll("goolge", new[] { "google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl" }, cutoff: 40);
@@ -139,6 +151,8 @@ Process.ExtractOne("cowboys", new[] { "Atlanta Falcons", "New York Jets", "New Y
 ```
 
 #### Generic Type Extraction
+
+<p align="right"><a href="https://dotnetfiddle.net/YDtl6k">Run .NET fiddle</a></p>
 
 Extraction can operate on objects of any type. Use the `processor` parameter to reduce the object to the string it should be compared on:
 ```csharp
@@ -160,14 +174,31 @@ The `Process.Configure()` fluent builder creates reusable, immutable pipelines w
 #### Basic Pipeline
 
 Equivalent to the static `Process` methods, but reusable across multiple queries:
+
+<p align="right"><a href="https://dotnetfiddle.net/KEFXxm">Run .NET fiddle</a></p>
+
 ```csharp
 var pipeline = Process.Configure().Build();
 
 var result1 = pipeline.ExtractOne("cowboys", new[] { "Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys" });
-var result2 = pipeline.ExtractOne("chicago cubs", baseballStrings);
+//(string: Dallas Cowboys, score: 90, index: 3)
+var result2 = pipeline.ExtractOne(
+    "chicago cubs",
+    new[]
+    {
+        "Boston Red Sox",
+        "Los Angeles Dodgers",
+        "New York Yankees",
+        "San Francisco Giants",
+        "St. Louis Cardinals",
+        "Houston Astros"
+    });
+//(string: San Francisco Giants, score: 45, index: 3)
 ```
 
 #### Custom Scorer
+
+<p align="right"><a href="https://dotnetfiddle.net/6JVmU9">Run .NET fiddle</a></p>
 
 ```csharp
 var pipeline = Process.Configure()
@@ -175,6 +206,7 @@ var pipeline = Process.Configure()
     .Build();
 
 var result = pipeline.ExtractOne("cowboys", new[] { "Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys" });
+//(string: Dallas Cowboys, score: 67, index: 3)
 ```
 
 #### Parallel Execution
