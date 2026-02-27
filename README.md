@@ -342,14 +342,20 @@ All three implement `IDisposable` -- use `using` to return pooled arrays.
 
 #### Levenshtein Instance
 
+<p align="right"><a href="https://dotnetfiddle.net/hxUB72">Run .NET fiddle</a></p>
+
 ```csharp
 using var lev = new Levenshtein("chicago cubs vs new york mets");
 
 int d1 = lev.DistanceFrom("new york mets vs chicago cubs");
+// 22
 int d2 = lev.DistanceFrom("atlanta braves vs pittsburgh pirates");
+// 26
 ```
 
 #### Indel Instance
+
+<p align="right"><a href="https://dotnetfiddle.net/UkyXk2">Run .NET fiddle</a></p>
 
 Indel distance counts only insertions and deletions (no replacements). `NormalizedSimilarityWith` returns a value between 0.0 (completely different) and 1.0 (identical):
 
@@ -357,7 +363,9 @@ Indel distance counts only insertions and deletions (no replacements). `Normaliz
 using var indel = new Indel("chicago cubs");
 
 int distance = indel.DistanceFrom("chicago white sox");
+// 11
 double similarity = indel.NormalizedSimilarityWith("chicago white sox");
+// 0.6206896551724138
 ```
 
 A generic variant `IndelT<T>` is available for comparing sequences of any `IEquatable<T>`:
@@ -366,10 +374,14 @@ A generic variant `IndelT<T>` is available for comparing sequences of any `IEqua
 using var indel = new IndelT<string>(new[] { "hello", "world" });
 
 int distance = indel.DistanceFrom(new[] { "hello", "there" });
+// 2
 double similarity = indel.NormalizedSimilarityWith(new[] { "hello", "there" });
+// 0.5
 ```
 
 #### LongestCommonSubsequence Instance
+
+<p align="right"><a href="https://dotnetfiddle.net/s60rZT">Run .NET fiddle</a></p>
 
 LCS distance is defined as `max(len1, len2) - LCS_length`:
 
