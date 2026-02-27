@@ -303,6 +303,8 @@ var weighted           = ScorerCache.Get<WeightedRatioScorer>();
 
 #### Cached Scorers (`ICachedRatioScorer`)
 
+<p align="right"><a href="https://dotnetfiddle.net/Ykr94M">Run .NET fiddle</a></p>
+
 Pre-initialize with a query string for repeated comparisons. These implement `IDisposable`:
 ```csharp
 using var scorer = new CachedWeightedRatioScorer("search query");
