@@ -420,7 +420,7 @@ Fuzz.Ratio("new york mets", "NEW YORK METS", PreprocessMode.Full);
 - [Jacob Bayer (original FuzzySharp library)](https://github.com/JakeBayer/FuzzySharp)
 - [Max Bachmann (RapidFuzz)](https://github.com/rapidfuzz/RapidFuzz)
 - [Mikko Ohtamaa (python-Levenshtein)](https://github.com/miohtama/python-Levenshtein)
-- [Panayiotis (Java implementation I heavily borrowed from)](https://github.com/xdrop)
+- [Panayiotis (Java implementation)](https://github.com/xdrop)
 
 ## Support
 
