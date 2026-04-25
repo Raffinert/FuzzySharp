@@ -1,5 +1,8 @@
 # Changelog
 
+## v4.0.1
+- Removed unnecessary abstractions CachedScorerBase and CachedStrategySensitiveScorerBase.
+
 ## v4.0.0
 
 *Fluent Pipeline API, Caching, and Parallelism*
