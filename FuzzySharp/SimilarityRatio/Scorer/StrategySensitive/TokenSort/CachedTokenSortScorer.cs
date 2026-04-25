@@ -3,7 +3,7 @@ using Raffinert.FuzzySharp.SimilarityRatio.Strategy;
 
 namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 
-public sealed class CachedTokenSortScorer : CachedScorerBase
+public sealed class CachedTokenSortScorer : ICachedRatioScorer
 {
     private readonly ICachedStrategy _strategy;
     private readonly bool _isStrategyOwner;
@@ -21,13 +21,13 @@ public sealed class CachedTokenSortScorer : CachedScorerBase
         _isStrategyOwner = isStrategyOwner;
     }
 
-    public override int Score(string input2)
+    public int Score(string input2)
     {
         var sorted2 = input2.NormalizeSpacesAndSort();
         return _strategy.Calculate(sorted2);
     }
 
-    public override void Dispose()
+    public void Dispose()
     {
         if(_isStrategyOwner)
         {

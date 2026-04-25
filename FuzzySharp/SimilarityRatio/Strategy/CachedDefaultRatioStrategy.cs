@@ -30,8 +30,3 @@ internal class CachedDefaultRatioStrategy : ICachedStrategy
         _indel.Dispose();
     }
 }
-
-public interface ICachedStrategy : IDisposable
-{
-    int Calculate(string input2);
-}
