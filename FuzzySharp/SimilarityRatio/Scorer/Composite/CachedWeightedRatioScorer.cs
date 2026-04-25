@@ -4,7 +4,7 @@ using Raffinert.FuzzySharp.SimilarityRatio.Strategy;
 
 namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
 
-public sealed class CachedWeightedRatioScorer : CachedScorerBase
+public sealed class CachedWeightedRatioScorer : ICachedRatioScorer
 {
     private static readonly double UNBASE_SCALE = .95;
     private static readonly double PARTIAL_SCALE = .90;
@@ -25,7 +25,7 @@ public sealed class CachedWeightedRatioScorer : CachedScorerBase
         _tokenSetScorer = new CachedTokenSetScorer(_input1);
     }
 
-    public override int Score(string input2)
+    public int Score(string input2)
     {
         int len1 = _input1.Length;
         int len2 = input2.Length;
@@ -62,7 +62,7 @@ public sealed class CachedWeightedRatioScorer : CachedScorerBase
         return (int)Math.Round(Math.Max(baseRatio, Math.Max(tokenSort, tokenSet)));
     }
 
-    public override void Dispose()
+    public void Dispose()
     {
         _strategy.Dispose();
     }
