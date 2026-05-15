@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="FuzzySharp.Benchmarks/FuzzySharp.Benchmarks.csproj" />
+  <Project Path="FuzzySharp.Test/FuzzySharp.Test.csproj" />
+  <Project Path="FuzzySharp/FuzzySharp.csproj" />
+</Solution>

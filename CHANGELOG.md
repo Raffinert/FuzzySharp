@@ -1,5 +1,12 @@
 # Changelog
 
+## v4.0.2
+
+- Added `string query` overloads for generic choice extraction, allowing a plain string query to be matched against `IEnumerable<T>` choices with a `Func<T, string>` processor.
+- Added `ExtractOne`, `ExtractSorted`, and `ExtractTop` support for this overload shape in the sequential and parallel result extractors.
+- Extended the `Process` API for string-query generic choice extraction and added matching `ProcessPipeline` overloads for `ExtractTop` and `ExtractOne`.
+- Added tests covering string-query generic choice extraction for `Process` and `ProcessPipeline`.
+
 ## v4.0.1
 - Removed unnecessary abstractions CachedScorerBase and CachedStrategySensitiveScorerBase.
 
