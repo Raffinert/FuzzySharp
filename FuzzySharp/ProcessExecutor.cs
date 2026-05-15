@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Raffinert.FuzzySharp.Extractor;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
@@ -165,6 +165,32 @@ internal static class ProcessExecutor
         return ResultExtractor.ExtractTop(query, choices, processor, scorer, limit, cutoff);
     }
 
+    public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(
+        string query,
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        int limit,
+        int cutoff,
+        ProcessOptions options)
+    {
+        if (processor == null) throw new ArgumentNullException(nameof(processor));
+
+        if (options.UseCaching)
+        {
+            return ExtractTopCached(query, choices, processor, limit, cutoff, options);
+        }
+
+        var scorer = options.Scorer ?? Process.DefaultScorer;
+
+        if (options.UseParallel)
+        {
+            return ResultExtractor.Parallel.ExtractTop(
+                query, choices, processor, scorer, limit, cutoff, options.ParallelOptions);
+        }
+
+        return ResultExtractor.ExtractTop(query, choices, processor, scorer, limit, cutoff);
+    }
+
     private static IEnumerable<ExtractedResult<T>> ExtractTopCached<T>(
         string processedQuery,
         IEnumerable<T> choices,
@@ -302,6 +328,34 @@ internal static class ProcessExecutor
         {
             var processedQuery = processor(query);
             using var cachedScorer = new CachedWeightedRatioScorer(processedQuery);
+            return CachedScorerProcessExecutor.ExtractOne(
+                choices, processor, cachedScorer, cutoff,
+                options.UseParallel, options.ParallelOptions);
+        }
+
+        var scorer = options.Scorer ?? Process.DefaultScorer;
+
+        if (options.UseParallel)
+        {
+            return ResultExtractor.Parallel.ExtractOne(
+                query, choices, processor, scorer, cutoff, options.ParallelOptions);
+        }
+
+        return ResultExtractor.ExtractOne(query, choices, processor, scorer, cutoff);
+    }
+
+    public static ExtractedResult<T> ExtractOne<T>(
+        string query,
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        int cutoff,
+        ProcessOptions options)
+    {
+        if (processor == null) throw new ArgumentNullException(nameof(processor));
+
+        if (options.UseCaching)
+        {
+            using var cachedScorer = new CachedWeightedRatioScorer(query);
             return CachedScorerProcessExecutor.ExtractOne(
                 choices, processor, cachedScorer, cutoff,
                 options.UseParallel, options.ParallelOptions);

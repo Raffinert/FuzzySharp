@@ -33,12 +33,27 @@ public static partial class ResultExtractor
         return ExtractWithoutOrder(query, choices, processor, calculator, cutoff).Max();
     }
 
+    public static ExtractedResult<T> ExtractOne<T>(string query, IEnumerable<T> choices, Func<T, string> processor, IRatioScorer calculator, int cutoff = 0)
+    {
+        return ExtractWithoutOrder(query, choices, processor, calculator, cutoff).Max();
+    }
+
     public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(T query, IEnumerable<T> choices, Func<T, string> processor, IRatioScorer calculator, int cutoff = 0)
     {
         return ExtractWithoutOrder(query, choices, processor, calculator, cutoff).OrderByDescending(r => r.Score);
     }
 
+    public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(string query, IEnumerable<T> choices, Func<T, string> processor, IRatioScorer calculator, int cutoff = 0)
+    {
+        return ExtractWithoutOrder(query, choices, processor, calculator, cutoff).OrderByDescending(r => r.Score);
+    }
+
     public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(T query, IEnumerable<T> choices, Func<T, string> processor, IRatioScorer calculator, int limit, int cutoff = 0)
+    {
+        return ExtractWithoutOrder(query, choices, processor, calculator, cutoff).MaxN(limit).Reverse();
+    }
+
+    public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(string query, IEnumerable<T> choices, Func<T, string> processor, IRatioScorer calculator, int limit, int cutoff = 0)
     {
         return ExtractWithoutOrder(query, choices, processor, calculator, cutoff).MaxN(limit).Reverse();
     }

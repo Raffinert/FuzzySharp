@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Raffinert.FuzzySharp.Extractor;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
@@ -93,6 +93,20 @@ public readonly struct ProcessPipeline
         return ProcessExecutor.ExtractTop(query, choices, processor, limit, cutoff, _options);
     }
 
+    /// <summary>
+    /// Creates a sorted list of ExtractedResult which contain the
+    /// top limit most similar choices
+    /// </summary>
+    public IEnumerable<ExtractedResult<T>> ExtractTop<T>(
+        string query,
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        int limit = 5,
+        int cutoff = 0)
+    {
+        return ProcessExecutor.ExtractTop(query, choices, processor, limit, cutoff, _options);
+    }
+
     #endregion
 
     #region ExtractSorted
@@ -142,6 +156,18 @@ public readonly struct ProcessPipeline
     /// </summary>
     public ExtractedResult<T> ExtractOne<T>(
         T query,
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        int cutoff = 0)
+    {
+        return ProcessExecutor.ExtractOne(query, choices, processor, cutoff, _options);
+    }
+
+    /// <summary>
+    /// Find the single best match above a score in a list of choices.
+    /// </summary>
+    public ExtractedResult<T> ExtractOne<T>(
+        string query,
         IEnumerable<T> choices,
         Func<T, string> processor,
         int cutoff = 0)

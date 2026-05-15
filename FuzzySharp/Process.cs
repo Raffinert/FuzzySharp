@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Raffinert.FuzzySharp.Extractor;
 using Raffinert.FuzzySharp.PreProcess;
@@ -126,6 +126,29 @@ public static class Process
     /// <param name="cutoff"></param>
     /// <returns></returns>
     public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(
+        string query,
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        IRatioScorer scorer = null,
+        int limit = 5,
+        int cutoff = 0)
+    {
+        scorer ??= DefaultScorer;
+        return ResultExtractor.ExtractTop(query, choices, processor, scorer, limit, cutoff);
+    }
+
+    /// <summary>
+    /// Creates a sorted list of ExtractedResult  which contain the
+    /// top limit most similar choices
+    /// </summary>
+    /// <param name="query"></param>
+    /// <param name="choices"></param>
+    /// <param name="processor"></param>
+    /// <param name="scorer"></param>
+    /// <param name="limit"></param>
+    /// <param name="cutoff"></param>
+    /// <returns></returns>
+    public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(
         T query, 
         IEnumerable<T> choices,
         Func<T, string> processor,
@@ -182,6 +205,26 @@ public static class Process
         return ResultExtractor.ExtractSorted(query, choices, processor, scorer, cutoff);
     }
 
+    /// <summary>
+    /// Creates a sorted list of ExtractedResult with the closest matches first
+    /// </summary>
+    /// <param name="query"></param>
+    /// <param name="choices"></param>
+    /// <param name="processor"></param>
+    /// <param name="scorer"></param>
+    /// <param name="cutoff"></param>
+    /// <returns></returns>
+    public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(
+        string query,
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        IRatioScorer scorer = null,
+        int cutoff = 0)
+    {
+        scorer ??= DefaultScorer;
+        return ResultExtractor.ExtractSorted(query, choices, processor, scorer, cutoff);
+    }
+
     #endregion
 
     #region ExtractOne
@@ -217,6 +260,26 @@ public static class Process
     /// <returns></returns>
     public static ExtractedResult<T> ExtractOne<T>(
         T query,
+        IEnumerable<T> choices,
+        Func<T, string> processor,
+        IRatioScorer scorer = null,
+        int cutoff = 0)
+    {
+        scorer ??= DefaultScorer;
+        return ResultExtractor.ExtractOne(query, choices, processor, scorer, cutoff);
+    }
+
+    /// <summary>
+    /// Find the single best match above a score in a list of choices.
+    /// </summary>
+    /// <param name="query"></param>
+    /// <param name="choices"></param>
+    /// <param name="processor"></param>
+    /// <param name="scorer"></param>
+    /// <param name="cutoff"></param>
+    /// <returns></returns>
+    public static ExtractedResult<T> ExtractOne<T>(
+        string query,
         IEnumerable<T> choices,
         Func<T, string> processor,
         IRatioScorer scorer = null,

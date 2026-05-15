@@ -167,6 +167,23 @@ var best = Process.ExtractOne(query, events, strings => strings[0]);
 // (value: { "chicago cubs vs new york mets", "CitiField", "2011-05-11", "8pm" }, score: 95, index: 0)
 ```
 
+If the query is already a string, it can be matched directly against generic choices by providing only a choice processor:
+```csharp
+var events = new[]
+{
+    new { Name = "new york mets vs chicago cubs", Venue = "CitiField" },
+    new { Name = "chicago cubs vs chicago white sox", Venue = "Wrigley Field" },
+    new { Name = "philadelphia phillies vs atlanta braves", Venue = "Citizens Bank Park" },
+};
+
+var query = "new york mets at chicago cubs";
+
+var best = Process.ExtractOne(query, events, e => e.Name);
+// best.Value.Name == "new york mets vs chicago cubs"
+
+var top = Process.ExtractTop(query, events, e => e.Name, limit: 2);
+```
+
 ### Fluent Pipeline API
 
 The `Process.Configure()` fluent builder creates reusable, immutable pipelines with preconfigured scoring, caching, and parallel execution.
