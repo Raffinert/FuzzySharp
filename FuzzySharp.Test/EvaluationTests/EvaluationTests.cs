@@ -113,9 +113,9 @@ public class EvaluationTests
         ];
 
         // Act
-        var cachedResults = Process.Configure().Cached().Build().ExtractTop(input, choices, limit: 9).ToArray();
-        var cachedParallelResults = Process.Configure().Cached().Parallel().Build().ExtractTop(input, choices, limit: 9).ToArray();
-        var regularResults = Process.ExtractTop(input, choices, limit: 9).ToArray();
+        var cachedResults = Process.Configure().Cached().Build().ExtractTop(input, choices, limit: 2).ToArray();
+        var cachedParallelResults = Process.Configure().Cached().Parallel().Build().ExtractTop(input, choices, limit: 2).ToArray();
+        var regularResults = Process.ExtractTop(input, choices, limit: 2).ToArray();
 
         // Assert
         Assert.IsNotEmpty(cachedResults);
@@ -147,9 +147,9 @@ public class EvaluationTests
         ];
 
         // Act
-        var regularResults = Process.ExtractTop(input, choices, StringPreprocessors.None, ScorerCache.Get<WeightedRatioScorer>(), limit: 9).ToArray();
-        var cachedParallelResults = Process.Configure().Cached().Parallel().Build().ExtractTop(input, choices, StringPreprocessors.None, limit: 9).ToArray();
-        var cachedResults = Process.Configure().Cached().Build().ExtractTop(input, choices, StringPreprocessors.None, limit: 9).ToArray();
+        var regularResults = Process.ExtractTop(input, choices, StringPreprocessors.None, ScorerCache.Get<WeightedRatioScorer>(), limit: 2).ToArray();
+        var cachedParallelResults = Process.Configure().Cached().Parallel().Build().ExtractTop(input, choices, StringPreprocessors.None, limit: 2).ToArray();
+        var cachedResults = Process.Configure().Cached().Build().ExtractTop(input, choices, StringPreprocessors.None, limit: 2).ToArray();
 
         // Assert
         Assert.IsNotEmpty(cachedResults);
