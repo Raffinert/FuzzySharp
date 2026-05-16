@@ -114,13 +114,17 @@ public class EvaluationTests
 
         // Act
         var cachedResults = Process.Configure().Cached().Build().ExtractTop(input, choices, limit: 9).ToArray();
+        var cachedParallelResults = Process.Configure().Cached().Parallel().Build().ExtractTop(input, choices, limit: 9).ToArray();
         var regularResults = Process.ExtractTop(input, choices, limit: 9).ToArray();
 
         // Assert
         Assert.IsNotEmpty(cachedResults);
+        Assert.IsNotEmpty(cachedParallelResults);
         Assert.IsNotEmpty(regularResults);
         Assert.AreEqual(regularResults[0].Value, cachedResults[0].Value, $"Case {caseNumber}: top match differs");
         Assert.AreEqual(regularResults[0].Score, cachedResults[0].Score, $"Case {caseNumber}: top score differs");
+        Assert.AreEqual(cachedParallelResults[0].Value, cachedResults[0].Value, $"Case {caseNumber}: top match differs");
+        Assert.AreEqual(cachedParallelResults[0].Score, cachedResults[0].Score, $"Case {caseNumber}: top score differs");
     }
 
     [Theory]
@@ -144,12 +148,16 @@ public class EvaluationTests
 
         // Act
         var regularResults = Process.ExtractTop(input, choices, StringPreprocessors.None, ScorerCache.Get<WeightedRatioScorer>(), limit: 9).ToArray();
+        var cachedParallelResults = Process.Configure().Cached().Parallel().Build().ExtractTop(input, choices, StringPreprocessors.None, limit: 9).ToArray();
         var cachedResults = Process.Configure().Cached().Build().ExtractTop(input, choices, StringPreprocessors.None, limit: 9).ToArray();
 
         // Assert
-        Assert.IsNotEmpty(regularResults);
         Assert.IsNotEmpty(cachedResults);
-        Assert.AreEqual(cachedResults[0].Value, regularResults[0].Value, $"Case {caseNumber}: top match differs");
-        Assert.AreEqual(cachedResults[0].Score, regularResults[0].Score, $"Case {caseNumber}: top score differs");
+        Assert.IsNotEmpty(cachedParallelResults);
+        Assert.IsNotEmpty(regularResults);
+        Assert.AreEqual(regularResults[0].Value, cachedResults[0].Value, $"Case {caseNumber}: top match differs");
+        Assert.AreEqual(regularResults[0].Score, cachedResults[0].Score, $"Case {caseNumber}: top score differs");
+        Assert.AreEqual(cachedParallelResults[0].Value, cachedResults[0].Value, $"Case {caseNumber}: top match differs");
+        Assert.AreEqual(cachedParallelResults[0].Score, cachedResults[0].Score, $"Case {caseNumber}: top score differs");
     }
 }
