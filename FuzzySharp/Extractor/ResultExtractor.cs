@@ -11,7 +11,7 @@ public static partial class ResultExtractor
     public static IEnumerable<ExtractedResult<T>> ExtractWithoutOrder<T>(ReadOnlySpan<char> query, IEnumerable<T> choices, Func<T, string> extractor, Processor<char> processor, IRatioScorer scorer, int cutoff = 0)
     {
         int index = 0;
-        processor(ref query);
+        processor?.Invoke(ref query);
         
         var results = new List<ExtractedResult<T>>();
         foreach (var choice in choices)

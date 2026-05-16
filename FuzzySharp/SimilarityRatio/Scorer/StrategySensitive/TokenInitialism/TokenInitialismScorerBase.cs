@@ -2,33 +2,24 @@
 
 namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 
+using Utils;
 using System;
 
 public abstract class TokenInitialismScorerBase : StrategySensitiveScorerBase
 {
     public override int Score(ReadOnlySpan<char> input1, ReadOnlySpan<char> input2)
     {
-        ReadOnlySpan<char> shorter;
-        ReadOnlySpan<char> longer;
+        SequenceUtils.SwapIfSourceIsLonger(ref input1, ref input2);
 
-        if (input1.Length < input2.Length)
-        {
-            shorter = input1;
-            longer = input2;
-        }
-        else
-        {
-            shorter = input2;
-            longer = input1;
-        }
+        if (input1.Length == 0) return 0;
 
-        double lenRatio = (double)longer.Length / shorter.Length;
+        double lenRatio = (double)input2.Length / input1.Length;
 
         // if longer isn't at least 3 times longer than the other, then it's probably not an initialism
         if (lenRatio < 3) return 0;
 
-        var initials = longer.GetInitials();
+        var initials = input2.GetInitials();
 
-        return Scorer(initials.Span, shorter);
+        return Scorer(initials.Span, input1);
     }
 }

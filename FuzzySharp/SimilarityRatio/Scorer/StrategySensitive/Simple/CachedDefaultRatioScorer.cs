@@ -19,7 +19,7 @@ public sealed class CachedDefaultRatioScorer : CachedSimpleRatioScorerBase
         _isStrategyOwner = isStrategyOwner;
     }
 
-    protected override CachedScorer Scorer => input2 => _strategy.Calculate(input2.ToString());
+    protected override CachedScorer Scorer => input2 => _strategy.Calculate(input2);
     public override void Dispose()
     {
         if (_isStrategyOwner)

@@ -113,8 +113,8 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
         if (len1 > len2)
             throw new ArgumentException("Requires s1.Length <= s2.Length");
 
-        using var patternMatchVector = PatternMatchVector.Create(s1);
-        return PartialRatioImpl(s1, s2, patternMatchVector, scoreCutoff);
+        using var s1Vector = PatternMatchVector.Create(s1);
+        return PartialRatioImpl(s1Vector, s2, scoreCutoff);
     }
 
     /// <summary>
@@ -122,14 +122,11 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
     /// Assumes s1.Length <= s2.Length.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static ScoreAlignment PartialRatioImpl(
-        ReadOnlySpan<T> s1,
+    private static ScoreAlignment PartialRatioImpl(IPatternMatchVector<T> s1Vector,
         ReadOnlySpan<T> s2,
-        IPatternMatchVector<T> patternMatchVector,
-        double? scoreCutoff = null
-    )
+        double? scoreCutoff = null)
     {
-        int len1 = s1.Length, len2 = s2.Length;
+        int len1 = s1Vector.Length, len2 = s2.Length;
         if (len1 > len2)
             throw new ArgumentException("Requires s1.Length <= s2.Length");
 
@@ -165,7 +162,7 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
 
                         if (scores[first] == int.MaxValue)
                         {
-                            int dist = Indel.DistanceImpl(patternMatchVector, s2.Slice(first, len1));
+                            int dist = Indel.DistanceImpl(s1Vector, s2.Slice(first, len1));
                             scores[first] = dist;
                             if (dist < cutoffDist)
                             {
@@ -182,7 +179,7 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
 
                         if (scores[second] == int.MaxValue)
                         {
-                            int dist = Indel.DistanceImpl(patternMatchVector, s2.Slice(second, len1));
+                            int dist = Indel.DistanceImpl(s1Vector, s2.Slice(second, len1));
                             scores[second] = dist;
                             if (dist < cutoffDist)
                             {
@@ -237,9 +234,9 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
         // 1) Prefixes shorter than len1
         for (int i = 1; i < len1; i++)
         {
-            if (!patternMatchVector.ContainsKey(s2[i - 1])) continue;
+            if (!s1Vector.ContainsKey(s2[i - 1])) continue;
             var slice = s2[..i];
-            double sim = Indel.BlockNormalizedSimilarity(patternMatchVector, slice, null);
+            double sim = Indel.BlockNormalizedSimilarity(s1Vector, slice, null);
             if (sim > res.Score && sim >= cutoff)
             {
                 res.Score = sim;
@@ -253,9 +250,9 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
         // 2) Suffixes up to len1 (includes the last full-width window)
         for (int i = len2 - len1; i < len2; i++)
         {
-            if (!patternMatchVector.ContainsKey(s2[i])) continue;
+            if (!s1Vector.ContainsKey(s2[i])) continue;
             var tail = s2[i..];
-            double sim = Indel.BlockNormalizedSimilarity(patternMatchVector, tail, null);
+            double sim = Indel.BlockNormalizedSimilarity(s1Vector, tail, null);
             if (sim > res.Score && sim >= cutoff)
             {
                 res.Score = sim;

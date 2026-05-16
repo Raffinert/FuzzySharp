@@ -14,7 +14,7 @@ public abstract class TokenAbbreviationScorerBase : StrategySensitiveScorerBase
 
         double lenRatio = (double)l.Length / s.Length;
 
-        // if longer isn't at least 1.5 times longer than the other, then its probably not an abbreviation
+        // if longer isn't at least 1.5 times longer than the other, then it's probably not an abbreviation
         if (lenRatio < 1.5) return 0;
 
         // numbers can't be abbreviations for other numbers, though that would be hilarious. "Yes, 4 - as in 4,238"
@@ -38,11 +38,11 @@ public abstract class TokenAbbreviationScorerBase : StrategySensitiveScorerBase
             double sum = 0;
             for (int i = 0; i < tokensShorter.Count; i++)
             {
-                var i1 = permutation[i];
-                var i2 = tokensShorter[i];
-                if (StringContainsInOrder(i1.AsSpan(), i2.AsSpan())) // must be at least twice as long
+                var i1 = permutation[i].AsSpan();
+                var i2 = tokensShorter[i].AsSpan();
+                if (StringContainsInOrder(i1, i2)) // must be at least twice as long
                 {
-                    var score = Scorer(i1.AsSpan(), i2.AsSpan());
+                    var score = Scorer(i1, i2);
                     sum += score;
                 }
             }

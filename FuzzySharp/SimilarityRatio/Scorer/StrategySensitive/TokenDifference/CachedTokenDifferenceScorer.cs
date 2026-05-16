@@ -1,6 +1,5 @@
 ﻿using System;
 using Raffinert.FuzzySharp.Extensions;
-using System.Linq;
 using Raffinert.FuzzySharp.PreProcess;
 using Raffinert.FuzzySharp.SimilarityRatio.Strategy.Generic;
 
@@ -17,15 +16,14 @@ public sealed class CachedTokenDifferenceScorer : ICachedRatioScorer
         var span = input1.AsSpan();
         _preprocessor(ref span);
         var tokens1 = span.GetSortedWords();
-        _scorer = new CachedDefaultRatioStrategy<string>(tokens1.Select(m => m.ToString()).ToArray());
+        _scorer = new CachedDefaultRatioStrategy<string>(tokens1);
     }
 
     public int Score(ReadOnlySpan<char> input2)
     {
-        var span = input2;
-        _preprocessor(ref span);
-        var tokens2 = span.GetSortedWords();
-        return _scorer.Calculate(tokens2.Select(m => m.ToString()).ToArray());
+        _preprocessor(ref input2);
+        var tokens2 = input2.GetSortedWords();
+        return _scorer.Calculate(tokens2);
     }
 
     public void Dispose()
