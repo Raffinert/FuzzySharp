@@ -20,6 +20,6 @@ public abstract class TokenInitialismScorerBase : StrategySensitiveScorerBase
 
         var initials = input2.GetInitials();
 
-        return Scorer(initials.Span, input1);
+        return Scorer(initials, input1);
     }
 }

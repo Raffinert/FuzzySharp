@@ -31,10 +31,10 @@ internal static class StringExtensions
         return result;
     }
 
-    public static ReadOnlyMemory<char> GetInitials(this ReadOnlySpan<char> input)
+    public static string GetInitials(this ReadOnlySpan<char> input)
     {
         if (input.IsEmpty || input.IsWhiteSpace())
-            return ReadOnlyMemory<char>.Empty;
+            return string.Empty;
 
         var result = new char[input.Length];
         var takeNext = true;
@@ -57,8 +57,8 @@ internal static class StringExtensions
         }
 
         return resultIndex == 0
-            ? ReadOnlyMemory<char>.Empty
-            : result.AsSpan(0, resultIndex).ToArray();
+            ? string.Empty
+            : result.AsSpan(0, resultIndex).ToString();
     }
 
     public static string[] SplitByAnySpace(this ReadOnlySpan<char> input)
