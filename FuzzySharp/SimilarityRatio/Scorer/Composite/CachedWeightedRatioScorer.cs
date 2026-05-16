@@ -13,15 +13,17 @@ public sealed class CachedWeightedRatioScorer : ICachedRatioScorer
     private readonly CachedDefaultRatioScorer _baseRatioScorer;
     private readonly CachedTokenSortScorer _tokenSortScorer;
     private readonly CachedTokenSetScorer _tokenSetScorer;
-    private readonly string _input1;
+    private readonly ReadOnlyMemory<char> _input1;
 
-    public CachedWeightedRatioScorer(string input1)
+    public CachedWeightedRatioScorer(string input1) : this(input1.AsMemory()) { }
+
+    public CachedWeightedRatioScorer(ReadOnlyMemory<char> input1)
     {
         _input1 = input1;
-        _strategy = new CachedDefaultRatioStrategy(input1);
+        _strategy = new CachedDefaultRatioStrategy(input1.Span);
         _baseRatioScorer = new CachedDefaultRatioScorer(_strategy);
         _tokenSortScorer = new CachedTokenSortScorer(_strategy);
-        _tokenSetScorer = new CachedTokenSetScorer(input1);
+        _tokenSetScorer = new CachedTokenSetScorer(input1.Span);
     }
 
     public int Score(ReadOnlySpan<char> input2)
@@ -41,7 +43,7 @@ public sealed class CachedWeightedRatioScorer : ICachedRatioScorer
         {
             var partialScale = lenRatio > 8 ? .6 : PartialScale;
 
-            var partial = Fuzz.PartialRatio(_input1, input2) * partialScale;
+            var partial = Fuzz.PartialRatio(_input1.Span, input2) * partialScale;
             var partialSor = _tokenSortScorer.Score(input2) * UnbaseScale * partialScale;
             var partialSet = _tokenSetScorer.Score(input2) * UnbaseScale * partialScale;
 

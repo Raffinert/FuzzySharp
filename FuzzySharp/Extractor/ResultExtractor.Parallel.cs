@@ -15,7 +15,7 @@ public static partial class ResultExtractor
     {
         public static IEnumerable<ExtractedResult<T>> ExtractWithoutOrder<T>(ReadOnlySpan<char> query, IEnumerable<T> choices, Func<T, string> extractor, Processor<char> processor, IRatioScorer scorer, int cutoff = 0, ParallelOptions parallelOptions = null)
         {
-            var queryStr = query.ToString();
+            ReadOnlyMemory<char> queryStr = query.ToArray();
             var materializedChoices = choices.ToList();
             var result = new ExtractedResult<T>[materializedChoices.Count];
 
@@ -23,8 +23,7 @@ public static partial class ResultExtractor
             {
                 var choiceStr = extractor(choice).AsSpan();
                 processor(ref choiceStr);
-                var querySpan = queryStr.AsSpan();
-                int score = scorer.Score(querySpan, choiceStr);
+                int score = scorer.Score(queryStr.Span, choiceStr);
                 if (score >= cutoff)
                 {
                     result[index] = new ExtractedResult<T>(choice, score, (int)index);
@@ -45,11 +44,10 @@ public static partial class ResultExtractor
             return ExtractWithoutOrder(query, choices, extractor, processor, calculator, cutoff, parallelOptions).Max();
         }
 
-        public static ExtractedResult<T> ExtractOne<T>(string query, IEnumerable<T> choices, Func<T, string> extractor, Processor<char> processor, IRatioScorer calculator, int cutoff = 0, ParallelOptions parallelOptions = null)
+        public static ExtractedResult<T> ExtractOne<T>(ReadOnlySpan<char> query, IEnumerable<T> choices, Func<T, string> extractor, Processor<char> processor, IRatioScorer calculator, int cutoff = 0, ParallelOptions parallelOptions = null)
         {
-            var extractedQuery = query.AsSpan();
-            processor(ref extractedQuery);
-            return ExtractWithoutOrder(extractedQuery, choices, extractor, processor, calculator, cutoff, parallelOptions).Max();
+            processor(ref query);
+            return ExtractWithoutOrder(query, choices, extractor, processor, calculator, cutoff, parallelOptions).Max();
         }
 
         public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(T query, IEnumerable<T> choices, Func<T, string> extractor, Processor<char> processor, IRatioScorer calculator, int cutoff = 0, ParallelOptions parallelOptions = null)
@@ -57,11 +55,10 @@ public static partial class ResultExtractor
             return ExtractWithoutOrder(query, choices, extractor, processor, calculator, cutoff, parallelOptions).OrderByDescending(r => r.Score);
         }
 
-        public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(string query, IEnumerable<T> choices, Func<T, string> extractor, Processor<char> processor, IRatioScorer calculator, int cutoff = 0, ParallelOptions parallelOptions = null)
+        public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(ReadOnlySpan<char> query, IEnumerable<T> choices, Func<T, string> extractor, Processor<char> processor, IRatioScorer calculator, int cutoff = 0, ParallelOptions parallelOptions = null)
         {
-            var extractedQuery = query.AsSpan();
-            processor(ref extractedQuery);
-            return ExtractWithoutOrder(extractedQuery, choices, extractor, processor, calculator, cutoff, parallelOptions).OrderByDescending(r => r.Score);
+            processor(ref query);
+            return ExtractWithoutOrder(query, choices, extractor, processor, calculator, cutoff, parallelOptions).OrderByDescending(r => r.Score);
         }
 
         public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(T query, IEnumerable<T> choices, Func<T, string> extractor, Processor<char> processor, IRatioScorer calculator, int limit, int cutoff = 0, ParallelOptions parallelOptions = null)
@@ -69,11 +66,10 @@ public static partial class ResultExtractor
             return ExtractWithoutOrder(query, choices, extractor, processor, calculator, cutoff, parallelOptions).MaxN(limit).Reverse();
         }
 
-        public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(string query, IEnumerable<T> choices, Func<T, string> extractor, Processor<char> processor, IRatioScorer calculator, int limit, int cutoff = 0, ParallelOptions parallelOptions = null)
+        public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(ReadOnlySpan<char> query, IEnumerable<T> choices, Func<T, string> extractor, Processor<char> processor, IRatioScorer calculator, int limit, int cutoff = 0, ParallelOptions parallelOptions = null)
         {
-            var extractedQuery = query.AsSpan();
-            processor(ref extractedQuery);
-            return ExtractWithoutOrder(extractedQuery, choices, extractor, processor, calculator, cutoff, parallelOptions).MaxN(limit).Reverse();
+            processor(ref query);
+            return ExtractWithoutOrder(query, choices, extractor, processor, calculator, cutoff, parallelOptions).MaxN(limit).Reverse();
         }
     }
 }
