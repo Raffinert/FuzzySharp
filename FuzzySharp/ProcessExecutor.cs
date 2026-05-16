@@ -31,7 +31,7 @@ internal static class ProcessExecutor
 
         if (options.UseCaching)
         {
-            return ExtractAllCached(span.ToArray(), choices, x => x, processor, cutoff, options);
+            return ExtractAllCached(span.ToString(), choices, x => x, processor, cutoff, options);
         }
 
         var scorer = options.Scorer ?? Process.WeightedRatioScorer;
@@ -39,7 +39,7 @@ internal static class ProcessExecutor
         if (options.UseParallel)
         {
             return ResultExtractor.Parallel.ExtractWithoutOrder(
-                span, choices, x => x, processor, scorer, cutoff, options.ParallelOptions);
+                span.ToString(), choices, x => x, processor, scorer, cutoff, options.ParallelOptions);
         }
 
         return ResultExtractor.ExtractWithoutOrder(span, choices, extractor: null, processor, scorer, cutoff);
@@ -60,7 +60,7 @@ internal static class ProcessExecutor
 
         if (options.UseCaching)
         {
-            return ExtractAllCached(processedQuery.AsMemory(), choices, extractor, processor, cutoff, options);
+            return ExtractAllCached(processedQuery, choices, extractor, processor, cutoff, options);
         }
 
         var scorer = options.Scorer ?? Process.WeightedRatioScorer;
@@ -95,7 +95,7 @@ internal static class ProcessExecutor
 
         if (options.UseCaching)
         {
-            return ExtractAllCached(normalizedQuery.AsMemory(), choices, extractor, processor, cutoff, options);
+            return ExtractAllCached(normalizedQuery, choices, extractor, processor, cutoff, options);
         }
 
         var scorer = options.Scorer ?? Process.WeightedRatioScorer;
@@ -122,14 +122,14 @@ internal static class ProcessExecutor
     }
 
     private static IEnumerable<ExtractedResult<T>> ExtractAllCached<T>(
-        ReadOnlyMemory<char> memory,
+        string query,
         IEnumerable<T> choices,
         Func<T, string> extractor,
         Processor<char> processor,
         int cutoff,
         ProcessOptions options)
     {
-        using var cachedScorer = new CachedWeightedRatioScorer(memory);
+        using var cachedScorer = new CachedWeightedRatioScorer(query);
         var results = CachedScorerProcessExecutor.ExtractAll(
             choices, extractor, processor, cachedScorer, cutoff,
             options.UseParallel, options.ParallelOptions);
@@ -158,7 +158,7 @@ internal static class ProcessExecutor
 
         if (options.UseCaching)
         {
-            return ExtractTopCached(querySpan.ToArray(), choices, x => x, processor, limit, cutoff, options);
+            return ExtractTopCached(querySpan.ToString(), choices, x => x, processor, limit, cutoff, options);
         }
 
         var scorer = options.Scorer ?? Process.WeightedRatioScorer;
@@ -190,7 +190,7 @@ internal static class ProcessExecutor
 
         if (options.UseCaching)
         {
-            return ExtractTopCached(querySpan.ToArray(), choices, extractor, processor, limit, cutoff, options);
+            return ExtractTopCached(querySpan.ToString(), choices, extractor, processor, limit, cutoff, options);
         }
 
         var scorer = options.Scorer ?? Process.WeightedRatioScorer;
@@ -234,7 +234,7 @@ internal static class ProcessExecutor
 
         if (options.UseCaching)
         {
-            return ExtractTopCached(normalizedQuery.AsMemory(), choices, extractor, processor, limit, cutoff, options);
+            return ExtractTopCached(normalizedQuery, choices, extractor, processor, limit, cutoff, options);
         }
 
         var scorer = options.Scorer ?? Process.WeightedRatioScorer;
@@ -263,7 +263,7 @@ internal static class ProcessExecutor
     }
 
     private static IEnumerable<ExtractedResult<T>> ExtractTopCached<T>(
-        ReadOnlyMemory<char> processedQuery,
+        string processedQuery,
         IEnumerable<T> choices,
         Func<T, string> extractor,
         Processor<char> processor,
@@ -358,7 +358,7 @@ internal static class ProcessExecutor
         int cutoff,
         ProcessOptions options)
     {
-        using var scorer = new CachedWeightedRatioScorer(processedQuery.AsMemory());
+        using var scorer = new CachedWeightedRatioScorer(processedQuery);
         var results = CachedScorerProcessExecutor.ExtractSorted(
             choices, extractor, processor, scorer, cutoff,
             options.UseParallel, options.ParallelOptions);
@@ -386,7 +386,7 @@ internal static class ProcessExecutor
 
         if (options.UseCaching)
         {
-            using var cachedScorer = new CachedWeightedRatioScorer(querySpan.ToArray());
+            using var cachedScorer = new CachedWeightedRatioScorer(querySpan.ToString());
             return CachedScorerProcessExecutor.ExtractOne(
                 choices, x => x, processor, cachedScorer, cutoff,
                 options.UseParallel, options.ParallelOptions);
@@ -420,7 +420,7 @@ internal static class ProcessExecutor
 
         if (options.UseCaching)
         {
-            using var cachedScorer = new CachedWeightedRatioScorer(querySpan.ToArray());
+            using var cachedScorer = new CachedWeightedRatioScorer(querySpan.ToString());
             return CachedScorerProcessExecutor.ExtractOne(
                 choices, extractor, processor, cachedScorer, cutoff,
                 options.UseParallel, options.ParallelOptions);
@@ -458,7 +458,7 @@ internal static class ProcessExecutor
 
         if (options.UseCaching)
         {
-            using var cachedScorer = new CachedWeightedRatioScorer(normalizedQuery.AsMemory());
+            using var cachedScorer = new CachedWeightedRatioScorer(normalizedQuery);
             return CachedScorerProcessExecutor.ExtractOne(
                 choices, extractor, processor, cachedScorer, cutoff,
                 options.UseParallel, options.ParallelOptions);

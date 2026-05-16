@@ -8,17 +8,16 @@ namespace Raffinert.FuzzySharp.Extractor;
 
 public static partial class ResultExtractor
 {
-    public static IEnumerable<ExtractedResult<T>> ExtractWithoutOrder<T>(ReadOnlySpan<char> query, IEnumerable<T> choices, Func<T, string> extractor, Processor<char> processor, IRatioScorer scorer, int cutoff = 0)
+    public static IEnumerable<ExtractedResult<T>> ExtractWithoutOrder<T>(ReadOnlySpan<char> processedQuery, IEnumerable<T> choices, Func<T, string> extractor, Processor<char> processor, IRatioScorer scorer, int cutoff = 0)
     {
         int index = 0;
-        processor?.Invoke(ref query);
         
         var results = new List<ExtractedResult<T>>();
         foreach (var choice in choices)
         {
             var choiceStr = (extractor?.Invoke(choice) ?? choice as string).AsSpan();
             processor?.Invoke(ref choiceStr);
-            int score = scorer.Score(query, choiceStr);
+            int score = scorer.Score(processedQuery, choiceStr);
             if (score >= cutoff)
             {
                 results.Add(new ExtractedResult<T>(choice, score, index));
@@ -42,12 +41,15 @@ public static partial class ResultExtractor
 
     public static ExtractedResult<T> ExtractOne<T>(ReadOnlySpan<char> query, IEnumerable<T> choices, Func<T, string> extractor, Processor<char> processor, IRatioScorer calculator, int cutoff = 0)
     {
+        processor?.Invoke(ref query);
         return ExtractWithoutOrder(query, choices, extractor, processor, calculator, cutoff).Max();
     }
 
     public static ExtractedResult<T> ExtractOne<T>(string query, IEnumerable<T> choices, Func<T, string> extractor, Processor<char> processor, IRatioScorer calculator, int cutoff = 0)
     {
-        return ExtractWithoutOrder(query, choices, extractor, processor, calculator, cutoff).Max();
+        var querySpan = query.AsSpan();
+        processor?.Invoke(ref querySpan);
+        return ExtractWithoutOrder(querySpan, choices, extractor, processor, calculator, cutoff).Max();
     }
 
     public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(T query, IEnumerable<T> choices, Func<T, string> extractor, Processor<char> processor, IRatioScorer calculator, int cutoff = 0)
@@ -57,12 +59,15 @@ public static partial class ResultExtractor
 
     public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(ReadOnlySpan<char> query, IEnumerable<T> choices, Func<T, string> extractor, Processor<char> processor, IRatioScorer calculator, int cutoff = 0)
     {
+        processor?.Invoke(ref query);
         return ExtractWithoutOrder(query, choices, extractor, processor, calculator, cutoff).OrderByDescending(r => r.Score);
     }
 
     public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(string query, IEnumerable<T> choices, Func<T, string> extractor, Processor<char> processor, IRatioScorer calculator, int cutoff = 0)
     {
-        return ExtractWithoutOrder(query, choices, extractor, processor, calculator, cutoff).OrderByDescending(r => r.Score);
+        var querySpan = query.AsSpan();
+        processor?.Invoke(ref querySpan);
+        return ExtractWithoutOrder(querySpan, choices, extractor, processor, calculator, cutoff).OrderByDescending(r => r.Score);
     }
 
     public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(T query, IEnumerable<T> choices, Func<T, string> extractor, Processor<char> processor, IRatioScorer calculator, int limit, int cutoff = 0)
@@ -72,11 +77,14 @@ public static partial class ResultExtractor
 
     public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(ReadOnlySpan<char> query, IEnumerable<T> choices, Func<T, string> extractor, Processor<char> processor, IRatioScorer calculator, int limit, int cutoff = 0)
     {
+        processor?.Invoke(ref query);
         return ExtractWithoutOrder(query, choices, extractor, processor, calculator, cutoff).MaxN(limit).Reverse();
     }
 
     public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(string query, IEnumerable<T> choices, Func<T, string> extractor, Processor<char> processor, IRatioScorer calculator, int limit, int cutoff = 0)
     {
-        return ExtractWithoutOrder(query, choices, extractor, processor, calculator, cutoff).MaxN(limit).Reverse();
+        var querySpan = query.AsSpan();
+        processor?.Invoke(ref querySpan);
+        return ExtractWithoutOrder(querySpan, choices, extractor, processor, calculator, cutoff).MaxN(limit).Reverse();
     }
 }
