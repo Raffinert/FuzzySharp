@@ -2,22 +2,24 @@
 
 namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 
+using System;
+
 public abstract class TokenInitialismScorerBase : StrategySensitiveScorerBase
 {
-    public override int Score(string input1, string input2)
+    public override int Score(ReadOnlySpan<char> input1, ReadOnlySpan<char> input2)
     {
-        string shorter;
-        string longer;
+        ReadOnlySpan<char> shorter;
+        ReadOnlySpan<char> longer;
 
         if (input1.Length < input2.Length)
         {
             shorter = input1;
-            longer  = input2;
+            longer = input2;
         }
         else
         {
             shorter = input2;
-            longer  = input1;
+            longer = input1;
         }
 
         double lenRatio = (double)longer.Length / shorter.Length;
@@ -27,6 +29,6 @@ public abstract class TokenInitialismScorerBase : StrategySensitiveScorerBase
 
         var initials = longer.GetInitials();
 
-        return Scorer(initials, shorter);
+        return Scorer(initials.Span, shorter);
     }
 }

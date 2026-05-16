@@ -11,7 +11,7 @@ public class PartialTokenAbbreviationRatioBenchmarks
     [Benchmark]
     public int PartialTokenAbbreviationRatio()
     {
-        return Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessMode.Full);
+        return Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", StringPreprocessors.Full);
     }
 
     [Benchmark]

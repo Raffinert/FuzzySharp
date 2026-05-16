@@ -48,7 +48,7 @@ public class RegressionTests
                 System.Diagnostics.Debug.WriteLine($"Testing string '{s}'");
                 try
                 {
-                    scorer.Score(s, "TEST");
+                    scorer.Score(s.AsSpan(), "TEST".AsSpan());
                 }
                 catch (InvalidOperationException e)
                 {
@@ -56,14 +56,14 @@ public class RegressionTests
                 }
                 try
                 {
-                    scorer.Score("TEST", s);
+                    scorer.Score("TEST".AsSpan(), s.AsSpan());
                 } catch (InvalidOperationException e)
                 {
                     Assert.Fail($"{t.Name}.score failed with empty string as second parameter");
                 }
                 try
                 {
-                    scorer.Score(s, s);
+                    scorer.Score(s.AsSpan(), s.AsSpan());
                 }
                 catch (InvalidOperationException e)
                 {

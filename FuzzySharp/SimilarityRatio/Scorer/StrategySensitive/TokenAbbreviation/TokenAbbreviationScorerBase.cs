@@ -6,18 +6,20 @@ namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 
 public abstract class TokenAbbreviationScorerBase : StrategySensitiveScorerBase
 {
-    public override int Score(string shorter, string longer)
+    public override int Score(ReadOnlySpan<char> shorter, ReadOnlySpan<char> longer)
     {
-        SequenceUtils.SwapIfSourceIsLonger(ref shorter, ref longer);
+        var s = shorter;
+        var l = longer;
+        SequenceUtils.SwapIfSourceIsLonger(ref s, ref l);
 
-        double lenRatio = (double)longer.Length / shorter.Length;
+        double lenRatio = (double)l.Length / s.Length;
 
         // if longer isn't at least 1.5 times longer than the other, then its probably not an abbreviation
         if (lenRatio < 1.5) return 0;
 
         // numbers can't be abbreviations for other numbers, though that would be hilarious. "Yes, 4 - as in 4,238"
-        var tokensLonger = longer.ExtractTokens();
-        var tokensShorter = shorter.ExtractTokens();
+        var tokensLonger = l.ExtractTokens();
+        var tokensShorter = s.ExtractTokens();
 
         SequenceUtils.SwapIfSourceIsLonger(ref tokensShorter, ref tokensLonger);
 
@@ -40,7 +42,7 @@ public abstract class TokenAbbreviationScorerBase : StrategySensitiveScorerBase
                 var i2 = tokensShorter[i];
                 if (StringContainsInOrder(i1.AsSpan(), i2.AsSpan())) // must be at least twice as long
                 {
-                    var score = Scorer(i1, i2);
+                    var score = Scorer(i1.AsSpan(), i2.AsSpan());
                     sum += score;
                 }
             }
@@ -63,14 +65,14 @@ public abstract class TokenAbbreviationScorerBase : StrategySensitiveScorerBase
     private static bool StringContainsInOrder(ReadOnlySpan<char> s1, ReadOnlySpan<char> s2)
     {
         if (s1.Length < s2.Length) return false;
-        int s2_idx = 0;
-        for (int i = 0; i < s1.Length; i++)
+        var s2Idx = 0;
+        for (var i = 0; i < s1.Length; i++)
         {
-            if (s2[s2_idx] == s1[i])
-                s2_idx++;
-            if (s2_idx == s2.Length)
+            if (s2[s2Idx] == s1[i])
+                s2Idx++;
+            if (s2Idx == s2.Length)
                 return true;
-            if (i + s2.Length - s2_idx == s1.Length)
+            if (i + s2.Length - s2Idx == s1.Length)
                 return false;
         }
         return false;

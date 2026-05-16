@@ -30,15 +30,17 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
 
     private bool _disposed;
 
+    public int Length { get; }
     public int Blocks => _blocks;
 
-    public PatternMatchVectorChar(int estimatedNonAsciiCharCount, int blocks, ArrayPool<ulong>? pool = null)
+    public PatternMatchVectorChar(int length, int estimatedNonAsciiCharCount, int blocks, ArrayPool<ulong>? pool = null)
     {
         if (blocks < 0) throw new ArgumentOutOfRangeException(nameof(blocks));
         if (estimatedNonAsciiCharCount < 0) throw new ArgumentOutOfRangeException(nameof(estimatedNonAsciiCharCount));
 
         _pool = pool ?? ArrayPool<ulong>.Shared;
         _blocks = blocks;
+        Length = length;
 
         // Single rental for all fixed-size data:
         // Layout: [asciiMasks (256*blocks) | asciiPresence (4) | zeroMask (blocks)]
@@ -71,7 +73,7 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
         int offset = position & 63;
 
         // Fast path: ASCII / extended ASCII
-        if ((uint)key <= 255u)
+        if (key <= 255u)
         {
             _fixedData[_asciiMasksOffset + (key * _blocks) + block] |= 1UL << offset;
             

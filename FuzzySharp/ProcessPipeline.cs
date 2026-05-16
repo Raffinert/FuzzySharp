@@ -1,7 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using Raffinert.FuzzySharp.Extractor;
+﻿using Raffinert.FuzzySharp.Extractor;
+using Raffinert.FuzzySharp.PreProcess;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
+using System;
+using System.Collections.Generic;
 
 namespace Raffinert.FuzzySharp;
 
@@ -29,10 +30,10 @@ public readonly struct ProcessPipeline
     public IEnumerable<ExtractedResult<string>> ExtractAll(
         string query,
         IEnumerable<string> choices,
-        Func<string, string> processor = null,
+        Processor<char> processor = null,
         int cutoff = 0)
     {
-        return ProcessExecutor.ExtractAll(query, choices, processor, cutoff, _options);
+        return ProcessExecutor.ExtractAll(query.AsSpan(), choices, processor, cutoff, _options);
     }
 
     /// <summary>
@@ -42,10 +43,11 @@ public readonly struct ProcessPipeline
     public IEnumerable<ExtractedResult<T>> ExtractAll<T>(
         T query,
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Processor<char> processor = null,
         int cutoff = 0)
     {
-        return ProcessExecutor.ExtractAll(query, choices, processor, cutoff, _options);
+        return ProcessExecutor.ExtractAll(query, choices, extractor, processor, cutoff, _options);
     }
 
     /// <summary>
@@ -55,10 +57,11 @@ public readonly struct ProcessPipeline
     public IEnumerable<ExtractedResult<T>> ExtractAll<T>(
         string query,
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Processor<char> processor = null,
         int cutoff = 0)
     {
-        return ProcessExecutor.ExtractAll(query, choices, processor, cutoff, _options);
+        return ProcessExecutor.ExtractAll(query, choices, extractor, processor, cutoff, _options);
     }
 
     #endregion
@@ -72,7 +75,7 @@ public readonly struct ProcessPipeline
     public IEnumerable<ExtractedResult<string>> ExtractTop(
         string query,
         IEnumerable<string> choices,
-        Func<string, string> processor = null,
+        Processor<char> processor = null,
         int limit = 5,
         int cutoff = 0)
     {
@@ -86,11 +89,12 @@ public readonly struct ProcessPipeline
     public IEnumerable<ExtractedResult<T>> ExtractTop<T>(
         T query,
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Processor<char> processor = null,
         int limit = 5,
         int cutoff = 0)
     {
-        return ProcessExecutor.ExtractTop(query, choices, processor, limit, cutoff, _options);
+        return ProcessExecutor.ExtractTop(query, choices, extractor, processor, limit, cutoff, _options);
     }
 
     /// <summary>
@@ -100,11 +104,12 @@ public readonly struct ProcessPipeline
     public IEnumerable<ExtractedResult<T>> ExtractTop<T>(
         string query,
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Processor<char> processor = null,
         int limit = 5,
         int cutoff = 0)
     {
-        return ProcessExecutor.ExtractTop(query, choices, processor, limit, cutoff, _options);
+        return ProcessExecutor.ExtractTop(query, choices, extractor, processor, limit, cutoff, _options);
     }
 
     #endregion
@@ -117,7 +122,7 @@ public readonly struct ProcessPipeline
     public IEnumerable<ExtractedResult<string>> ExtractSorted(
         string query,
         IEnumerable<string> choices,
-        Func<string, string> processor = null,
+        Processor<char> processor = null,
         int cutoff = 0)
     {
         return ProcessExecutor.ExtractSorted(query, choices, processor, cutoff, _options);
@@ -129,10 +134,11 @@ public readonly struct ProcessPipeline
     public IEnumerable<ExtractedResult<T>> ExtractSorted<T>(
         T query,
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Processor<char> processor = null,
         int cutoff = 0)
     {
-        return ProcessExecutor.ExtractSorted(query, choices, processor, cutoff, _options);
+        return ProcessExecutor.ExtractSorted(query, choices, extractor, processor, cutoff, _options);
     }
 
     #endregion
@@ -145,7 +151,7 @@ public readonly struct ProcessPipeline
     public ExtractedResult<string> ExtractOne(
         string query,
         IEnumerable<string> choices,
-        Func<string, string> processor = null,
+        Processor<char> processor = null,
         int cutoff = 0)
     {
         return ProcessExecutor.ExtractOne(query, choices, processor, cutoff, _options);
@@ -157,10 +163,11 @@ public readonly struct ProcessPipeline
     public ExtractedResult<T> ExtractOne<T>(
         T query,
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Processor<char> processor = null,
         int cutoff = 0)
     {
-        return ProcessExecutor.ExtractOne(query, choices, processor, cutoff, _options);
+        return ProcessExecutor.ExtractOne(query, choices, extractor, processor, cutoff, _options);
     }
 
     /// <summary>
@@ -169,10 +176,11 @@ public readonly struct ProcessPipeline
     public ExtractedResult<T> ExtractOne<T>(
         string query,
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Processor<char> processor = null,
         int cutoff = 0)
     {
-        return ProcessExecutor.ExtractOne(query, choices, processor, cutoff, _options);
+        return ProcessExecutor.ExtractOne(query, choices, extractor, processor, cutoff, _options);
     }
 
     /// <summary>
@@ -208,11 +216,11 @@ public readonly struct CachedScorerProcessPipeline
     /// </summary>
     public IEnumerable<ExtractedResult<string>> ExtractAll(
         IEnumerable<string> choices,
-        Func<string, string> processor = null,
+        Processor<char> processor = null,
         int cutoff = 0)
     {
         return CachedScorerProcessExecutor.ExtractAll(
-            choices, processor ?? Process.DefaultStringProcessor, _options.CachedScorer, cutoff,
+            choices, x => x, processor ?? StringPreprocessors.Full, _options.CachedScorer, cutoff,
             _options.UseParallel, _options.ParallelOptions);
     }
 
@@ -222,12 +230,12 @@ public readonly struct CachedScorerProcessPipeline
     /// </summary>
     public IEnumerable<ExtractedResult<T>> ExtractAll<T>(
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Processor<char> processor = null,
         int cutoff = 0)
     {
-        if (processor == null) throw new ArgumentNullException(nameof(processor));
         return CachedScorerProcessExecutor.ExtractAll(
-            choices, processor, _options.CachedScorer, cutoff,
+            choices, extractor, processor ?? StringPreprocessors.Full, _options.CachedScorer, cutoff,
             _options.UseParallel, _options.ParallelOptions);
     }
 
@@ -241,12 +249,12 @@ public readonly struct CachedScorerProcessPipeline
     /// </summary>
     public IEnumerable<ExtractedResult<string>> ExtractTop(
         IEnumerable<string> choices,
-        Func<string, string> processor = null,
+        Processor<char> processor = null,
         int limit = 5,
         int cutoff = 0)
     {
         return CachedScorerProcessExecutor.ExtractTop(
-            choices, processor ?? Process.DefaultStringProcessor, _options.CachedScorer, limit, cutoff,
+            choices, x => x, processor ?? StringPreprocessors.Full, _options.CachedScorer, limit, cutoff,
             _options.UseParallel, _options.ParallelOptions);
     }
 
@@ -256,13 +264,13 @@ public readonly struct CachedScorerProcessPipeline
     /// </summary>
     public IEnumerable<ExtractedResult<T>> ExtractTop<T>(
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Processor<char> processor = null,
         int limit = 5,
         int cutoff = 0)
     {
-        if (processor == null) throw new ArgumentNullException(nameof(processor));
         return CachedScorerProcessExecutor.ExtractTop(
-            choices, processor, _options.CachedScorer, limit, cutoff,
+            choices, extractor, processor ?? StringPreprocessors.Full, _options.CachedScorer, limit, cutoff,
             _options.UseParallel, _options.ParallelOptions);
     }
 
@@ -275,11 +283,11 @@ public readonly struct CachedScorerProcessPipeline
     /// </summary>
     public IEnumerable<ExtractedResult<string>> ExtractSorted(
         IEnumerable<string> choices,
-        Func<string, string> processor = null,
+        Processor<char> processor = null,
         int cutoff = 0)
     {
         return CachedScorerProcessExecutor.ExtractSorted(
-            choices, processor ?? Process.DefaultStringProcessor, _options.CachedScorer, cutoff,
+            choices, null, processor ?? StringPreprocessors.Full, _options.CachedScorer, cutoff,
             _options.UseParallel, _options.ParallelOptions);
     }
 
@@ -288,12 +296,13 @@ public readonly struct CachedScorerProcessPipeline
     /// </summary>
     public IEnumerable<ExtractedResult<T>> ExtractSorted<T>(
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Processor<char> processor = null,
         int cutoff = 0)
     {
-        if (processor == null) throw new ArgumentNullException(nameof(processor));
+        if (extractor == null) throw new ArgumentNullException(nameof(extractor));
         return CachedScorerProcessExecutor.ExtractSorted(
-            choices, processor, _options.CachedScorer, cutoff,
+            choices, extractor, processor ?? StringPreprocessors.Full, _options.CachedScorer, cutoff,
             _options.UseParallel, _options.ParallelOptions);
     }
 
@@ -306,11 +315,11 @@ public readonly struct CachedScorerProcessPipeline
     /// </summary>
     public ExtractedResult<string> ExtractOne(
         IEnumerable<string> choices,
-        Func<string, string> processor = null,
+        Processor<char> processor = null,
         int cutoff = 0)
     {
         return CachedScorerProcessExecutor.ExtractOne(
-            choices, processor ?? Process.DefaultStringProcessor, _options.CachedScorer, cutoff,
+            choices, null, processor ?? StringPreprocessors.Full, _options.CachedScorer, cutoff,
             _options.UseParallel, _options.ParallelOptions);
     }
 
@@ -319,12 +328,13 @@ public readonly struct CachedScorerProcessPipeline
     /// </summary>
     public ExtractedResult<T> ExtractOne<T>(
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Processor<char> processor = null,
         int cutoff = 0)
     {
-        if (processor == null) throw new ArgumentNullException(nameof(processor));
+        if (extractor == null) throw new ArgumentNullException(nameof(extractor));
         return CachedScorerProcessExecutor.ExtractOne(
-            choices, processor, _options.CachedScorer, cutoff,
+            choices, extractor, processor ?? StringPreprocessors.Full, _options.CachedScorer, cutoff,
             _options.UseParallel, _options.ParallelOptions);
     }
 
@@ -334,7 +344,7 @@ public readonly struct CachedScorerProcessPipeline
     public ExtractedResult<string> ExtractOne(params string[] choices)
     {
         return CachedScorerProcessExecutor.ExtractOne(
-            choices, Process.DefaultStringProcessor, _options.CachedScorer, 0,
+            choices, null, StringPreprocessors.Full, _options.CachedScorer, 0,
             _options.UseParallel, _options.ParallelOptions);
     }
 

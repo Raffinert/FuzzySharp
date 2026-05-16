@@ -5,12 +5,12 @@ using Raffinert.FuzzySharp.Extensions;
 
 namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 
-public abstract class CachedTokenSetScorerBase(string input1) : ICachedRatioScorer
+public abstract class CachedTokenSetScorerBase(ReadOnlySpan<char> input1) : ICachedRatioScorer
 {
-    private HashSet<string> Tokens1 { get; set; } = new HashSet<string>(input1.SplitByAnySpace());
+    private HashSet<string> Tokens1 { get; } = new(input1.SplitByAnySpace());
     protected abstract FuzzySharp.Scorer Scorer { get; }
 
-    public int Score(string input2)
+    public int Score(ReadOnlySpan<char> input2)
     {
         var tokens2 = new HashSet<string>(input2.SplitByAnySpace());
         var tokens1 = new HashSet<string>(Tokens1);

@@ -14,11 +14,13 @@ public sealed class ProcessBuilder
     private bool _useParallel;
     private ParallelOptions _parallelOptions;
     private IRatioScorer _scorer;
-
     /// <summary>
     /// Enables caching mode with automatic scorer creation per extraction call.
     /// Returns a <see cref="CachedProcessBuilder"/> for further configuration.
     /// Order independent - can be called before or after Parallel().
+    /// Note: If <see cref="WithScorer"/> was called prior to Cached(), the custom scorer is silently
+    /// ignored — a <see cref="Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite.CachedWeightedRatioScorer"/>
+    /// is used instead. To retain a custom scorer in cached mode, use <see cref="Cached(ICachedRatioScorer)"/>.
     /// </summary>
     public CachedProcessBuilder Cached()
     {
@@ -30,6 +32,8 @@ public sealed class ProcessBuilder
     /// Returns a <see cref="CachedScorerProcessBuilder"/> for further configuration.
     /// When using with parallel execution, the caller is responsible for ensuring the scorer is thread-safe.
     /// Order independent - can be called before or after Parallel().
+    /// Note: If <see cref="WithScorer"/> was called prior to this method, the custom scorer is silently
+    /// ignored in favor of the provided <paramref name="scorer"/>.
     /// </summary>
     /// <param name="scorer">The external cached scorer instance. Must not be null.</param>
     public CachedScorerProcessBuilder Cached(ICachedRatioScorer scorer)

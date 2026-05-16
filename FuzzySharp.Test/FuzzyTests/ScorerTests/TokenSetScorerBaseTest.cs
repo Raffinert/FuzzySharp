@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System;
+using NUnit.Framework;
 using Raffinert.FuzzySharp.SimilarityRatio;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
@@ -31,32 +32,32 @@ public class TokenSetScorerBaseTest
     [TestCase(nasa2, nasa2)]
     public void TokenSetScorer_SameInput_Returns100(string s1, string s2)
     {
-        Assert.That(_scorer.Score(s1, s2), Is.EqualTo(100));
-        Assert.That(_partialScorer.Score(s1, s2), Is.EqualTo(100));
+        Assert.That(_scorer.Score(s1.AsSpan(), s2.AsSpan()), Is.EqualTo(100));
+        Assert.That(_partialScorer.Score(s1.AsSpan(), s2.AsSpan()), Is.EqualTo(100));
     }
 
     [Test]
     public void TokenSetScorer_OneSetContainsAllTokensOfTheOther_Returns100()
     {
-        Assert.That(_scorer.Score(fuzzy1, fuzzy2), Is.EqualTo(100));
-        Assert.That(_partialScorer.Score(fuzzy1, fuzzy2), Is.EqualTo(100));
+        Assert.That(_scorer.Score(fuzzy1.AsSpan(), fuzzy2.AsSpan()), Is.EqualTo(100));
+        Assert.That(_partialScorer.Score(fuzzy1.AsSpan(), fuzzy2.AsSpan()), Is.EqualTo(100));
     }
 
     [Test]
     public void TokenSetScorer_WhenOnlySingleTokenSimilar_DoesNotReturn100()
     {
-        Assert.That(_scorer.Score(nasa1, nasa2), Is.Not.EqualTo(100));
+        Assert.That(_scorer.Score(nasa1.AsSpan(), nasa2.AsSpan()), Is.Not.EqualTo(100));
     }
 
     [Test]
     public void PartialTokenSetScorer_WhenOnlySingleTokenSimilar_StillReturns100()
     {
-        Assert.That(_partialScorer.Score(nasa1, nasa2), Is.EqualTo(100));
+        Assert.That(_partialScorer.Score(nasa1.AsSpan(), nasa2.AsSpan()), Is.EqualTo(100));
     }
 
     [Test]
     public void PartialTokenSetScorer_WhenNoTokenSimilar_DoesNotReturn100()
     {
-        Assert.That(_partialScorer.Score(nasa1, nersa), Is.Not.EqualTo(100));
+        Assert.That(_partialScorer.Score(nasa1.AsSpan(), nersa.AsSpan()), Is.Not.EqualTo(100));
     }
 }

@@ -1,16 +1,15 @@
-﻿using Raffinert.FuzzySharp.PreProcess;
+﻿using System;
 
 namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer;
 
 public abstract class ScorerBase : IRatioScorer
 {
-    public abstract int Score(string input1, string input2);
+    public abstract int Score(ReadOnlySpan<char> input1, ReadOnlySpan<char> input2);
 
-    public int Score(string input1, string input2, PreprocessMode preprocessMode)
+    public int Score(ReadOnlySpan<char> input1, ReadOnlySpan<char> input2, Processor<char> preprocessor)
     {
-        var preprocessor = StringPreprocessorFactory.GetPreprocessor(preprocessMode);
-        input1 = preprocessor(input1);
-        input2 = preprocessor(input2);
+        preprocessor(ref input1);
+        preprocessor(ref input2);
         return Score(input1, input2);
     }
 }

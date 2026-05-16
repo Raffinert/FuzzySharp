@@ -3,14 +3,13 @@ using System;
 
 namespace Raffinert.FuzzySharp;
 
-public sealed partial class LongestCommonSubsequence(string source) : IDisposable
+public sealed partial class LongestCommonSubsequence(ReadOnlySpan<char> source) : IDisposable
 {
-    private readonly string _source = source ?? throw new ArgumentNullException(nameof(source));
-    private readonly IPatternMatchVector<char> _patternMatchVector = PatternMatchVector.Create(source.AsSpan());
+    private readonly IPatternMatchVector<char> _patternMatchVector = PatternMatchVector.Create(source);
 
-    public int DistanceFrom(string value)
+    public int DistanceFrom(ReadOnlySpan<char> value)
     {
-        return DistanceImpl(_source.AsSpan(), value.AsSpan(), _patternMatchVector);
+        return DistanceImpl(_patternMatchVector, value);
     }
 
     public void Dispose()

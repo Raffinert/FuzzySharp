@@ -6,23 +6,24 @@ namespace Raffinert.FuzzySharp.SimilarityRatio.Strategy;
 internal class CachedDefaultRatioStrategy : ICachedStrategy
 {
     private readonly Indel _indel;
-    private readonly Func<string, string> _preprocessor;
+    private readonly Processor<char> _preprocessor;
 
-    public CachedDefaultRatioStrategy(string input1, PreprocessMode preprocess = PreprocessMode.None)
+    public CachedDefaultRatioStrategy(ReadOnlySpan<char> input1, Processor<char> preprocessor = null)
     {
-        _preprocessor = StringPreprocessorFactory.GetPreprocessor(preprocess);
-        _indel = new Indel(_preprocessor(input1));
+        _preprocessor = preprocessor ?? StringPreprocessors.None;
+        _preprocessor(ref input1);
+        _indel = new Indel(input1);
     }
 
-    public int Calculate(string input2)
+    public int Calculate(ReadOnlySpan<char> input2)
     {
-        var  processedInput2 = _preprocessor(input2);
-        if (processedInput2.Length == 0)
+        _preprocessor(ref input2);
+        if (input2.Length == 0)
         {
             return 0;
         }
 
-        return (int)Math.Round(100 * _indel.NormalizedSimilarityWith(processedInput2));
+        return (int)Math.Round(100 * _indel.NormalizedSimilarityWith(input2));
     }
 
     public void Dispose()

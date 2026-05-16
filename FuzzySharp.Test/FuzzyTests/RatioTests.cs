@@ -57,7 +57,7 @@ public class RatioTests
     public void Test_Case_Insensitive()
     {
         Assert.AreNotEqual(Fuzz.Ratio(_s1, _s2), 100);
-        Assert.AreEqual(Fuzz.Ratio(_s1, _s2, PreprocessMode.Full), 100);
+        Assert.AreEqual(Fuzz.Ratio(_s1, _s2, StringPreprocessors.Full), 100);
     }
 
     [Test]
@@ -75,24 +75,24 @@ public class RatioTests
     [Test]
     public void TestPartialTokenSortRatio()
     {
-        Assert.AreEqual(Fuzz.PartialTokenSortRatio(_s1, _s1A, PreprocessMode.Full), 100);
-        Assert.AreEqual(Fuzz.PartialTokenSortRatio(_s4, _s5, PreprocessMode.Full), 100);
+        Assert.AreEqual(Fuzz.PartialTokenSortRatio(_s1, _s1A, StringPreprocessors.Full), 100);
+        Assert.AreEqual(Fuzz.PartialTokenSortRatio(_s4, _s5, StringPreprocessors.Full), 100);
         Assert.AreEqual(Fuzz.PartialTokenSortRatio(_s8, _s8A), 100);
-        Assert.AreEqual(Fuzz.PartialTokenSortRatio(_s9, _s9A, PreprocessMode.Full), 100);
+        Assert.AreEqual(Fuzz.PartialTokenSortRatio(_s9, _s9A, StringPreprocessors.Full), 100);
         Assert.AreEqual(Fuzz.PartialTokenSortRatio(_s9, _s9A), 100);
 
         //var al =  Fuzz1.PartialRatioAlignment("a certain string".AsSpan(), "cetain".AsSpan());
             
         Assert.AreEqual(Fuzz.PartialTokenSortRatio(_s10, _s10A), 67);
-        Assert.AreEqual(Fuzz.PartialTokenSortRatio(_s10, _s10A, PreprocessMode.Full), 0);
+        Assert.AreEqual(Fuzz.PartialTokenSortRatio(_s10, _s10A, StringPreprocessors.Full), 0);
     }
 
     [Test]
     public void TestTokenSetRatio()
     {
-        Assert.AreEqual(Fuzz.TokenSetRatio(_s4, _s5, PreprocessMode.Full), 100);
+        Assert.AreEqual(Fuzz.TokenSetRatio(_s4, _s5, StringPreprocessors.Full), 100);
         Assert.AreEqual(Fuzz.TokenSetRatio(_s8, _s8A), 100);
-        Assert.AreEqual(Fuzz.TokenSetRatio(_s9, _s9A, PreprocessMode.Full), 100);
+        Assert.AreEqual(Fuzz.TokenSetRatio(_s9, _s9A, StringPreprocessors.Full), 100);
         Assert.AreEqual(Fuzz.TokenSetRatio(_s9, _s9A), 100);
         Assert.AreEqual(Fuzz.TokenSetRatio(_s10, _s10A), 50);
     }
@@ -100,8 +100,8 @@ public class RatioTests
     [Test]
     public void TestTokenAbbreviationRatio()
     {
-        Assert.AreEqual(Fuzz.TokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessMode.Full), 40);
-        Assert.AreEqual(Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessMode.Full), 67);
+        Assert.AreEqual(Fuzz.TokenAbbreviationRatio("bl 420", "Baseline section 420", StringPreprocessors.Full), 40);
+        Assert.AreEqual(Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", StringPreprocessors.Full), 67);
     }
 
     [Test]
@@ -119,7 +119,7 @@ public class RatioTests
     [Test]
     public void TestWeightedRatioCaseInsensitive()
     {
-        Assert.AreEqual(Fuzz.WeightedRatio(_s1, _s2, PreprocessMode.Full), 100);
+        Assert.AreEqual(Fuzz.WeightedRatio(_s1, _s2, StringPreprocessors.Full), 100);
     }
 
     [Test]
@@ -170,8 +170,8 @@ public class RatioTests
         Assert.AreEqual(100, Fuzz.PartialRatio("this is a test", "is this is a not really thing this is a test!")); // was 92 (actually 93)
 
         // https://github.com/Raffinert/FuzzySharp/issues/2
-        Assert.AreEqual(100, Fuzz.PartialRatio("sh", "Growing eshops without a popular platform", PreprocessMode.Full));
-        Assert.AreEqual(100, Fuzz.PartialRatio("shop", "Growing eshops without a popular platform", PreprocessMode.Full));
+        Assert.AreEqual(100, Fuzz.PartialRatio("sh", "Growing eshops without a popular platform", StringPreprocessors.Full));
+        Assert.AreEqual(100, Fuzz.PartialRatio("shop", "Growing eshops without a popular platform", StringPreprocessors.Full));
     }
 
     [Test]

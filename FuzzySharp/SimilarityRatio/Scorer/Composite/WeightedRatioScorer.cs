@@ -4,44 +4,38 @@ namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
 
 public class WeightedRatioScorer : ScorerBase
 {
-    private static readonly double UNBASE_SCALE = .95;
-    private static readonly double PARTIAL_SCALE = .90;
-    private static readonly bool TRY_PARTIALS = true;
+    private const double UnbaseScale = .95;
+    private const double PartialScale = .90;
 
-    public override int Score(string input1, string input2)
+    public override int Score(ReadOnlySpan<char> input1, ReadOnlySpan<char> input2)
     {
-        int len1 = input1.Length;
-        int len2 = input2.Length;
+        var len1 = input1.Length;
+        var len2 = input2.Length;
 
         if (len1 == 0 || len2 == 0)
         {
             return 0;
         }
 
-        bool tryPartials = TRY_PARTIALS;
-        double unbaseScale = UNBASE_SCALE;
-        double partialScale = PARTIAL_SCALE;
-
-        int baseRatio = Fuzz.Ratio(input1, input2);
-        double lenRatio = (double)Math.Max(len1, len2) / Math.Min(len1, len2);
+        var baseRatio = Fuzz.Ratio(input1, input2);
+        var lenRatio = (double)Math.Max(len1, len2) / Math.Min(len1, len2);
 
         // if strings are similar length don't use partials
-        if (lenRatio < 1.5) tryPartials = false;
-
-        // if one string is much shorter than the other
-        if (lenRatio > 8) partialScale = .6;
-
-        if (tryPartials)
+        if (lenRatio >= 1.5)
         {
-            double partial = Fuzz.PartialRatio(input1, input2) * partialScale;
-            double partialSor = Fuzz.TokenSortRatio(input1, input2) * unbaseScale * partialScale;
-            double partialSet = Fuzz.TokenSetRatio(input1, input2) * unbaseScale * partialScale;
+            var partialScale = lenRatio > 8 // if one string is much shorter than the other
+                ? .6 
+                : PartialScale;
 
-            return (int)Math.Round(Math.Max(baseRatio, Math.Max(partial, Math.Max(partialSor, partialSet))));
+            var partial = Fuzz.PartialRatio(input1, input2) * partialScale;
+            var sortRatio = Fuzz.TokenSortRatio(input1, input2) * UnbaseScale * partialScale;
+            var setRatio = Fuzz.TokenSetRatio(input1, input2) * UnbaseScale * partialScale;
+
+            return (int)Math.Round(Math.Max(baseRatio, Math.Max(partial, Math.Max(sortRatio, setRatio))));
         }
 
-        double tokenSort = Fuzz.TokenSortRatio(input1, input2) * unbaseScale;
-        double tokenSet = Fuzz.TokenSetRatio(input1, input2) * unbaseScale;
+        var tokenSort = Fuzz.TokenSortRatio(input1, input2) * UnbaseScale;
+        var tokenSet = Fuzz.TokenSetRatio(input1, input2) * UnbaseScale;
         return (int)Math.Round(Math.Max(baseRatio, Math.Max(tokenSort, tokenSet)));
     }
 }

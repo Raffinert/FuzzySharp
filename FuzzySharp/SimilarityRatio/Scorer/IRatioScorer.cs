@@ -1,9 +1,9 @@
-﻿using Raffinert.FuzzySharp.PreProcess;
+﻿using System;
 
 namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer;
 
 public interface IRatioScorer
 {
-    int Score(string input1, string input2);
-    int Score(string input1, string input2, PreprocessMode preprocessMode);
+    public int Score(ReadOnlySpan<char> input1, ReadOnlySpan<char> input2);
+    public int Score(ReadOnlySpan<char> input1, ReadOnlySpan<char> input2, Processor<char> preprocessor);
 }

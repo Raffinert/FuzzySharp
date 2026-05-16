@@ -3,19 +3,17 @@ using System;
 
 namespace Raffinert.FuzzySharp;
 
-public sealed partial class Indel(string source) : IDisposable
+public sealed partial class Indel(ReadOnlySpan<char> source) : IDisposable
 {
-    private readonly string _source = source ?? throw new ArgumentNullException(nameof(source));
-    private readonly IPatternMatchVector<char> _patternMatchVector = PatternMatchVector.Create(source.AsSpan());
-
-    public int DistanceFrom(string value)
+    private readonly IPatternMatchVector<char> _patternMatchVector = PatternMatchVector.Create(source);
+    public int DistanceFrom(ReadOnlySpan<char> value)
     {
-        return DistanceImpl(_source.AsSpan(), value.AsSpan(), _patternMatchVector);
+        return DistanceImpl(_patternMatchVector, value);
     }
 
-    public double NormalizedSimilarityWith(string value)
+    public double NormalizedSimilarityWith(ReadOnlySpan<char> value)
     {
-        return NormalizedSimilarityImpl(_source.AsSpan(), value.AsSpan(), _patternMatchVector);
+        return NormalizedSimilarityImpl(_patternMatchVector, value);
     }
 
     public void Dispose()
@@ -26,17 +24,16 @@ public sealed partial class Indel(string source) : IDisposable
 
 public sealed class IndelT<T>(T[] source) : IDisposable where T : IEquatable<T>
 {
-    private readonly T[] _source = source ?? throw new ArgumentNullException(nameof(source));
     private readonly IPatternMatchVector<T> _patternMatchVector = PatternMatchVector.Create(source.AsSpan());
 
     public int DistanceFrom(T[] value)
     {
-        return Indel.DistanceImpl<T>(_source.AsSpan(), value.AsSpan(), _patternMatchVector);
+        return Indel.DistanceImpl<T>(_patternMatchVector, value.AsSpan());
     }
 
     public double NormalizedSimilarityWith(T[] value)
     {
-        return Indel.NormalizedSimilarityImpl(_source.AsSpan(), value.AsSpan(), _patternMatchVector);
+        return Indel.NormalizedSimilarityImpl(_patternMatchVector, value.AsSpan());
     }
 
     public void Dispose()
