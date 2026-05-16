@@ -33,7 +33,7 @@ public readonly struct ProcessPipeline
         Processor<char> processor = null,
         int cutoff = 0)
     {
-        return ProcessExecutor.ExtractAll(query.AsSpan(), choices, processor, cutoff, _options);
+        return ProcessExecutor.ExtractAll(query, choices, processor, cutoff, _options);
     }
 
     /// <summary>

@@ -11,9 +11,9 @@ public sealed class CachedWeightedRatioScorer : ICachedRatioScorer
 
     private readonly ICachedStrategy _strategy;
     private readonly CachedDefaultRatioScorer _baseRatioScorer;
-    private readonly string _input1;
     private readonly CachedTokenSortScorer _tokenSortScorer;
     private readonly CachedTokenSetScorer _tokenSetScorer;
+    private readonly string _input1;
 
     public CachedWeightedRatioScorer(string input1)
     {
@@ -21,26 +21,20 @@ public sealed class CachedWeightedRatioScorer : ICachedRatioScorer
         _strategy = new CachedDefaultRatioStrategy(input1);
         _baseRatioScorer = new CachedDefaultRatioScorer(_strategy);
         _tokenSortScorer = new CachedTokenSortScorer(_strategy);
-        _tokenSetScorer = new CachedTokenSetScorer(_input1);
+        _tokenSetScorer = new CachedTokenSetScorer(input1);
     }
 
     public int Score(ReadOnlySpan<char> input2)
     {
-        return Score(input2.ToString());
-    }
-
-    public int Score(string input2)
-    {
-        var len1 = _input1.Length;
         var len2 = input2.Length;
 
-        if (len1 == 0 || len2 == 0)
+        if (_input1.Length == 0 || len2 == 0)
         {
             return 0;
         }
 
         var baseRatio = _baseRatioScorer.Score(input2);
-        var lenRatio = (double)Math.Max(len1, len2) / Math.Min(len1, len2);
+        var lenRatio = (double)Math.Max(_input1.Length, len2) / Math.Min(_input1.Length, len2);
 
         // if strings are similar length don't use partials
         if (lenRatio >= 1.5)

@@ -18,7 +18,7 @@ internal static class ProcessExecutor
     #region ExtractAll
 
     public static IEnumerable<ExtractedResult<string>> ExtractAll(
-        ReadOnlySpan<char> query,
+        string query,
         IEnumerable<string> choices,
         Processor<char> processor,
         int cutoff,
@@ -26,11 +26,12 @@ internal static class ProcessExecutor
     {
         processor ??= StringPreprocessors.Full;
 
-        processor(ref query);
+        var span = query.AsSpan();
+        processor(ref span);
 
         if (options.UseCaching)
         {
-            return ExtractAllCached(query.ToString(), choices, x => x, processor, cutoff, options);
+            return ExtractAllCached(span.ToString(), choices, x => x, processor, cutoff, options);
         }
 
         var scorer = options.Scorer ?? Process.WeightedRatioScorer;
@@ -38,10 +39,10 @@ internal static class ProcessExecutor
         if (options.UseParallel)
         {
             return ResultExtractor.Parallel.ExtractWithoutOrder(
-                query, choices, x => x, processor, scorer, cutoff, options.ParallelOptions);
+                span, choices, x => x, processor, scorer, cutoff, options.ParallelOptions);
         }
 
-        return ResultExtractor.ExtractWithoutOrder(query, choices, extractor: null, processor, scorer, cutoff);
+        return ResultExtractor.ExtractWithoutOrder(span, choices, extractor: null, processor, scorer, cutoff);
     }
 
     public static IEnumerable<ExtractedResult<T>> ExtractAll<T>(
