@@ -10,7 +10,7 @@ namespace Raffinert.FuzzySharp;
 
 public static class Process
 {
-    internal static readonly IRatioScorer WeightedRatioScorer = ScorerCache.Get<WeightedRatioScorer>();
+    internal static readonly WeightedRatioScorer WeightedRatioScorer = (WeightedRatioScorer)ScorerCache.Get<WeightedRatioScorer>();
 
     /// <summary>
     /// Creates a new fluent builder for configuring a fuzzy string matching pipeline.
