@@ -33,7 +33,7 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
     public int Length { get; }
     public int Blocks => _blocks;
 
-    public PatternMatchVectorChar(int length, int estimatedNonAsciiCharCount, int blocks, ArrayPool<ulong>? pool = null)
+    public PatternMatchVectorChar(int length, int estimatedNonAsciiCharCount, int blocks, ArrayPool<ulong> pool = null)
     {
         if (blocks < 0) throw new ArgumentOutOfRangeException(nameof(blocks));
         if (estimatedNonAsciiCharCount < 0) throw new ArgumentOutOfRangeException(nameof(estimatedNonAsciiCharCount));
@@ -108,7 +108,7 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
     {
         if (_disposed) throw new ObjectDisposedException(nameof(PatternMatchVectorChar));
 
-        if ((uint)key <= 255u)
+        if (key <= 255u)
         {
             // Check presence bitmap instead of scanning the mask
             int presenceIndex = key >> 6;
@@ -155,7 +155,7 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
     {
         if (_disposed) throw new ObjectDisposedException(nameof(PatternMatchVectorChar));
 
-        if ((uint)key <= 255u)
+        if (key <= 255u)
         {
             int presenceIndex = key >> 6;
             int presenceOffset = key & 63;

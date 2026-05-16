@@ -22,18 +22,18 @@ public sealed partial class Indel(ReadOnlySpan<char> source) : IDisposable
     }
 }
 
-public sealed class IndelT<T>(T[] source) : IDisposable where T : IEquatable<T>
+public sealed class IndelT<T>(ReadOnlySpan<T> source) : IDisposable where T : IEquatable<T>
 {
-    private readonly IPatternMatchVector<T> _patternMatchVector = PatternMatchVector.Create(source.AsSpan());
+    private readonly IPatternMatchVector<T> _patternMatchVector = PatternMatchVector.Create(source);
 
-    public int DistanceFrom(T[] value)
+    public int DistanceFrom(ReadOnlySpan<T> value)
     {
-        return Indel.DistanceImpl<T>(_patternMatchVector, value.AsSpan());
+        return Indel.DistanceImpl<T>(_patternMatchVector, value);
     }
 
-    public double NormalizedSimilarityWith(T[] value)
+    public double NormalizedSimilarityWith(ReadOnlySpan<T> value)
     {
-        return Indel.NormalizedSimilarityImpl(_patternMatchVector, value.AsSpan());
+        return Indel.NormalizedSimilarityImpl(_patternMatchVector, value);
     }
 
     public void Dispose()

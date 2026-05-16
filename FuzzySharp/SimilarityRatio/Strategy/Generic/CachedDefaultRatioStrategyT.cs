@@ -2,14 +2,15 @@
 
 namespace Raffinert.FuzzySharp.SimilarityRatio.Strategy.Generic;
 
-internal class CachedDefaultRatioStrategy<T>(T[] input1) : IDisposable
+internal class CachedDefaultRatioStrategy<T>(ReadOnlySpan<T> input1) : IDisposable
     where T : IEquatable<T>
 {
     private readonly IndelT<T> _indel = new(input1);
+    private readonly int _inputLength = input1.Length;
 
-    public int Calculate(T[] input2)
+    public int Calculate(ReadOnlySpan<T> input2)
     {
-        if (input1.Length == 0 || input2.Length == 0)
+        if (_inputLength == 0 || input2.Length == 0)
         {
             return 0;
         }
