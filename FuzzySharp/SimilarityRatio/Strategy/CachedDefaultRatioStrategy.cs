@@ -8,9 +8,10 @@ internal class CachedDefaultRatioStrategy : ICachedStrategy
     private readonly Indel _indel;
     private readonly Func<string, string> _preprocessor;
 
-    public CachedDefaultRatioStrategy(string input1, PreprocessMode preprocess = PreprocessMode.None)
+    public CachedDefaultRatioStrategy(string input1, Func<string, string> preprocessor = null)
     {
-        _preprocessor = StringPreprocessorFactory.GetPreprocessor(preprocess);
+        preprocessor ??= StringPreprocessor.None;
+        _preprocessor = preprocessor;
         _indel = new Indel(_preprocessor(input1));
     }
 

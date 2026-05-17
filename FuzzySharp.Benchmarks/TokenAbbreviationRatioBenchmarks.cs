@@ -11,7 +11,7 @@ public class TokenAbbreviationRatioBenchmarks
     [Benchmark]
     public int TokenAbbreviationRatio()
     {
-        return Fuzz.TokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessMode.Full);
+        return Fuzz.TokenAbbreviationRatio("bl 420", "Baseline section 420", StringPreprocessor.Full);
     }
 
     [Benchmark]

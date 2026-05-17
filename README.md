@@ -103,9 +103,9 @@ Fuzz.PartialTokenInitialismRatio("NASA", "National Aeronautics Space Administrat
 <p align="right"><a href="https://dotnetfiddle.net/MVlwrW">Run .NET fiddle</a></p>
 
 ```csharp
-Fuzz.TokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessMode.Full);
+Fuzz.TokenAbbreviationRatio("bl 420", "Baseline section 420", StringPreprocessor.Full);
 // 40
-Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessMode.Full);
+Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", StringPreprocessor.Full);
 // 67
 ```
 
@@ -163,7 +163,7 @@ var events = new[]
     new[] { "atlanta braves vs pittsburgh pirates", "PNC Park", "2011-05-11", "8pm" },
 };
 var query = new[] { "new york mets vs chicago cubs", "CitiField", "2017-03-19", "8pm" };
-var best = Process.ExtractOne(query, events, strings => strings[0]);
+var best = Process.ExtractOneBy(query, events, strings => strings[0]);
 // (value: { "chicago cubs vs new york mets", "CitiField", "2011-05-11", "8pm" }, score: 95, index: 0)
 ```
 
@@ -178,10 +178,10 @@ var events = new[]
 
 var query = "new york mets at chicago cubs";
 
-var best = Process.ExtractOne(query, events, e => e.Name);
+var best = Process.ExtractOneBy(query, events, e => e.Name);
 // best.Value.Name == "new york mets vs chicago cubs"
 
-var top = Process.ExtractTop(query, events, e => e.Name, limit: 2);
+var top = Process.ExtractTopBy(query, events, e => e.Name, limit: 2);
 ```
 
 ### Fluent Pipeline API
@@ -414,20 +414,20 @@ int distance = lcs.DistanceFrom("chicago white sox");
 // 8
 ```
 
-### PreprocessMode
+### String Preprocessors
 <p align="right"><a href="https://dotnetfiddle.net/cIQ6PB">Run .NET fiddle</a></p>
 
-By default, `Fuzz` methods compare strings as-is. Pass `PreprocessMode.Full` to normalize whitespace, lowercase, and strip non-alphanumeric characters before comparing:
+By default, `Fuzz` methods compare strings as-is. Pass `StringPreprocessor.Full` to normalize whitespace, lowercase, and strip non-alphanumeric characters before comparing:
 
 ```csharp
 Fuzz.Ratio("new york mets", "NEW YORK METS");
 // < 100 (case sensitive)
 
-Fuzz.Ratio("new york mets", "NEW YORK METS", PreprocessMode.Full);
+Fuzz.Ratio("new york mets", "NEW YORK METS", StringPreprocessor.Full);
 // 100 (case insensitive after preprocessing)
 ```
 
-`Process` extraction methods use `PreprocessMode.Full` by default. Pass a custom `processor` function to override this behavior.
+`Process` extraction methods use `StringPreprocessor.Full` by default. Pass `StringPreprocessor.None` (or a custom `processor` function) to override this behavior.
 
 ## Credits
 

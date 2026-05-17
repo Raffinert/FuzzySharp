@@ -6,6 +6,7 @@ namespace Raffinert.FuzzySharp.Utils;
 
 public interface IPatternMatchVector<in TKey> : IDisposable where TKey : notnull, IEquatable<TKey>
 {
+    int Length { get; }
     int Blocks { get; }
     ReadOnlySpan<ulong> GetOrZero(TKey key);
 
@@ -24,8 +25,8 @@ public sealed class PatternMatchVector
         var blocks = (source.Length + 63) >> 6;
 
         var pmv = typeof(T) == typeof(char)
-            ? (IPatternMatchVectorImpl<T>)(object)new PatternMatchVectorChar(estimatedNonAsciiCharCount: 8, blocks: blocks)
-            : new PatternMatchVector<T>(64, blocks);
+            ? (IPatternMatchVectorImpl<T>)(object)new PatternMatchVectorChar(source.Length, estimatedNonAsciiCharCount: 8, blocks: blocks)
+            : new PatternMatchVector<T>(source.Length, 64, blocks);
 
         var i = 0;
 
@@ -48,8 +49,9 @@ internal sealed class PatternMatchVector<T> : IPatternMatchVectorImpl<T> where T
     private readonly ulong[] _zeroMask;
     private bool _disposed;
 
-    public PatternMatchVector(int estimatedCharCount, int blocks, ArrayPool<ulong> pool = null)
+    public PatternMatchVector(int length, int estimatedCharCount, int blocks, ArrayPool<ulong> pool = null)
     {
+        Length = length;
         _pool = pool ?? ArrayPool<ulong>.Shared;
         Blocks = blocks;
         _capacity = estimatedCharCount;
@@ -60,6 +62,7 @@ internal sealed class PatternMatchVector<T> : IPatternMatchVectorImpl<T> where T
         _next = 0;
     }
 
+    public int Length { get; }
     public int Blocks { get; }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

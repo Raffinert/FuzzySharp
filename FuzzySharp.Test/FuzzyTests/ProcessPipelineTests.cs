@@ -281,10 +281,10 @@ public class ProcessPipelineTests
         };
         var query = new[] { "new york mets vs chicago cubs", "CitiField", "2017-03-19", "8pm" };
 
-        var staticResult = Process.ExtractOne(query, events, strings => strings[0]);
+        var staticResult = Process.ExtractOneBy(query, events, strings => strings[0]);
 
         var pipeline = Process.Configure().Build();
-        var pipelineResult = pipeline.ExtractOne(query, events, strings => strings[0]);
+        var pipelineResult = pipeline.ExtractOneBy(query, events, strings => strings[0]);
 
         Assert.AreEqual(staticResult.Value, pipelineResult.Value);
         Assert.AreEqual(staticResult.Score, pipelineResult.Score);
@@ -304,8 +304,8 @@ public class ProcessPipelineTests
         var sequentialPipeline = Process.Configure().Build();
         var parallelPipeline = Process.Configure().Parallel().Build();
 
-        var sequentialResult = sequentialPipeline.ExtractOne(query, events, strings => strings[0]);
-        var parallelResult = parallelPipeline.ExtractOne(query, events, strings => strings[0]);
+        var sequentialResult = sequentialPipeline.ExtractOneBy(query, events, strings => strings[0]);
+        var parallelResult = parallelPipeline.ExtractOneBy(query, events, strings => strings[0]);
 
         Assert.AreEqual(sequentialResult.Value, parallelResult.Value);
         Assert.AreEqual(sequentialResult.Score, parallelResult.Score);

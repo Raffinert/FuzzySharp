@@ -1,17 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <FileVersion>4.0.2.0</FileVersion>
-    <Version>4.0.2</Version>
-    <PackageVersion>4.0.2</PackageVersion>
-    <AssemblyVersion>4.0.2.0</AssemblyVersion>
-    <FileVersion>4.0.2.0</FileVersion>
-    <Version>4.0.2</Version>
-    <PackageVersion>4.0.2</PackageVersion>
+    <FileVersion>5.0.0.0</FileVersion>
+    <Version>5.0.0</Version>
+    <PackageVersion>5.0.0</PackageVersion>
+    <AssemblyVersion>5.0.0.0</AssemblyVersion>
+    <FileVersion>5.0.0.0</FileVersion>
+    <Version>5.0.0</Version>
+    <PackageVersion>5.0.0</PackageVersion>
     <Authors>Jacob Bayer;Yevhen Cherkes</Authors>
     <Company />
     <Description>
-        Bit-parallel Fuzzy string matcher based on FuzzyWuzzy algorithm from SeatGeek and RapidFuzz python and cpp libraries from Max Bachmann.
+        Fuzzy string matcher based on FuzzyWuzzy algorithm from SeatGeek and RapidFuzz python and cpp libraries from Max Bachmann.
     </Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>

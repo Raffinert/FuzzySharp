@@ -59,35 +59,35 @@ public sealed partial class Levenshtein
         if (replaceCost == 1)
         {
             return scoreCutoff.HasValue
-                ? Distance(source, target, scoreCutoff.Value, patternMatchVector)
-                : Distance(source, target, patternMatchVector);
+                ? Distance(patternMatchVector, target, scoreCutoff.Value)
+                : Distance(patternMatchVector, target);
         }
 
-        return Indel.DistanceImpl(source, target, patternMatchVector, scoreCutoff);
+        return Indel.DistanceImpl(patternMatchVector, target, scoreCutoff);
     }
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int Distance<T>(ReadOnlySpan<T> source, ReadOnlySpan<T> target, int scoreCutoff, IPatternMatchVector<T> patternMatchVector) where T : IEquatable<T>
+    private static int Distance<T>(IPatternMatchVector<T> sourceVector, ReadOnlySpan<T> target, int scoreCutoff) where T : IEquatable<T>
     {
-        if (source.Length <= 64)
+        if (sourceVector.Length <= 64)
         {
-            return DistanceSingleULong(source, target, scoreCutoff, patternMatchVector);
+            return DistanceSingleULong(sourceVector, target, scoreCutoff);
         }
 
-        return DistanceMultipleULongs(source, target, scoreCutoff, patternMatchVector);
+        return DistanceMultipleULongs(sourceVector, target, scoreCutoff);
     }
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int Distance<T>(ReadOnlySpan<T> source, ReadOnlySpan<T> target, IPatternMatchVector<T> patternMatchVector) where T : IEquatable<T>
+    private static int Distance<T>(IPatternMatchVector<T> sourceVector, ReadOnlySpan<T> target) where T : IEquatable<T>
     {
-        if (source.Length <= 64)
+        if (sourceVector.Length <= 64)
         {
-            return DistanceSingleULong(source, target, patternMatchVector);
+            return DistanceSingleULong(sourceVector, target);
         }
 
-        return DistanceMultipleULongs(source, target, null, patternMatchVector);
+        return DistanceMultipleULongs(sourceVector, target, null);
     }
 
     /// <summary>
@@ -652,14 +652,11 @@ public sealed partial class Levenshtein
     /// Uses a dictionary to store per‐character bitmasks rented from ArrayPool, and uses stackalloc if
     /// 6*blocks ≤ STACKALLOC_THRESHOLD_ULONGS; otherwise allocates a new ulong[] on the heap for the six lanes.
     /// </summary>
-    private static int DistanceMultipleULongs<T>(
-        ReadOnlySpan<T> source,
+    private static int DistanceMultipleULongs<T>(IPatternMatchVector<T> sourceVector,
         ReadOnlySpan<T> target,
-        int? scoreCutoff,
-        IPatternMatchVector<T> patternMatchVector
-    ) where T : IEquatable<T>
+        int? scoreCutoff) where T : IEquatable<T>
     {
-        var m = source.Length;
+        var m = sourceVector.Length;
         if (m == 0)
         {
             var d = target.Length;
@@ -674,7 +671,7 @@ public sealed partial class Levenshtein
         var scratchArray = ArrayPool<ulong>.Shared.Rent(totalScratch);
         try
         {
-            var result = DistanceMultipleULongsImpl(target, scoreCutoff, m, blocks, patternMatchVector, scratchArray);
+            var result = DistanceMultipleULongsImpl(sourceVector, target, scoreCutoff, m, blocks, scratchArray);
             return result;
         }
         finally
@@ -694,13 +691,12 @@ public sealed partial class Levenshtein
     //   scratch[4*blocks..5*blocks)→ HP
     //   scratch[5*blocks..6*blocks)→ HN
     // ─────────────────────────────────────────────────────────────────────────────
-    private static int DistanceMultipleULongsImpl<T>(ReadOnlySpan<T> target,
+    private static int DistanceMultipleULongsImpl<T>(IPatternMatchVector<T> sourceVector, 
+        ReadOnlySpan<T> target,
         int? scoreCutoff,
         int m,
         int blocks,
-        IPatternMatchVector<T> patternMatchVector,
-        Span<ulong> scratch
-    ) where T : IEquatable<T>
+        Span<ulong> scratch) where T : IEquatable<T>
     {
         // Partition scratch into six spans of length = blocks
         var VP = scratch.Slice(0 * blocks, blocks);
@@ -732,7 +728,7 @@ public sealed partial class Levenshtein
         for (var i = 0; i < target.Length; i++)
         {
             // Look up the precomputed bitmask array, or use zeroMask if not found
-            var PMitem = patternMatchVector.GetOrZero(target[i]);
+            var PMitem = sourceVector.GetOrZero(target[i]);
 
             // “D0‐loop” with carry across blocks
             var carry = 0UL;
@@ -797,9 +793,11 @@ public sealed partial class Levenshtein
         return dist;
     }
 
-    private static int DistanceSingleULong<T>(ReadOnlySpan<T> source, ReadOnlySpan<T> target, int scoreCutoff, IPatternMatchVector<T> patternMatchVector) where T : IEquatable<T>
+    private static int DistanceSingleULong<T>(IPatternMatchVector<T> sourceVector, 
+        ReadOnlySpan<T> target,
+        int scoreCutoff) where T : IEquatable<T>
     {
-        var m = source.Length;
+        var m = sourceVector.Length;
         if (m == 0) return target.Length;
 
         // initial bitmask: lower m bits set
@@ -810,7 +808,7 @@ public sealed partial class Levenshtein
 
         for (var i = 0; i < target.Length; i++)
         {
-            var PM = patternMatchVector.GetOrZero(target[i])[0];
+            var PM = sourceVector.GetOrZero(target[i])[0];
 
             // Myers bit-parallel update
             var X = PM | VN;
@@ -835,9 +833,9 @@ public sealed partial class Levenshtein
         return dist;
     }
 
-    private static int DistanceSingleULong<T>(ReadOnlySpan<T> source, ReadOnlySpan<T> target, IPatternMatchVector<T> patternMatchVector) where T : IEquatable<T>
+    private static int DistanceSingleULong<T>(IPatternMatchVector<T> sourceVector, ReadOnlySpan<T> target) where T : IEquatable<T>
     {
-        var m = source.Length;
+        var m = sourceVector.Length;
         if (m == 0) return target.Length;
 
         // initial bitmask: lower m bits set
@@ -848,7 +846,7 @@ public sealed partial class Levenshtein
 
         for (var i = 0; i < target.Length; i++)
         {
-            var PM = patternMatchVector.GetOrZero(target[i])[0];
+            var PM = sourceVector.GetOrZero(target[i])[0];
 
             // Myers bit-parallel update
             var X = PM | VN;

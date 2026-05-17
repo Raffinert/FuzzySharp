@@ -2,8 +2,11 @@
 
 namespace Raffinert.FuzzySharp.PreProcess;
 
-internal static class StringPreprocessorFactory
+public static class StringPreprocessor
 {
+    public static Func<string, string> Full { get; } = Default;
+    public static Func<string, string> None { get; } = static s => s;
+
     private static string Default(string input)
     {
         if (string.IsNullOrWhiteSpace(input))
@@ -19,16 +22,6 @@ internal static class StringPreprocessorFactory
             result[i] = char.IsLetterOrDigit(c) ? char.ToLower(c) : ' ';
         }
 
-        return ((ReadOnlySpan<char>)result).Trim().ToString();
-    }
-
-    public static Func<string, string> GetPreprocessor(PreprocessMode mode)
-    {
-        return mode switch
-        {
-            PreprocessMode.Full => Default,
-            PreprocessMode.None => static s => s,
-            _ => throw new InvalidOperationException($"Invalid string preprocessor mode: {mode}")
-        };
+        return result.Trim().ToString();
     }
 }

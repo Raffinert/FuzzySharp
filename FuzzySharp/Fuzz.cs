@@ -1,4 +1,4 @@
-﻿using Raffinert.FuzzySharp.PreProcess;
+﻿using System;
 using Raffinert.FuzzySharp.SimilarityRatio;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
@@ -26,11 +26,11 @@ public static class Fuzz
     /// </summary>
     /// <param name="input1"></param>
     /// <param name="input2"></param>
-    /// <param name="preprocessMode"></param>
+    /// <param name="preprocessor"></param>
     /// <returns></returns>
-    public static int Ratio(string input1, string input2, PreprocessMode preprocessMode)
+    public static int Ratio(string input1, string input2, Func<string, string> preprocessor)
     {
-        return ScorerCache.Get<DefaultRatioScorer>().Score(input1, input2, preprocessMode);
+        return ScorerCache.Get<DefaultRatioScorer>().Score(input1, input2, preprocessor);
     }
     #endregion
 
@@ -55,11 +55,11 @@ public static class Fuzz
     /// </summary>
     /// <param name="input1"></param>
     /// <param name="input2"></param>
-    /// <param name="preprocessMode"></param>
+    /// <param name="preprocessor"></param>
     /// <returns></returns>
-    public static int PartialRatio(string input1, string input2, PreprocessMode preprocessMode)
+    public static int PartialRatio(string input1, string input2, Func<string, string> preprocessor)
     {
-        return ScorerCache.Get<PartialRatioScorer>().Score(input1, input2, preprocessMode);
+        return ScorerCache.Get<PartialRatioScorer>().Score(input1, input2, preprocessor);
     }
     #endregion
 
@@ -84,11 +84,11 @@ public static class Fuzz
     /// </summary>
     /// <param name="input1"></param>
     /// <param name="input2"></param>
-    /// <param name="preprocessMode"></param>
+    /// <param name="preprocessor"></param>
     /// <returns></returns>
-    public static int TokenSortRatio(string input1, string input2, PreprocessMode preprocessMode)
+    public static int TokenSortRatio(string input1, string input2, Func<string, string> preprocessor)
     {
-        return ScorerCache.Get<TokenSortScorer>().Score(input1, input2, preprocessMode);
+        return ScorerCache.Get<TokenSortScorer>().Score(input1, input2, preprocessor);
     }
 
     /// <summary>
@@ -111,11 +111,11 @@ public static class Fuzz
     /// </summary>
     /// <param name="input1"></param>
     /// <param name="input2"></param>
-    /// <param name="preprocessMode"></param>
+    /// <param name="preprocessor"></param>
     /// <returns></returns>
-    public static int PartialTokenSortRatio(string input1, string input2, PreprocessMode preprocessMode)
+    public static int PartialTokenSortRatio(string input1, string input2, Func<string, string> preprocessor)
     {
-        return ScorerCache.Get<PartialTokenSortScorer>().Score(input1, input2, preprocessMode);
+        return ScorerCache.Get<PartialTokenSortScorer>().Score(input1, input2, preprocessor);
     }
     #endregion
 
@@ -142,11 +142,11 @@ public static class Fuzz
     /// </summary>
     /// <param name="input1"></param>
     /// <param name="input2"></param>
-    /// <param name="preprocessMode"></param>
+    /// <param name="preprocessor"></param>
     /// <returns></returns>
-    public static int TokenSetRatio(string input1, string input2, PreprocessMode preprocessMode)
+    public static int TokenSetRatio(string input1, string input2, Func<string, string> preprocessor)
     {
-        return ScorerCache.Get<TokenSetScorer>().Score(input1, input2, preprocessMode);
+        return ScorerCache.Get<TokenSetScorer>().Score(input1, input2, preprocessor);
     }
 
     /// <summary>
@@ -171,11 +171,11 @@ public static class Fuzz
     /// </summary>
     /// <param name="input1"></param>
     /// <param name="input2"></param>
-    /// <param name="preprocessMode"></param>
+    /// <param name="preprocessor"></param>
     /// <returns></returns>
-    public static int PartialTokenSetRatio(string input1, string input2, PreprocessMode preprocessMode)
+    public static int PartialTokenSetRatio(string input1, string input2, Func<string, string> preprocessor)
     {
-        return ScorerCache.Get<PartialTokenSetScorer>().Score(input1, input2, preprocessMode);
+        return ScorerCache.Get<PartialTokenSetScorer>().Score(input1, input2, preprocessor);
     }
     #endregion
 
@@ -198,11 +198,11 @@ public static class Fuzz
     /// </summary>
     /// <param name="input1"></param>
     /// <param name="input2"></param>
-    /// <param name="preprocessMode"></param>
+    /// <param name="preprocessor"></param>
     /// <returns></returns>
-    public static int TokenDifferenceRatio(string input1, string input2, PreprocessMode preprocessMode)
+    public static int TokenDifferenceRatio(string input1, string input2, Func<string, string> preprocessor)
     {
-        return ScorerCache.Get<TokenDifferenceScorer>().Score(input1, input2, preprocessMode);
+        return ScorerCache.Get<TokenDifferenceScorer>().Score(input1, input2, preprocessor);
     }
 
     /// <summary>
@@ -223,11 +223,11 @@ public static class Fuzz
     /// </summary>
     /// <param name="input1"></param>
     /// <param name="input2"></param>
-    /// <param name="preprocessMode"></param>
+    /// <param name="preprocessor"></param>
     /// <returns></returns>
-    public static int PartialTokenDifferenceRatio(string input1, string input2, PreprocessMode preprocessMode)
+    public static int PartialTokenDifferenceRatio(string input1, string input2, Func<string, string> preprocessor)
     {
-        return ScorerCache.Get<PartialTokenDifferenceScorer>().Score(input1, input2, preprocessMode);
+        return ScorerCache.Get<PartialTokenDifferenceScorer>().Score(input1, input2, preprocessor);
     }
     #endregion
 
@@ -248,11 +248,11 @@ public static class Fuzz
     /// </summary>
     /// <param name="input1"></param>
     /// <param name="input2"></param>
-    /// <param name="preprocessMode"></param>
+    /// <param name="preprocessor"></param>
     /// <returns></returns>
-    public static int TokenInitialismRatio(string input1, string input2, PreprocessMode preprocessMode)
+    public static int TokenInitialismRatio(string input1, string input2, Func<string, string> preprocessor)
     {
-        return ScorerCache.Get<TokenInitialismScorer>().Score(input1, input2, preprocessMode);
+        return ScorerCache.Get<TokenInitialismScorer>().Score(input1, input2, preprocessor);
     }
 
     /// <summary>
@@ -271,11 +271,11 @@ public static class Fuzz
     /// </summary>
     /// <param name="input1"></param>
     /// <param name="input2"></param>
-    /// <param name="preprocessMode"></param>
+    /// <param name="preprocessor"></param>
     /// <returns></returns>
-    public static int PartialTokenInitialismRatio(string input1, string input2, PreprocessMode preprocessMode)
+    public static int PartialTokenInitialismRatio(string input1, string input2, Func<string, string> preprocessor)
     {
-        return ScorerCache.Get<PartialTokenInitialismScorer>().Score(input1, input2);
+        return ScorerCache.Get<PartialTokenInitialismScorer>().Score(input1, input2, preprocessor);
     }
     #endregion
 
@@ -300,11 +300,11 @@ public static class Fuzz
     /// </summary>
     /// <param name="input1"></param>
     /// <param name="input2"></param>
-    /// <param name="preprocessMode"></param>
+    /// <param name="preprocessor"></param>
     /// <returns></returns>
-    public static int TokenAbbreviationRatio(string input1, string input2, PreprocessMode preprocessMode)
+    public static int TokenAbbreviationRatio(string input1, string input2, Func<string, string> preprocessor)
     {
-        return ScorerCache.Get<TokenAbbreviationScorer>().Score(input1, input2, preprocessMode);
+        return ScorerCache.Get<TokenAbbreviationScorer>().Score(input1, input2, preprocessor);
     }
 
     /// <summary>
@@ -327,11 +327,11 @@ public static class Fuzz
     /// </summary>
     /// <param name="input1"></param>
     /// <param name="input2"></param>
-    /// <param name="preprocessMode"></param>
+    /// <param name="preprocessor"></param>
     /// <returns></returns>
-    public static int PartialTokenAbbreviationRatio(string input1, string input2, PreprocessMode preprocessMode)
+    public static int PartialTokenAbbreviationRatio(string input1, string input2, Func<string, string> preprocessor)
     {
-        return ScorerCache.Get<PartialTokenAbbreviationScorer>().Score(input1, input2, preprocessMode);
+        return ScorerCache.Get<PartialTokenAbbreviationScorer>().Score(input1, input2, preprocessor);
     }
     #endregion
 
@@ -352,11 +352,11 @@ public static class Fuzz
     /// </summary>
     /// <param name="input1"></param>
     /// <param name="input2"></param>
-    /// <param name="preprocessMode"></param>
+    /// <param name="preprocessor"></param>
     /// <returns></returns>
-    public static int WeightedRatio(string input1, string input2, PreprocessMode preprocessMode)
+    public static int WeightedRatio(string input1, string input2, Func<string, string> preprocessor)
     {
-        return ScorerCache.Get<WeightedRatioScorer>().Score(input1, input2, preprocessMode);
+        return ScorerCache.Get<WeightedRatioScorer>().Score(input1, input2, preprocessor);
     }
     #endregion
 }

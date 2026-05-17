@@ -1,5 +1,14 @@
 # Changelog
 
+## v5.0.0
+
+*Breaking API changes and preprocessing fixes*
+
+- **Breaking:** Replaced `PreprocessMode`-based APIs with `Func<string, string>` preprocessors across public scoring/extraction APIs. Calls that passed `PreprocessMode.Full`/`PreprocessMode.None` must now pass `StringPreprocessor.Full`/`StringPreprocessor.None` (or a custom delegate).
+- **Breaking:** Renamed `PreProcess.StringPreprocessorFactory` to `PreProcess.StringPreprocessor`.
+- **Breaking:** Renamed generic extraction methods from `Process.Extract*` to `Process.Extract*By` when an extractor delegate is provided (for example, `ExtractOne` -> `ExtractOneBy`, `ExtractTop` -> `ExtractTopBy`).
+- Fixed missing preprocessing in several internal extraction/scoring paths so configured preprocessors are now applied consistently.
+
 ## v4.0.2
 
 - Added `string query` overloads for generic choice extraction, allowing a plain string query to be matched against `IEnumerable<T>` choices with a `Func<T, string>` processor.

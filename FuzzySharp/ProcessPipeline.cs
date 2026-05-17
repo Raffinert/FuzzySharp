@@ -32,33 +32,35 @@ public readonly struct ProcessPipeline
         Func<string, string> processor = null,
         int cutoff = 0)
     {
-        return ProcessExecutor.ExtractAll(query, choices, processor, cutoff, _options);
+        return ProcessExecutor.ExtractAll(query, choices, processor ?? Process.DefaultStringProcessor, cutoff, _options);
     }
 
     /// <summary>
     /// Creates a list of ExtractedResult which contain all the choices with
     /// their corresponding score where higher is more similar
     /// </summary>
-    public IEnumerable<ExtractedResult<T>> ExtractAll<T>(
+    public IEnumerable<ExtractedResult<T>> ExtractAllBy<T>(
         T query,
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor = null,
         int cutoff = 0)
     {
-        return ProcessExecutor.ExtractAll(query, choices, processor, cutoff, _options);
+        return ProcessExecutor.ExtractAll(query, choices, extractor, processor ?? Process.DefaultStringProcessor, cutoff, _options);
     }
 
     /// <summary>
     /// Creates a list of ExtractedResult which contain all the choices with
     /// their corresponding score where higher is more similar
     /// </summary>
-    public IEnumerable<ExtractedResult<T>> ExtractAll<T>(
+    public IEnumerable<ExtractedResult<T>> ExtractAllBy<T>(
         string query,
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor = null,
         int cutoff = 0)
     {
-        return ProcessExecutor.ExtractAll(query, choices, processor, cutoff, _options);
+        return ProcessExecutor.ExtractAll(query, choices, extractor, processor ?? Process.DefaultStringProcessor, cutoff, _options);
     }
 
     #endregion
@@ -76,35 +78,37 @@ public readonly struct ProcessPipeline
         int limit = 5,
         int cutoff = 0)
     {
-        return ProcessExecutor.ExtractTop(query, choices, processor, limit, cutoff, _options);
+        return ProcessExecutor.ExtractTop(query, choices, processor ?? Process.DefaultStringProcessor, limit, cutoff, _options);
     }
 
     /// <summary>
     /// Creates a sorted list of ExtractedResult which contain the
     /// top limit most similar choices
     /// </summary>
-    public IEnumerable<ExtractedResult<T>> ExtractTop<T>(
+    public IEnumerable<ExtractedResult<T>> ExtractTopBy<T>(
         T query,
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor = null,
         int limit = 5,
         int cutoff = 0)
     {
-        return ProcessExecutor.ExtractTop(query, choices, processor, limit, cutoff, _options);
+        return ProcessExecutor.ExtractTop(query, choices, extractor, processor ?? Process.DefaultStringProcessor, limit, cutoff, _options);
     }
 
     /// <summary>
     /// Creates a sorted list of ExtractedResult which contain the
     /// top limit most similar choices
     /// </summary>
-    public IEnumerable<ExtractedResult<T>> ExtractTop<T>(
+    public IEnumerable<ExtractedResult<T>> ExtractTopBy<T>(
         string query,
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor = null,
         int limit = 5,
         int cutoff = 0)
     {
-        return ProcessExecutor.ExtractTop(query, choices, processor, limit, cutoff, _options);
+        return ProcessExecutor.ExtractTop(query, choices, extractor, processor ?? Process.DefaultStringProcessor, limit, cutoff, _options);
     }
 
     #endregion
@@ -120,19 +124,33 @@ public readonly struct ProcessPipeline
         Func<string, string> processor = null,
         int cutoff = 0)
     {
-        return ProcessExecutor.ExtractSorted(query, choices, processor, cutoff, _options);
+        return ProcessExecutor.ExtractSorted(query, choices, processor ?? Process.DefaultStringProcessor, cutoff, _options);
     }
 
     /// <summary>
     /// Creates a sorted list of ExtractedResult with the closest matches first
     /// </summary>
-    public IEnumerable<ExtractedResult<T>> ExtractSorted<T>(
+    public IEnumerable<ExtractedResult<T>> ExtractSortedBy<T>(
         T query,
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor = null,
         int cutoff = 0)
     {
-        return ProcessExecutor.ExtractSorted(query, choices, processor, cutoff, _options);
+        return ProcessExecutor.ExtractSorted(query, choices, extractor, processor ?? Process.DefaultStringProcessor, cutoff, _options);
+    }
+
+    /// <summary>
+    /// Creates a sorted list of ExtractedResult with the closest matches first
+    /// </summary>
+    public IEnumerable<ExtractedResult<T>> ExtractSortedBy<T>(
+        string query,
+        IEnumerable<T> choices,
+        Func<T, string> extractor,
+        Func<string, string> processor = null,
+        int cutoff = 0)
+    {
+        return ProcessExecutor.ExtractSorted(query, choices, extractor, processor ?? Process.DefaultStringProcessor, cutoff, _options);
     }
 
     #endregion
@@ -148,31 +166,33 @@ public readonly struct ProcessPipeline
         Func<string, string> processor = null,
         int cutoff = 0)
     {
-        return ProcessExecutor.ExtractOne(query, choices, processor, cutoff, _options);
+        return ProcessExecutor.ExtractOne(query, choices, processor ?? Process.DefaultStringProcessor, cutoff, _options);
     }
 
     /// <summary>
     /// Find the single best match above a score in a list of choices.
     /// </summary>
-    public ExtractedResult<T> ExtractOne<T>(
+    public ExtractedResult<T> ExtractOneBy<T>(
         T query,
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor = null,
         int cutoff = 0)
     {
-        return ProcessExecutor.ExtractOne(query, choices, processor, cutoff, _options);
+        return ProcessExecutor.ExtractOne(query, choices, extractor, processor ?? Process.DefaultStringProcessor, cutoff, _options);
     }
 
     /// <summary>
     /// Find the single best match above a score in a list of choices.
     /// </summary>
-    public ExtractedResult<T> ExtractOne<T>(
+    public ExtractedResult<T> ExtractOneBy<T>(
         string query,
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor = null,
         int cutoff = 0)
     {
-        return ProcessExecutor.ExtractOne(query, choices, processor, cutoff, _options);
+        return ProcessExecutor.ExtractOne(query, choices, extractor, processor ?? Process.DefaultStringProcessor, cutoff, _options);
     }
 
     /// <summary>
@@ -180,7 +200,7 @@ public readonly struct ProcessPipeline
     /// </summary>
     public ExtractedResult<string> ExtractOne(string query, params string[] choices)
     {
-        return ProcessExecutor.ExtractOne(query, choices, null, 0, _options);
+        return ProcessExecutor.ExtractOne(query, choices, Process.DefaultStringProcessor, 0, _options);
     }
 
     #endregion
@@ -220,14 +240,16 @@ public readonly struct CachedScorerProcessPipeline
     /// Creates a list of ExtractedResult which contain all the choices with
     /// their corresponding score where higher is more similar
     /// </summary>
-    public IEnumerable<ExtractedResult<T>> ExtractAll<T>(
+    public IEnumerable<ExtractedResult<T>> ExtractAllBy<T>(
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor = null,
         int cutoff = 0)
     {
-        if (processor == null) throw new ArgumentNullException(nameof(processor));
+        if (extractor == null) throw new ArgumentNullException(nameof(extractor));
+
         return CachedScorerProcessExecutor.ExtractAll(
-            choices, processor, _options.CachedScorer, cutoff,
+            choices, extractor, processor ?? Process.DefaultStringProcessor, _options.CachedScorer, cutoff,
             _options.UseParallel, _options.ParallelOptions);
     }
 
@@ -254,15 +276,17 @@ public readonly struct CachedScorerProcessPipeline
     /// Creates a sorted list of ExtractedResult which contain the
     /// top limit most similar choices
     /// </summary>
-    public IEnumerable<ExtractedResult<T>> ExtractTop<T>(
+    public IEnumerable<ExtractedResult<T>> ExtractTopBy<T>(
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor = null,
         int limit = 5,
         int cutoff = 0)
     {
-        if (processor == null) throw new ArgumentNullException(nameof(processor));
+        if (extractor == null) throw new ArgumentNullException(nameof(extractor));
+        processor ??= Process.DefaultStringProcessor;
         return CachedScorerProcessExecutor.ExtractTop(
-            choices, processor, _options.CachedScorer, limit, cutoff,
+            choices, extractor, processor, _options.CachedScorer, limit, cutoff,
             _options.UseParallel, _options.ParallelOptions);
     }
 
@@ -286,14 +310,16 @@ public readonly struct CachedScorerProcessPipeline
     /// <summary>
     /// Creates a sorted list of ExtractedResult with the closest matches first
     /// </summary>
-    public IEnumerable<ExtractedResult<T>> ExtractSorted<T>(
+    public IEnumerable<ExtractedResult<T>> ExtractSortedBy<T>(
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor = null,
         int cutoff = 0)
     {
-        if (processor == null) throw new ArgumentNullException(nameof(processor));
+        if (extractor == null) throw new ArgumentNullException(nameof(extractor));
+        processor ??= Process.DefaultStringProcessor;
         return CachedScorerProcessExecutor.ExtractSorted(
-            choices, processor, _options.CachedScorer, cutoff,
+            choices, extractor, processor, _options.CachedScorer, cutoff,
             _options.UseParallel, _options.ParallelOptions);
     }
 
@@ -317,14 +343,16 @@ public readonly struct CachedScorerProcessPipeline
     /// <summary>
     /// Find the single best match above a score in a list of choices.
     /// </summary>
-    public ExtractedResult<T> ExtractOne<T>(
+    public ExtractedResult<T> ExtractOneBy<T>(
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor = null,
         int cutoff = 0)
     {
-        if (processor == null) throw new ArgumentNullException(nameof(processor));
+        if (extractor == null) throw new ArgumentNullException(nameof(extractor));
+        processor ??= Process.DefaultStringProcessor;
         return CachedScorerProcessExecutor.ExtractOne(
-            choices, processor, _options.CachedScorer, cutoff,
+            choices, extractor, processor, _options.CachedScorer, cutoff,
             _options.UseParallel, _options.ParallelOptions);
     }
 

@@ -11,7 +11,7 @@ namespace Raffinert.FuzzySharp.Benchmarks.LevenshteinDistance;
 [MemoryDiagnoser]
 public class LevenshteinNormal
 {
-    private string[] _words;
+    private string[] _words = null!;
 
     [GlobalSetup]
     public void SetUp()

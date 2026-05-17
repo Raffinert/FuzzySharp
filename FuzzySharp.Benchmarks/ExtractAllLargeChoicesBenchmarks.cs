@@ -80,45 +80,45 @@ public class ExtractAllLargeChoicesBenchmarks
     }
 
     [Benchmark]
-    public List<ExtractedResult<string[]>> ExtractAll()
+    public List<ExtractedResult<string[]>> ExtractAllBy()
     {
-        return Process.ExtractAll(_query, _events, static strings => strings[0]).ToList();
+        return Process.ExtractAllBy(_query, _events, static strings => strings[0]).ToList();
     }
 
     [Benchmark]
-    public List<global::FuzzySharp.Extractor.ExtractedResult<string[]>> ExtractAllClassic()
+    public List<global::FuzzySharp.Extractor.ExtractedResult<string[]>> ExtractAllByClassic()
     {
         return Classic.Process.ExtractAll(_query, _events, static strings => strings[0]).ToList();
     }
 
     [Benchmark]
-    public List<ExtractedResult<string[]>> ExtractAllParallel()
+    public List<ExtractedResult<string[]>> ExtractAllByParallel()
     {
-        return _parallelPipeline.ExtractAll(_query, _events, static strings => strings[0]).ToList();
+        return _parallelPipeline.ExtractAllBy(_query, _events, static strings => strings[0]).ToList();
     }
 
     [Benchmark]
-    public List<ExtractedResult<string[]>> ExtractAllCached()
+    public List<ExtractedResult<string[]>> ExtractAllByCached()
     {
-        return _cachedPipeline.ExtractAll(_query, _events, static strings => strings[0]).ToList();
+        return _cachedPipeline.ExtractAllBy(_query, _events, static strings => strings[0]).ToList();
     }
 
     [Benchmark]
-    public List<ExtractedResult<string[]>> ExtractAllParallelCached()
+    public List<ExtractedResult<string[]>> ExtractAllByParallelCached()
     {
-        return _parallelCachedPipeline.ExtractAll(_query, _events, static strings => strings[0]).ToList();
+        return _parallelCachedPipeline.ExtractAllBy(_query, _events, static strings => strings[0]).ToList();
     }
 
     [Benchmark]
-    public List<ExtractedResult<string[]>> ExtractAllAcrossRunsCached()
+    public List<ExtractedResult<string[]>> ExtractAllByAcrossRunsCached()
     {
-        return _acrossRunsCachedPipeline.ExtractAll(_events, static strings => strings[0]).ToList();
+        return _acrossRunsCachedPipeline.ExtractAllBy(_events, static strings => strings[0]).ToList();
     }
 
     [Benchmark]
-    public List<ExtractedResult<string[]>> ExtractAllAcrossRunsParallelCached()
+    public List<ExtractedResult<string[]>> ExtractAllByAcrossRunsParallelCached()
     {
-        return _acrossRunsParallelCachedPipeline.ExtractAll(_events, static strings => strings[0]).ToList();
+        return _acrossRunsParallelCachedPipeline.ExtractAllBy(_events, static strings => strings[0]).ToList();
     }
 
     private static string[][] BuildEvents(int count)
