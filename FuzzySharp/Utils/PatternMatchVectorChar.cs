@@ -30,12 +30,15 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
 
     private bool _disposed;
 
+    public int Length { get; }
     public int Blocks => _blocks;
 
-    public PatternMatchVectorChar(int estimatedNonAsciiCharCount, int blocks, ArrayPool<ulong> pool = null)
+    public PatternMatchVectorChar(int length, int estimatedNonAsciiCharCount, int blocks, ArrayPool<ulong> pool = null)
     {
         if (blocks < 0) throw new ArgumentOutOfRangeException(nameof(blocks));
         if (estimatedNonAsciiCharCount < 0) throw new ArgumentOutOfRangeException(nameof(estimatedNonAsciiCharCount));
+
+        Length = length;
 
         _pool = pool ?? ArrayPool<ulong>.Shared;
         _blocks = blocks;

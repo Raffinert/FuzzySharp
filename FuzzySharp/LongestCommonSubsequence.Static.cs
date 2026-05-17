@@ -37,17 +37,15 @@ public sealed partial class LongestCommonSubsequence
 
         using var patternMatchVector = PatternMatchVector.Create(s1);
 
-        return DistanceImpl(s1, s2, patternMatchVector, scoreCutoff);
+        return DistanceImpl(patternMatchVector, s2, scoreCutoff);
     }
 
-    private static int DistanceImpl<T>(
-        ReadOnlySpan<T> s1,
+    private static int DistanceImpl<T>(IPatternMatchVector<T> s1Vector,
         ReadOnlySpan<T> s2,
-        IPatternMatchVector<T> patternMatchVector,
         int? scoreCutoff = null) where T : IEquatable<T>
     {
-        int maximum = Math.Max(s1.Length, s2.Length);
-        int sim = SimilarityImpl(s1, s2, patternMatchVector);
+        int maximum = Math.Max(s1Vector.Length, s2.Length);
+        int sim = SimilarityImpl(s1Vector, s2);
         int dist = maximum - sim;
 
         var result = scoreCutoff == null || dist <= scoreCutoff.Value
@@ -320,18 +318,16 @@ public sealed partial class LongestCommonSubsequence
 
         using var patternMatchVector = PatternMatchVector.Create(s1);
 
-        return SimilarityImpl(s1, s2, patternMatchVector, scoreCutoff);
+        return SimilarityImpl(patternMatchVector, s2, scoreCutoff);
     }
 
-    internal static int SimilarityImpl<T>(
-        ReadOnlySpan<T> s1,
+    internal static int SimilarityImpl<T>(IPatternMatchVector<T> s1Vector,
         ReadOnlySpan<T> s2,
-        IPatternMatchVector<T> patternMatchVector,
         int? scoreCutoff = null) where T : IEquatable<T>
     {
-        var sim = s1.Length > 64
-            ? BlockSimilarityMultipleULongs(patternMatchVector, s1, s2)
-            : BlockSimilaritySingleULong(patternMatchVector, s1, s2);
+        var sim = s1Vector.Length > 64
+            ? BlockSimilarityMultipleULongs(s1Vector, s2)
+            : BlockSimilaritySingleULong(s1Vector, s2);
 
         var result = scoreCutoff == null || sim >= scoreCutoff.Value
             ? sim
@@ -344,43 +340,38 @@ public sealed partial class LongestCommonSubsequence
     /// Computes the LCS similarity using a bit-parallel algorithm for sequences that can be longer than 64 elements.
     /// </summary>
     /// <typeparam name="T">Element type, must implement IEquatable&lt;T&gt;.</typeparam>
-    /// <param name="block">Precomputed per-symbol bitmasks for s1.</param>
-    /// <param name="s1">First sequence (pattern).</param>
+    /// <param name="s1Vector">Precomputed per-symbol bitmasks for s1.</param>
     /// <param name="s2">Second sequence (text).</param>
     /// <param name="scoreCutoff">Optional minimum similarity threshold.</param>
     /// <returns>The length of the longest common subsequence, or 0 if below cutoff.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int BlockSimilarity<T>(
-        IPatternMatchVector<T> block,
-        ReadOnlySpan<T> s1,
+    internal static int BlockSimilarity<T>(IPatternMatchVector<T> s1Vector,
         ReadOnlySpan<T> s2,
-        int? scoreCutoff = null
-    ) where T : IEquatable<T>
+        int? scoreCutoff = null) where T : IEquatable<T>
     {
-        return s1.Length <= 64
-            ? BlockSimilaritySingleULong(block, s1, s2, scoreCutoff)
-            : BlockSimilarityMultipleULongs(block, s1, s2, scoreCutoff);
+        return s1Vector.Length <= 64
+            ? BlockSimilaritySingleULong(s1Vector, s2, scoreCutoff)
+            : BlockSimilarityMultipleULongs(s1Vector, s2, scoreCutoff);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int BlockSimilaritySingleULong<T>(
-        IPatternMatchVector<T> block,
-        ReadOnlySpan<T> s1,
+        IPatternMatchVector<T> s1Vector,
         ReadOnlySpan<T> s2,
         int? scoreCutoff = null
     ) where T : IEquatable<T>
     {
-        if (s1.IsEmpty)
+        if (s1Vector.Length == 0)
             return 0;
 
-        int len1 = s1.Length;
+        int len1 = s1Vector.Length;
         ulong mask = len1 == 64 ? ulong.MaxValue : (1UL << len1) - 1UL;
 
         ulong S = mask;
         
         for (int i = 0; i < s2.Length; i++)
         {
-            ulong M = block.GetOrZero(s2[i])[0];
+            ulong M = s1Vector.GetOrZero(s2[i])[0];
             ulong u = S & M;
             unchecked
             {
@@ -395,17 +386,14 @@ public sealed partial class LongestCommonSubsequence
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int BlockSimilarityMultipleULongs<T>(
-        IPatternMatchVector<T> block,
-        ReadOnlySpan<T> s1,
+    internal static int BlockSimilarityMultipleULongs<T>(IPatternMatchVector<T> s1Vector,
         ReadOnlySpan<T> s2,
-        int? scoreCutoff = null
-    ) where T : IEquatable<T>
+        int? scoreCutoff = null) where T : IEquatable<T>
     {
-        if (s1.IsEmpty)
+        if (s1Vector.Length == 0)
             return 0;
 
-        int len1 = s1.Length;
+        int len1 = s1Vector.Length;
         int segCount = (len1 + 63) / 64;
 
         var scratch = ArrayPool<ulong>.Shared.Rent(segCount * 4);
@@ -425,7 +413,7 @@ public sealed partial class LongestCommonSubsequence
             // --- 3) main bit-parallel loop: S = (S + u) | (S - u)  ---
             for (int chIdx = 0; chIdx < s2.Length; chIdx++)
             {
-                var M = block.GetOrZero(s2[chIdx]);
+                var M = s1Vector.GetOrZero(s2[chIdx]);
 
                 // u = S & M
                 for (int i = 0; i < segCount; i++)
