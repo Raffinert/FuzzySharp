@@ -3,6 +3,8 @@ using Raffinert.FuzzySharp.PreProcess;
 using Raffinert.FuzzySharp.SimilarityRatio;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Raffinert.FuzzySharp.Test.EvaluationTests;
 
@@ -47,10 +49,13 @@ public class EvaluationTests
         var h5 = string.Join(", ", Process.ExtractSorted("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"]));
         var h51 = string.Join(", ", cached.ExtractSorted("goolge", ["google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl"]));
 
-        var i1 = Process.ExtractOne("cowboys", ["Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys"], s => s, ScorerCache.Get<DefaultRatioScorer>());
+        var i1 = Process.ExtractOne("cowboys", ["Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys"], StringPreprocessor.None, ScorerCache.Get<DefaultRatioScorer>());
         using var cachedRatioScorer = new CachedDefaultRatioScorer("cowboys");
         var i11 = Process.Configure().Cached(cachedRatioScorer).Build()
-            .ExtractOne(["Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys"], s => s);
+            .ExtractOne(["Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys"], processor: StringPreprocessor.None);
+
+        var i12 = Process.Configure().Cached(cachedRatioScorer).Build()
+            .ExtractTop([new { Name = "Atlanta Falcons" }, new { Name = "New York Jets" }, new { Name = "New York Giants" }, new { Name = "Dallas Cowboys" }], s => s.Name);
 
         string[][] events =
         [
@@ -86,5 +91,73 @@ public class EvaluationTests
 
         // assert
         Assert.IsTrue(ratio >= 0);
+    }
+
+    [Theory]
+    [TestCase("+30.0% Damage to Close Enemies [30.01%", 1)]
+    [TestCase("+14.3% Damage to Crowd Controlled Enemies [7.5 - 18.0]%", 2)]
+    public void FullPreprocessor(string input, int caseNumber)
+    {
+        // Arrange
+        List<string> choices =
+        [
+            "+#% Damage",
+            "+#% Damage to Crowd Controlled Enemies",
+            "+#% Damage to Close Enemies",
+            "+#% Damage to Chilled Enemies",
+            "+#% Damage to Poisoned Enemies",
+            "#% Block Chance#% Blocked Damage Reduction",
+            "#% Damage Reduction from Bleeding Enemies",
+            "#% Damage Reduction",
+            "+#% Cold Damage"
+        ];
+
+        // Act
+        var cachedResults = Process.Configure().Cached().Build().ExtractTop(input, choices, limit: 2).ToArray();
+        var cachedParallelResults = Process.Configure().Cached().Parallel().Build().ExtractTop(input, choices, limit: 2).ToArray();
+        var regularResults = Process.ExtractTop(input, choices, limit: 2).ToArray();
+
+        // Assert
+        Assert.IsNotEmpty(cachedResults);
+        Assert.IsNotEmpty(cachedParallelResults);
+        Assert.IsNotEmpty(regularResults);
+        Assert.AreEqual(regularResults[0].Value, cachedResults[0].Value, $"Case {caseNumber}: top match differs");
+        Assert.AreEqual(regularResults[0].Score, cachedResults[0].Score, $"Case {caseNumber}: top score differs");
+        Assert.AreEqual(cachedParallelResults[0].Value, cachedResults[0].Value, $"Case {caseNumber}: top match differs");
+        Assert.AreEqual(cachedParallelResults[0].Score, cachedResults[0].Score, $"Case {caseNumber}: top score differs");
+    }
+
+    [Theory]
+    [TestCase("+30.0% Damage to Close Enemies [30.01%", 1)]
+    [TestCase("+14.3% Damage to Crowd Controlled Enemies [7.5 - 18.0]%", 2)]
+    public void NonePreprocessor(string input, int caseNumber)
+    {
+        // Arrange
+        List<string> choices =
+        [
+            "+#% Damage",
+            "+#% Damage to Crowd Controlled Enemies",
+            "+#% Damage to Close Enemies",
+            "+#% Damage to Chilled Enemies",
+            "+#% Damage to Poisoned Enemies",
+            "#% Block Chance#% Blocked Damage Reduction",
+            "#% Damage Reduction from Bleeding Enemies",
+            "#% Damage Reduction",
+            "+#% Cold Damage"
+        ];
+
+        // Act
+        var regularResults = Process.ExtractTop(input, choices, StringPreprocessor.None, ScorerCache.Get<WeightedRatioScorer>(), limit: 2).ToArray();
+        var cachedParallelResults = Process.Configure().Cached().Parallel().Build().ExtractTop(input, choices, processor: StringPreprocessor.None, limit: 2).ToArray();
+        var cachedResults = Process.Configure().Cached().Build().ExtractTop(input, choices, processor: StringPreprocessor.None, limit: 2).ToArray();
+
+        // Assert
+        Assert.IsNotEmpty(cachedResults);
+        Assert.IsNotEmpty(cachedParallelResults);
+        Assert.IsNotEmpty(regularResults);
+        Assert.AreEqual(regularResults[0].Value, cachedResults[0].Value, $"Case {caseNumber}: top match differs");
+        Assert.AreEqual(regularResults[0].Score, cachedResults[0].Score, $"Case {caseNumber}: top score differs");
+        Assert.AreEqual(cachedParallelResults[0].Value, cachedResults[0].Value, $"Case {caseNumber}: top match differs");
+        Assert.AreEqual(cachedParallelResults[0].Score, cachedResults[0].Score, $"Case {caseNumber}: top score differs");
     }
 }

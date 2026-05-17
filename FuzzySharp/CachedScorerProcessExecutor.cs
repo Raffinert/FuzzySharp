@@ -15,7 +15,8 @@ internal static class CachedScorerProcessExecutor
 {
     public static IEnumerable<ExtractedResult<T>> ExtractAll<T>(
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor,
         ICachedRatioScorer scorer,
         int cutoff,
         bool useParallel,
@@ -24,7 +25,23 @@ internal static class CachedScorerProcessExecutor
         if (useParallel)
         {
             return ResultExtractor.Parallel.Cached.ExtractWithoutOrder(
-                choices, processor, scorer, cutoff, parallelOptions);
+                choices, extractor, processor, scorer, cutoff, parallelOptions);
+        }
+
+        return ResultExtractor.Cached.ExtractWithoutOrder(choices, extractor, processor, scorer, cutoff);
+    }
+
+    public static IEnumerable<ExtractedResult<string>> ExtractAll(
+        IEnumerable<string> choices,
+        Func<string, string> processor,
+        ICachedRatioScorer scorer,
+        int cutoff,
+        bool useParallel,
+        ParallelOptions parallelOptions)
+    {
+        if (useParallel)
+        {
+            return ResultExtractor.Parallel.Cached.ExtractWithoutOrder(choices, processor, scorer, cutoff, parallelOptions);
         }
 
         return ResultExtractor.Cached.ExtractWithoutOrder(choices, processor, scorer, cutoff);
@@ -32,7 +49,26 @@ internal static class CachedScorerProcessExecutor
 
     public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor,
+        ICachedRatioScorer scorer,
+        int limit,
+        int cutoff,
+        bool useParallel,
+        ParallelOptions parallelOptions)
+    {
+        if (useParallel)
+        {
+            return ResultExtractor.Parallel.Cached.ExtractTop(
+                choices, extractor, processor, scorer, limit, cutoff, parallelOptions);
+        }
+
+        return ResultExtractor.Cached.ExtractTop(choices, extractor, processor, scorer, limit, cutoff);
+    }
+
+    public static IEnumerable<ExtractedResult<string>> ExtractTop(
+        IEnumerable<string> choices,
+        Func<string, string> processor,
         ICachedRatioScorer scorer,
         int limit,
         int cutoff,
@@ -50,7 +86,8 @@ internal static class CachedScorerProcessExecutor
 
     public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor,
         ICachedRatioScorer scorer,
         int cutoff,
         bool useParallel,
@@ -59,7 +96,23 @@ internal static class CachedScorerProcessExecutor
         if (useParallel)
         {
             return ResultExtractor.Parallel.Cached.ExtractSorted(
-                choices, processor, scorer, cutoff, parallelOptions);
+                choices, extractor, processor, scorer, cutoff, parallelOptions);
+        }
+
+        return ResultExtractor.Cached.ExtractSorted(choices, extractor, processor, scorer, cutoff);
+    }
+
+    public static IEnumerable<ExtractedResult<string>> ExtractSorted(
+            IEnumerable<string> choices,
+            Func<string, string> processor,
+            ICachedRatioScorer scorer,
+            int cutoff,
+            bool useParallel,
+            ParallelOptions parallelOptions)
+    {
+        if (useParallel)
+        {
+            return ResultExtractor.Parallel.Cached.ExtractSorted(choices, processor, scorer, cutoff, parallelOptions);
         }
 
         return ResultExtractor.Cached.ExtractSorted(choices, processor, scorer, cutoff);
@@ -67,7 +120,8 @@ internal static class CachedScorerProcessExecutor
 
     public static ExtractedResult<T> ExtractOne<T>(
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor,
         ICachedRatioScorer scorer,
         int cutoff,
         bool useParallel,
@@ -76,9 +130,26 @@ internal static class CachedScorerProcessExecutor
         if (useParallel)
         {
             return ResultExtractor.Parallel.Cached.ExtractOne(
-                choices, processor, scorer, cutoff, parallelOptions);
+                choices, extractor, processor, scorer, cutoff, parallelOptions);
         }
 
-        return ResultExtractor.Cached.ExtractOne(choices, processor, scorer, cutoff);
+        return ResultExtractor.Cached.ExtractOne(choices, extractor, processor, scorer, cutoff);
+    }
+
+    public static ExtractedResult<string> ExtractOne(
+        IEnumerable<string> choices,
+        Func<string, string> processor,
+        ICachedRatioScorer scorer,
+        int cutoff,
+        bool useParallel,
+        ParallelOptions parallelOptions)
+    {
+        if (useParallel)
+        {
+            return ResultExtractor.Parallel.Cached.ExtractOne(
+                choices, processor, processor, scorer, cutoff, parallelOptions);
+        }
+
+        return ResultExtractor.Cached.ExtractOne(choices, processor, processor, scorer, cutoff);
     }
 }

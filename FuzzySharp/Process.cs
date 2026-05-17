@@ -11,7 +11,7 @@ namespace Raffinert.FuzzySharp;
 public static class Process
 {
     internal static readonly IRatioScorer DefaultScorer = ScorerCache.Get<WeightedRatioScorer>();
-    internal static readonly Func<string, string> DefaultStringProcessor = StringPreprocessorFactory.GetPreprocessor(PreprocessMode.Full);
+    internal static readonly Func<string, string> DefaultStringProcessor = StringPreprocessor.Full;
 
     /// <summary>
     /// Creates a new fluent builder for configuring a fuzzy string matching pipeline.
@@ -40,10 +40,9 @@ public static class Process
     {
         processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;
-        return ResultExtractor.ExtractWithoutOrder(query, choices, processor, scorer, cutoff);
+        return ResultExtractor.ExtractWithoutOrder(query, choices, processor, processor, scorer, cutoff);
     }
 
-    
 
     /// <summary>
     /// Creates a list of ExtractedResult which contain all the choices with
@@ -51,6 +50,7 @@ public static class Process
     /// </summary>
     /// <param name="query"></param>
     /// <param name="choices"></param>
+    /// <param name="extractor"></param>
     /// <param name="processor"></param>
     /// <param name="scorer"></param>
     /// <param name="cutoff"></param>
@@ -58,20 +58,23 @@ public static class Process
     public static IEnumerable<ExtractedResult<T>> ExtractAll<T>(
         T query, 
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor = null,
         IRatioScorer scorer = null,
         int cutoff = 0)
     {
+        processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;
-        return ResultExtractor.ExtractWithoutOrder(query, choices, processor, scorer, cutoff);
+        return ResultExtractor.ExtractWithoutOrder(query, choices, extractor, processor, scorer, cutoff);
     }
-    
+
     /// <summary>
     /// Creates a list of ExtractedResult which contain all the choices with
     /// their corresponding score where higher is more similar
     /// </summary>
     /// <param name="query"></param>
     /// <param name="choices"></param>
+    /// <param name="extractor"></param>
     /// <param name="processor"></param>
     /// <param name="scorer"></param>
     /// <param name="cutoff"></param>
@@ -79,12 +82,14 @@ public static class Process
     public static IEnumerable<ExtractedResult<T>> ExtractAll<T>(
         string query,
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor = null,
         IRatioScorer scorer = null,
         int cutoff = 0)
     {
+        processor ??= DefaultStringProcessor;  
         scorer ??= DefaultScorer;
-        return ResultExtractor.ExtractWithoutOrder(query, choices, processor, scorer, cutoff);
+        return ResultExtractor.ExtractWithoutOrder(query, choices, extractor, processor, scorer, cutoff);
     }
 
     #endregion
@@ -120,6 +125,7 @@ public static class Process
     /// </summary>
     /// <param name="query"></param>
     /// <param name="choices"></param>
+    /// <param name="extractor"></param>
     /// <param name="processor"></param>
     /// <param name="scorer"></param>
     /// <param name="limit"></param>
@@ -128,13 +134,15 @@ public static class Process
     public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(
         string query,
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor = null,
         IRatioScorer scorer = null,
         int limit = 5,
         int cutoff = 0)
     {
+        processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;
-        return ResultExtractor.ExtractTop(query, choices, processor, scorer, limit, cutoff);
+        return ResultExtractor.ExtractTop(query, choices, extractor, processor, scorer, limit, cutoff);
     }
 
     /// <summary>
@@ -143,6 +151,7 @@ public static class Process
     /// </summary>
     /// <param name="query"></param>
     /// <param name="choices"></param>
+    /// <param name="extractor"></param>
     /// <param name="processor"></param>
     /// <param name="scorer"></param>
     /// <param name="limit"></param>
@@ -151,13 +160,15 @@ public static class Process
     public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(
         T query, 
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor = null,
         IRatioScorer scorer = null,
         int limit = 5, 
         int cutoff = 0)
     {
+        processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;
-        return ResultExtractor.ExtractTop(query, choices, processor, scorer, limit, cutoff);
+        return ResultExtractor.ExtractTop(query, choices, extractor, processor, scorer, limit, cutoff);
     }
 
     #endregion
@@ -190,6 +201,7 @@ public static class Process
     /// </summary>
     /// <param name="query"></param>
     /// <param name="choices"></param>
+    /// <param name="extractor"></param>
     /// <param name="processor"></param>
     /// <param name="scorer"></param>
     /// <param name="cutoff"></param>
@@ -197,12 +209,14 @@ public static class Process
     public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(
         T query,
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor = null,
         IRatioScorer scorer = null,
         int cutoff = 0)
     {
+        processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;
-        return ResultExtractor.ExtractSorted(query, choices, processor, scorer, cutoff);
+        return ResultExtractor.ExtractSorted(query, choices, extractor, processor, scorer, cutoff);
     }
 
     /// <summary>
@@ -210,6 +224,7 @@ public static class Process
     /// </summary>
     /// <param name="query"></param>
     /// <param name="choices"></param>
+    /// <param name="extractor"></param>
     /// <param name="processor"></param>
     /// <param name="scorer"></param>
     /// <param name="cutoff"></param>
@@ -217,12 +232,14 @@ public static class Process
     public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(
         string query,
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor = null,
         IRatioScorer scorer = null,
         int cutoff = 0)
     {
+        processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;
-        return ResultExtractor.ExtractSorted(query, choices, processor, scorer, cutoff);
+        return ResultExtractor.ExtractSorted(query, choices, extractor, processor, scorer, cutoff);
     }
 
     #endregion
@@ -254,6 +271,7 @@ public static class Process
     /// </summary>
     /// <param name="query"></param>
     /// <param name="choices"></param>
+    /// <param name="extractor"></param>
     /// <param name="processor"></param>
     /// <param name="scorer"></param>
     /// <param name="cutoff"></param>
@@ -261,12 +279,14 @@ public static class Process
     public static ExtractedResult<T> ExtractOne<T>(
         T query,
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor = null,
         IRatioScorer scorer = null,
         int cutoff = 0)
     {
+        processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;
-        return ResultExtractor.ExtractOne(query, choices, processor, scorer, cutoff);
+        return ResultExtractor.ExtractOne(query, choices, extractor, processor, scorer, cutoff);
     }
 
     /// <summary>
@@ -274,6 +294,7 @@ public static class Process
     /// </summary>
     /// <param name="query"></param>
     /// <param name="choices"></param>
+    /// <param name="extractor"></param>
     /// <param name="processor"></param>
     /// <param name="scorer"></param>
     /// <param name="cutoff"></param>
@@ -281,12 +302,14 @@ public static class Process
     public static ExtractedResult<T> ExtractOne<T>(
         string query,
         IEnumerable<T> choices,
-        Func<T, string> processor,
+        Func<T, string> extractor,
+        Func<string, string> processor = null,
         IRatioScorer scorer = null,
         int cutoff = 0)
     {
+        processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;
-        return ResultExtractor.ExtractOne(query, choices, processor, scorer, cutoff);
+        return ResultExtractor.ExtractOne(query, choices, extractor, processor, scorer, cutoff);
     }
 
     /// <summary>

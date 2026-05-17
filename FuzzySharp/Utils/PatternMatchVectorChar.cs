@@ -32,7 +32,7 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
 
     public int Blocks => _blocks;
 
-    public PatternMatchVectorChar(int estimatedNonAsciiCharCount, int blocks, ArrayPool<ulong>? pool = null)
+    public PatternMatchVectorChar(int estimatedNonAsciiCharCount, int blocks, ArrayPool<ulong> pool = null)
     {
         if (blocks < 0) throw new ArgumentOutOfRangeException(nameof(blocks));
         if (estimatedNonAsciiCharCount < 0) throw new ArgumentOutOfRangeException(nameof(estimatedNonAsciiCharCount));
