@@ -95,7 +95,7 @@ public class ProcessTests
         };
         var query = new[] { "new york mets vs chicago cubs", "CitiField", "2017-03-19", "8pm" };
 
-        var best = Process.ExtractOne(query, events, strings => strings[0]);
+        var best = Process.ExtractOneBy(query, events, strings => strings[0]);
         Assert.AreEqual(best.Value, events[0]);
     }
 

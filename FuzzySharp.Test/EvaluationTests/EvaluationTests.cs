@@ -33,8 +33,8 @@ public class EvaluationTests
         var f3 = Fuzz.TokenInitialismRatio("NASA", "National Aeronautics Space Administration, Kennedy Space Center, Cape Canaveral, Florida 32899");
         var f4 = Fuzz.PartialTokenInitialismRatio("NASA", "National Aeronautics Space Administration, Kennedy Space Center, Cape Canaveral, Florida 32899");
 
-        var g1 = Fuzz.TokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessMode.Full);
-        var g2 = Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", PreprocessMode.Full);
+        var g1 = Fuzz.TokenAbbreviationRatio("bl 420", "Baseline section 420", StringPreprocessor.Full);
+        var g2 = Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", StringPreprocessor.Full);
 
         var cached = Process.Configure().Cached().Build();
 
@@ -55,7 +55,7 @@ public class EvaluationTests
             .ExtractOne(["Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys"], processor: StringPreprocessor.None);
 
         var i12 = Process.Configure().Cached(cachedRatioScorer).Build()
-            .ExtractTop([new { Name = "Atlanta Falcons" }, new { Name = "New York Jets" }, new { Name = "New York Giants" }, new { Name = "Dallas Cowboys" }], s => s.Name);
+            .ExtractTopBy([new { Name = "Atlanta Falcons" }, new { Name = "New York Jets" }, new { Name = "New York Giants" }, new { Name = "Dallas Cowboys" }], s => s.Name);
 
         string[][] events =
         [
@@ -65,8 +65,8 @@ public class EvaluationTests
         ];
         var query = new[] { "new york mets vs chicago cubs", "CitiField", "2017-03-19", "8pm" };
 
-        var best = Process.ExtractOne(query, events, strings => strings[0]);
-        var best1 = cached.ExtractOne(query, events, strings => strings[0]);
+        var best = Process.ExtractOneBy(query, events, strings => strings[0]);
+        var best1 = cached.ExtractOneBy(query, events, strings => strings[0]);
 
         var ratio = ScorerCache.Get<DefaultRatioScorer>();
         var partial = ScorerCache.Get<PartialRatioScorer>();

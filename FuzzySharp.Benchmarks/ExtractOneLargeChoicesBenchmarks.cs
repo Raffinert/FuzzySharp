@@ -80,47 +80,47 @@ public class ExtractOneLargeChoicesBenchmarks
     }
 
     [Benchmark]
-    public ExtractedResult<string[]> ExtractOne()
+    public ExtractedResult<string[]> ExtractOneBy()
     {
-        return Process.ExtractOne(_query, _events, static strings => strings[0]);
+        return Process.ExtractOneBy(_query, _events, static strings => strings[0]);
     }
 
     [Benchmark]
-    public Classic.Extractor.ExtractedResult<string[]> ExtractOneClassic()
+    public Classic.Extractor.ExtractedResult<string[]> ExtractOneByClassic()
     {
         return Classic.Process.ExtractOne(_query, _events, static strings => strings[0]);
     }
 
     [Benchmark]
-    public ExtractedResult<string[]> ExtractOneParallel()
+    public ExtractedResult<string[]> ExtractOneByParallel()
     {
-        return _parallelPipeline.ExtractOne(_query, _events, static strings => strings[0]);
+        return _parallelPipeline.ExtractOneBy(_query, _events, static strings => strings[0]);
     }
 
     [Benchmark]
-    public ExtractedResult<string[]> ExtractOneCached()
+    public ExtractedResult<string[]> ExtractOneByCached()
     {
         
-        return _cachedPipeline.ExtractOne(_query, _events, static strings => strings[0]);
+        return _cachedPipeline.ExtractOneBy(_query, _events, static strings => strings[0]);
     }
 
     [Benchmark]
-    public ExtractedResult<string[]> ExtractOneParallelCached()
+    public ExtractedResult<string[]> ExtractOneByParallelCached()
     {
         
-       return _parallelCachedPipeline.ExtractOne(_query, _events, static strings => strings[0]);
+       return _parallelCachedPipeline.ExtractOneBy(_query, _events, static strings => strings[0]);
     }
 
     [Benchmark]
-    public ExtractedResult<string[]> ExtractOneAcrossRunsCached()
+    public ExtractedResult<string[]> ExtractOneByAcrossRunsCached()
     {
-        return _acrossRunsCachedPipeline.ExtractOne(_events, static strings => strings[0]);
+        return _acrossRunsCachedPipeline.ExtractOneBy(_events, static strings => strings[0]);
     }
 
     [Benchmark]
-    public ExtractedResult<string[]> ExtractOneAcrossRunsParallelCached()
+    public ExtractedResult<string[]> ExtractOneByAcrossRunsParallelCached()
     {
-        return _acrossRunsParallelCachedPipeline.ExtractOne(_events, static strings => strings[0]);
+        return _acrossRunsParallelCachedPipeline.ExtractOneBy(_events, static strings => strings[0]);
     }
 
     private static string[][] BuildEvents(int count)
