@@ -45,6 +45,11 @@ public static partial class ResultExtractor
             return ExtractWithoutOrder(choices, extractor, processor, scorer, cutoff).Max();
         }
 
+        public static ExtractedResult<string> ExtractOne(IEnumerable<string> choices, Func<string, string> processor, ICachedRatioScorer scorer, int cutoff = 0)
+        {
+            return ExtractWithoutOrder(choices, processor, scorer, cutoff).Max();
+        }
+
         public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, ICachedRatioScorer scorer, int cutoff = 0)
         {
             return ExtractWithoutOrder(choices, extractor, processor, scorer, cutoff).OrderByDescending(r => r.Score);

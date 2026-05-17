@@ -50,6 +50,11 @@ public static partial class ResultExtractor
                 return ExtractWithoutOrder(choices, extractor, processor, calculator, cutoff, parallelOptions).Max();
             }
 
+            public static ExtractedResult<string> ExtractOne(IEnumerable<string> choices, Func<string, string> processor, ICachedRatioScorer calculator, int cutoff = 0, ParallelOptions parallelOptions = null)
+            {
+                return ExtractWithoutOrder(choices, processor, calculator, cutoff, parallelOptions).Max();
+            }
+
             public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, ICachedRatioScorer calculator, int cutoff = 0, ParallelOptions parallelOptions = null)
             {
                 return ExtractWithoutOrder(choices, extractor, processor, calculator, cutoff, parallelOptions).OrderByDescending(r => r.Score);

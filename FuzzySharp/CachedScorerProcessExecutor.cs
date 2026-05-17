@@ -147,9 +147,9 @@ internal static class CachedScorerProcessExecutor
         if (useParallel)
         {
             return ResultExtractor.Parallel.Cached.ExtractOne(
-                choices, processor, processor, scorer, cutoff, parallelOptions);
+                choices, processor, scorer, cutoff, parallelOptions);
         }
 
-        return ResultExtractor.Cached.ExtractOne(choices, processor, processor, scorer, cutoff);
+        return ResultExtractor.Cached.ExtractOne(choices, processor, scorer, cutoff);
     }
 }
