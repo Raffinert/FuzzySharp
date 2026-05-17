@@ -154,7 +154,7 @@ Process.ExtractOne("cowboys", new[] { "Atlanta Falcons", "New York Jets", "New Y
 
 <p align="right"><a href="https://dotnetfiddle.net/YDtl6k">Run .NET fiddle</a></p>
 
-Extraction can operate on objects of any type. Use the `processor` parameter to reduce the object to the string it should be compared on:
+Extraction can operate on objects of any type. Use the `extractor` parameter to reduce the object to the string it should be compared on:
 ```csharp
 var events = new[]
 {
@@ -167,7 +167,7 @@ var best = Process.ExtractOneBy(query, events, strings => strings[0]);
 // (value: { "chicago cubs vs new york mets", "CitiField", "2011-05-11", "8pm" }, score: 95, index: 0)
 ```
 
-If the query is already a string, it can be matched directly against generic choices by providing only a choice processor:
+If the query is already a string, it can be matched directly against generic choices by providing only a choice extractor:
 ```csharp
 var events = new[]
 {
