@@ -315,6 +315,33 @@ internal static class ProcessExecutor
         return ResultExtractor.ExtractSorted(query, choices, extractor, processor, scorer, cutoff);
     }
 
+    public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(
+        string query,
+        IEnumerable<T> choices,
+        Func<T, string> extractor,
+        Func<string, string> processor,
+        int cutoff,
+        ProcessOptions options)
+    {
+        if (extractor == null) throw new ArgumentNullException(nameof(extractor));
+        if (processor == null) throw new ArgumentNullException(nameof(processor));
+
+        if (options.UseCaching)
+        {
+            return ExtractSortedCached(query, choices, extractor, processor, cutoff, options);
+        }
+
+        var scorer = options.Scorer ?? Process.DefaultScorer;
+
+        if (options.UseParallel)
+        {
+            return ResultExtractor.Parallel.ExtractSorted(
+                query, choices, extractor, processor, scorer, cutoff, options.ParallelOptions);
+        }
+
+        return ResultExtractor.ExtractSorted(query, choices, extractor, processor, scorer, cutoff);
+    }
+
     private static IEnumerable<ExtractedResult<T>> ExtractSortedCached<T>(
         string query,
         IEnumerable<T> choices,

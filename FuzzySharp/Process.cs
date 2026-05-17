@@ -10,7 +10,7 @@ namespace Raffinert.FuzzySharp;
 
 public static class Process
 {
-    internal static readonly IRatioScorer DefaultScorer = ScorerCache.Get<WeightedRatioScorer>();
+    internal static readonly WeightedRatioScorer DefaultScorer = (WeightedRatioScorer)ScorerCache.Get<WeightedRatioScorer>();
     internal static readonly Func<string, string> DefaultStringProcessor = StringPreprocessor.Full;
 
     /// <summary>
@@ -55,7 +55,7 @@ public static class Process
     /// <param name="scorer"></param>
     /// <param name="cutoff"></param>
     /// <returns></returns>
-    public static IEnumerable<ExtractedResult<T>> ExtractAll<T>(
+    public static IEnumerable<ExtractedResult<T>> ExtractAllBy<T>(
         T query, 
         IEnumerable<T> choices,
         Func<T, string> extractor,
@@ -79,7 +79,7 @@ public static class Process
     /// <param name="scorer"></param>
     /// <param name="cutoff"></param>
     /// <returns></returns>
-    public static IEnumerable<ExtractedResult<T>> ExtractAll<T>(
+    public static IEnumerable<ExtractedResult<T>> ExtractAllBy<T>(
         string query,
         IEnumerable<T> choices,
         Func<T, string> extractor,
@@ -131,7 +131,7 @@ public static class Process
     /// <param name="limit"></param>
     /// <param name="cutoff"></param>
     /// <returns></returns>
-    public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(
+    public static IEnumerable<ExtractedResult<T>> ExtractTopBy<T>(
         string query,
         IEnumerable<T> choices,
         Func<T, string> extractor,
@@ -157,13 +157,13 @@ public static class Process
     /// <param name="limit"></param>
     /// <param name="cutoff"></param>
     /// <returns></returns>
-    public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(
-        T query, 
+    public static IEnumerable<ExtractedResult<T>> ExtractTopBy<T>(
+        T query,
         IEnumerable<T> choices,
         Func<T, string> extractor,
         Func<string, string> processor = null,
         IRatioScorer scorer = null,
-        int limit = 5, 
+        int limit = 5,
         int cutoff = 0)
     {
         processor ??= DefaultStringProcessor;
@@ -206,7 +206,7 @@ public static class Process
     /// <param name="scorer"></param>
     /// <param name="cutoff"></param>
     /// <returns></returns>
-    public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(
+    public static IEnumerable<ExtractedResult<T>> ExtractSortedBy<T>(
         T query,
         IEnumerable<T> choices,
         Func<T, string> extractor,
@@ -229,7 +229,7 @@ public static class Process
     /// <param name="scorer"></param>
     /// <param name="cutoff"></param>
     /// <returns></returns>
-    public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(
+    public static IEnumerable<ExtractedResult<T>> ExtractSortedBy<T>(
         string query,
         IEnumerable<T> choices,
         Func<T, string> extractor,
@@ -276,7 +276,7 @@ public static class Process
     /// <param name="scorer"></param>
     /// <param name="cutoff"></param>
     /// <returns></returns>
-    public static ExtractedResult<T> ExtractOne<T>(
+    public static ExtractedResult<T> ExtractOneBy<T>(
         T query,
         IEnumerable<T> choices,
         Func<T, string> extractor,
@@ -299,7 +299,7 @@ public static class Process
     /// <param name="scorer"></param>
     /// <param name="cutoff"></param>
     /// <returns></returns>
-    public static ExtractedResult<T> ExtractOne<T>(
+    public static ExtractedResult<T> ExtractOneBy<T>(
         string query,
         IEnumerable<T> choices,
         Func<T, string> extractor,
