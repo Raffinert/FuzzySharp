@@ -504,43 +504,43 @@ public sealed partial class LongestCommonSubsequence
         using var blockTable = PatternMatchVector.Create(s1);
 
         var matrix = new List<ulong[]>(s2.Length);
-        var Sum = new ulong[blocks];
-        var Diff = new ulong[blocks];
+        var sum = new ulong[blocks];
+        var diff = new ulong[blocks];
 
         foreach (var y in s2)
         {
             // load mask for y
             var U = blockTable.GetOrZero(y);
 
-            // big-integer add: Sum = S + U
+            // big-integer add/subtract using u = S & U
             ulong carry = 0;
+            ulong borrow = 0;
             for (int b = 0; b < blocks; b++)
             {
-                ulong s = S[b], u = U[b];
+                // u = S & U
+                ulong s = S[b];
+                ulong u = s & U[b];
+
+                // Sum = S + u
                 ulong t = unchecked(s + u);
                 ulong c1 = t < s ? 1UL : 0UL;
                 ulong t2 = unchecked(t + carry);
                 ulong c2 = t2 < t ? 1UL : 0UL;
-                Sum[b] = t2;
+                sum[b] = t2;
                 carry = c1 | c2;
-            }
 
-            // big-integer subtract: Diff = S - U
-            ulong borrow = 0;
-            for (int b = 0; b < blocks; b++)
-            {
-                ulong s = S[b], u = U[b];
+                // Diff = S - u
                 ulong t1 = unchecked(s - u);
                 ulong b1 = s < u ? 1UL : 0UL;
-                ulong t2 = unchecked(t1 - borrow);
+                ulong t3 = unchecked(t1 - borrow);
                 ulong b2 = t1 < borrow ? 1UL : 0UL;
-                Diff[b] = t2;
+                diff[b] = t3;
                 borrow = b1 | b2;
             }
 
             // update S = Sum | Diff
             for (int b = 0; b < blocks; b++)
-                S[b] = Sum[b] | Diff[b];
+                S[b] = sum[b] | diff[b];
 
             // snapshot row
             matrix.Add((ulong[])S.Clone());
@@ -558,7 +558,7 @@ public sealed partial class LongestCommonSubsequence
             return (0, new List<ulong[]>(s2.Length));
 
         int m = s1.Length;
-        ulong S = m == 64 ? ulong.MaxValue : (1UL << m) - 1UL;
+        ulong s = m == 64 ? ulong.MaxValue : (1UL << m) - 1UL;
 
         // build bit-mask
         using var block = PatternMatchVector.Create(s1);
@@ -568,13 +568,13 @@ public sealed partial class LongestCommonSubsequence
         {
             var M = block.GetOrZero(y)[0];
 
-            ulong u = S & M;
+            ulong u = s & M;
 
-            unchecked { S = (S + u) | (S - u); }
-            matrix.Add([S]);
+            unchecked { s = (s + u) | (s - u); }
+            matrix.Add([s]);
         }
 
-        int sim = CountZeroBits(S, m);
+        int sim = CountZeroBits(s, m);
         return (sim, matrix);
     }
 }
