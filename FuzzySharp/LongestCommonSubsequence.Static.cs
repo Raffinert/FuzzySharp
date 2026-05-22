@@ -504,6 +504,7 @@ public sealed partial class LongestCommonSubsequence
         using var blockTable = PatternMatchVector.Create(s1);
 
         var matrix = new List<ulong[]>(s2.Length);
+        var And = new ulong[blocks];
         var Sum = new ulong[blocks];
         var Diff = new ulong[blocks];
 
@@ -512,11 +513,13 @@ public sealed partial class LongestCommonSubsequence
             // load mask for y
             var U = blockTable.GetOrZero(y);
 
-            // big-integer add: Sum = S + U
+            // big-integer add: Sum = S + u
             ulong carry = 0;
             for (int b = 0; b < blocks; b++)
             {
-                ulong s = S[b], u = U[b];
+                // u = S & U
+                ulong u = And[b] = S[b] & U[b];
+                ulong s = S[b];
                 ulong t = unchecked(s + u);
                 ulong c1 = t < s ? 1UL : 0UL;
                 ulong t2 = unchecked(t + carry);
@@ -525,11 +528,11 @@ public sealed partial class LongestCommonSubsequence
                 carry = c1 | c2;
             }
 
-            // big-integer subtract: Diff = S - U
+            // big-integer subtract: Diff = S - u
             ulong borrow = 0;
             for (int b = 0; b < blocks; b++)
             {
-                ulong s = S[b], u = U[b];
+                ulong s = S[b], u = And[b];
                 ulong t1 = unchecked(s - u);
                 ulong b1 = s < u ? 1UL : 0UL;
                 ulong t2 = unchecked(t1 - borrow);
