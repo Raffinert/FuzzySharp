@@ -1,5 +1,14 @@
 # Changelog
 
+## v5.0.1
+
+*LongestCommonSubsequence matrix correctness for long inputs*
+
+- Fixed `LongestCommonSubsequence` matrix update logic for `s1.Length > 64` to match RapidFuzz LCSseq references.
+- Corrected transition from using raw mask arithmetic (`S +/- U`) to the proper bit-parallel form based on `u = S & U`, then `S = (S + u) | (S - u)`.
+- Refactored the multi-block add/sub computation into a single per-block loop while preserving carry/borrow behavior.
+- This fixes incorrect early matrix rows (including the second-row failure case) and downstream reconstruction issues in `GetEditOps` and `MatchingBlocks` for long sequences.
+
 ## v5.0.0
 
 *Breaking API changes and preprocessing fixes*
