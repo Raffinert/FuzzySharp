@@ -54,4 +54,56 @@ public class LevenshteinTests
         Assert.That(eo.Length, Is.EqualTo(qd));
         //Assert.That(mb, Is.EquivalentTo(mb2));
     }
+
+    [Test]
+    [TestCase("abc", "adc", 1, 1, 1, 1)]
+    [TestCase("abc", "adc", 1, 1, 2, 2)]
+    [TestCase("abc", "adc", 2, 1, 1, 1)]
+    [TestCase("abc", "adc", 1, 2, 1, 1)]
+    [TestCase("abc", "adc", 2, 2, 3, 3)]
+    [TestCase("abc", "", 2, 1, 1, 3)]
+    [TestCase("", "abc", 2, 1, 1, 6)]
+    public void TestLevenshteinDistance_Weighted(string s1, string s2, int insertCost, int deleteCost, int replaceCost, int expected)
+    {
+        var distance = Levenshtein.Distance(s1, s2, insertCost, deleteCost, replaceCost);
+        Assert.That(distance, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void TestLevenshteinDistance_WeightedScoreCutoff()
+    {
+        var distance = Levenshtein.Distance("abc", "", insertCost: 2, deleteCost: 1, replaceCost: 3, scoreCutoff: 2);
+        Assert.That(distance, Is.EqualTo(3));
+    }
+
+    [Test]
+    public void TestLevenshteinSimilarity_UsesSimilarityCutoff()
+    {
+        var similarity = Levenshtein.Similarity("kitten", "sitting", scoreCutoff: 5);
+        Assert.That(similarity, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void TestLevenshteinMaximum_MatchesExpectedFormula()
+    {
+        var maximum = Levenshtein.LevenshteinMaximum(5, 3, insertCost: 2, deleteCost: 3, replaceCost: 4);
+        Assert.That(maximum, Is.EqualTo(18));
+    }
+
+    [Test]
+    public void TestLevenshteinDistance_CutoffDoesNotExitEarly_ForRecoverablePrefix_SingleUlong()
+    {
+        var distance = Levenshtein.Distance("abc", "xabc", scoreCutoff: 1);
+        Assert.That(distance, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void TestLevenshteinDistance_CutoffDoesNotExitEarly_ForRecoverablePrefix_MultiUlong()
+    {
+        var source = new string('a', 70);
+        var target = "x" + source;
+
+        var distance = Levenshtein.Distance(source, target, scoreCutoff: 1);
+        Assert.That(distance, Is.EqualTo(1));
+    }
 }

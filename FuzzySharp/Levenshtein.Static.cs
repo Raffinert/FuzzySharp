@@ -47,11 +47,16 @@ public sealed partial class Levenshtein
         int insertCost = 1, int deleteCost = 1, int replaceCost = 1,
         int? scoreCutoff = null) where T : IEquatable<T>
     {
-        SequenceUtils.TrimCommonAffixAndSwapIfNeeded(ref source, ref target);
+        SequenceUtils.TrimCommonAffix(ref source, ref target);
 
-        if (insertCost != 1 && deleteCost != 1 && replaceCost is not (1 or 2))
+        if (insertCost == deleteCost)
         {
-            GenericDistance(source, target, insertCost, deleteCost, replaceCost, scoreCutoff);
+            SequenceUtils.SwapIfSourceIsLonger(ref source, ref target);
+        }
+
+        if (insertCost != 1 || deleteCost != 1 || (replaceCost != 1 && replaceCost != 2))
+        {
+            return GenericDistance(source, target, insertCost, deleteCost, replaceCost, scoreCutoff);
         }
 
         using var patternMatchVector = PatternMatchVector.Create(source);
@@ -283,8 +288,8 @@ public sealed partial class Levenshtein
         // Cost of replacing common prefix and handling extra characters
         var common = len1 < len2 ? len1 : len2;
         var extraCost = len1 >= len2
-            ? len1 - len2 * deleteCost
-            : len2 - len1 * insertCost;
+            ? (len1 - len2) * deleteCost
+            : (len2 - len1) * insertCost;
 
         var replaceAndDiff = common * replaceCost + extraCost;
 
@@ -334,68 +339,49 @@ public sealed partial class Levenshtein
         var matrixVP = new List<ulong[]>();
         var matrixVN = new List<ulong[]>();
 
-        // Temporary arrays for per‐character computation
-        var D0 = new ulong[blocks];
-        var HP = new ulong[blocks];
-        var HN = new ulong[blocks];
-        var sum = new ulong[blocks];
-        var HPs = new ulong[blocks];
-        var HNs = new ulong[blocks];
-
         // Process each character of the text
         for (var i = 0; i < text.Length; i++)
         {
             // 1) Load the pattern‐mask for c, or zeros if not present
             var X = blockTable.GetOrZero(text[i]);
 
-            // 2) Compute D0 = (((X & VP) + VP) ^ VP) | X | VN
-            //    -> Must do a big‐integer add and carry across blocks
+            // 2) Compute/update in one loop (D0/HP/HN + shift + VP/VN)
             ulong carry = 0;
-            for (var b = 0; b < blocks; b++)
-            {
-                var Pv = VP[b];
-                var XandVP = X[b] & Pv;
-                // big‐integer add: XandVP + Pv + carry
-                var t = unchecked(XandVP + Pv);
-                var c1 = t < XandVP ? 1UL : 0UL;          // carry from first add
-                var t2 = unchecked(t + carry);
-                var c2 = t2 < carry ? 1UL : 0UL;           // carry from second add
-                carry = c1 | c2;
-
-                sum[b] = t2;
-                D0[b] = (sum[b] ^ Pv) | X[b] | VN[b];
-            }
-
-            // 3) HP = VN | ~(D0 | VP),   HN = D0 & VP
-            for (var b = 0; b < blocks; b++)
-            {
-                HP[b] = VN[b] | ~(D0[b] | VP[b]);
-                HN[b] = D0[b] & VP[b];
-            }
-
-            // 4) Update distance by inspecting the highest bit
-            if ((HP[lastBlk] & topBitMask) != 0) currDist++;
-            if ((HN[lastBlk] & topBitMask) != 0) currDist--;
-
-            // 5) Shift HP and HN left by one over the entire multi‐block vector
-            //    and set the low bit of HP[0] to 1
             ulong carryHP = 1, carryHN = 0;
             for (var b = 0; b < blocks; b++)
             {
-                ulong hpb = HP[b], hnb = HN[b];
-                var newCarryHP = hpb >> 63;
-                var newCarryHN = hnb >> 63;
-                HPs[b] = (hpb << 1) | carryHP;
-                HNs[b] = (hnb << 1) | carryHN;
-                carryHP = newCarryHP;
-                carryHN = newCarryHN;
-            }
+                var pv = VP[b];
+                var vn = VN[b];
+                var x = X[b] | vn;
+                var xAndVp = X[b] & pv;
 
-            // 6) Recompute VP, VN
-            for (var b = 0; b < blocks; b++)
-            {
-                VP[b] = HNs[b] | ~(D0[b] | HPs[b]);
-                VN[b] = HPs[b] & D0[b];
+                // big‐integer add: (X & VP) + VP + carry
+                var t = unchecked(xAndVp + pv);
+                var c1 = t < xAndVp ? 1UL : 0UL;
+                var sum = unchecked(t + carry);
+                var c2 = sum < t ? 1UL : 0UL;
+                carry = c1 | c2;
+
+                var d0 = (sum ^ pv) | x;
+                var hp = vn | ~(d0 | pv);
+                var hn = d0 & pv;
+
+                if (b == lastBlk)
+                {
+                    if ((hp & topBitMask) != 0) currDist++;
+                    if ((hn & topBitMask) != 0) currDist--;
+                }
+
+                var nextCarryHP = hp >> 63;
+                var nextCarryHN = hn >> 63;
+                hp = (hp << 1) | carryHP;
+                hn = (hn << 1) | carryHN;
+
+                VP[b] = hn | ~(d0 | hp);
+                VN[b] = hp & d0;
+
+                carryHP = nextCarryHP;
+                carryHN = nextCarryHN;
             }
 
             // 7) Keep a snapshot of VP/VN for this character
@@ -519,7 +505,8 @@ public sealed partial class Levenshtein
         int insertCost = 1, int deleteCost = 1, int replaceCost = 1,
         double? scoreCutoff = null)
     {
-        var nd = NormalizedDistance(source, target, insertCost, deleteCost, replaceCost, scoreCutoff);
+        double? distanceCutoff = 1.0 - scoreCutoff;
+        var nd = NormalizedDistance(source, target, insertCost, deleteCost, replaceCost, distanceCutoff);
         var ns = 1.0 - nd;
 
         return ns < scoreCutoff ? 0.0 : ns;
@@ -558,7 +545,10 @@ public sealed partial class Levenshtein
     {
         int len1 = source.Length, len2 = target.Length;
         var maximum = LevenshteinMaximum(len1, len2, insertCost, deleteCost, replaceCost);
-        var dist = Distance(source, target, insertCost, deleteCost, replaceCost, scoreCutoff);
+        int? distanceCutoff = scoreCutoff.HasValue
+            ? Math.Max(0, maximum - scoreCutoff.Value)
+            : null;
+        var dist = Distance(source, target, insertCost, deleteCost, replaceCost, distanceCutoff);
         var sim = maximum - dist;
         return sim < scoreCutoff ? 0 : sim;
     }
@@ -667,7 +657,7 @@ public sealed partial class Levenshtein
 
         // Number of 64‐bit blocks needed to cover pattern length m
         var blocks = (m + 63) >> 6;
-        var totalScratch = 6 * blocks;
+        var totalScratch = 2 * blocks;
         var scratchArray = ArrayPool<ulong>.Shared.Rent(totalScratch);
         try
         {
@@ -683,13 +673,9 @@ public sealed partial class Levenshtein
 
     // ─────────────────────────────────────────────────────────────────────────────
     // Shared implementation that uses the precomputed dictionary of masks.
-    // 'scratch' must have Length == 6 * blocks. It is partitioned into six lanes:
+    // 'scratch' must have Length == 2 * blocks. It is partitioned into two lanes:
     //   scratch[0..blocks)       → VP
     //   scratch[blocks..2*blocks)→ VN
-    //   scratch[2*blocks..3*blocks)→ X
-    //   scratch[3*blocks..4*blocks)→ D0
-    //   scratch[4*blocks..5*blocks)→ HP
-    //   scratch[5*blocks..6*blocks)→ HN
     // ─────────────────────────────────────────────────────────────────────────────
     private static int DistanceMultipleULongsImpl<T>(IPatternMatchVector<T> sourceVector, 
         ReadOnlySpan<T> target,
@@ -698,13 +684,9 @@ public sealed partial class Levenshtein
         int blocks,
         Span<ulong> scratch) where T : IEquatable<T>
     {
-        // Partition scratch into six spans of length = blocks
+        // Partition scratch into two spans of length = blocks
         var VP = scratch.Slice(0 * blocks, blocks);
         var VN = scratch.Slice(1 * blocks, blocks);
-        var X = scratch.Slice(2 * blocks, blocks);
-        var D0 = scratch.Slice(3 * blocks, blocks);
-        var HP = scratch.Slice(4 * blocks, blocks);
-        var HN = scratch.Slice(5 * blocks, blocks);
 
         // Initialize VP (low m bits = 1) and VN = 0
         for (var b = 0; b < blocks; b++)
@@ -730,15 +712,16 @@ public sealed partial class Levenshtein
             // Look up the precomputed bitmask array, or use zeroMask if not found
             var PMitem = sourceVector.GetOrZero(target[i]);
 
-            // “D0‐loop” with carry across blocks
+            // Update in one loop (D0/HP/HN + shift + VP/VN)
             var carry = 0UL;
+            var carryHP = 1UL;
+            var carryHN = 0UL;
             for (var b = 0; b < blocks; b++)
             {
                 var pm = PMitem[b];
                 var vp = VP[b];
                 var vn = VN[b];
                 var x = pm | vn;
-                X[b] = x;
                 var tmp = x & vp;
 
                 // tmp + vp
@@ -749,31 +732,15 @@ public sealed partial class Levenshtein
                 var c2o = (sum < sum1) ? 1UL : 0UL;
                 carry = c1 | c2o;
 
-                // D0 = (sum ^ vp) | x
                 var d0 = (sum ^ vp) | x;
-                D0[b] = d0;
+                var hp = vn | ~(d0 | vp);
+                var hn = d0 & vp;
 
-                // HP = vn | ~(d0 | vp)
-                // HN = d0 & vp
-                HP[b] = vn | ~(d0 | vp);
-                HN[b] = d0 & vp;
-            }
-
-            // Update distance by checking top bit of last block
-            if ((HP[last] & highestBitMask) != 0UL) dist++;
-            if ((HN[last] & highestBitMask) != 0UL) dist--;
-            if (scoreCutoff.HasValue && dist > scoreCutoff.Value)
-            {
-                return scoreCutoff.Value + 1;
-            }
-
-            // Shift HP/HN left by 1 (with cross‐block carry), then compute new VP/VN
-            var carryHP = 1UL;
-            var carryHN = 0UL;
-            for (var b = 0; b < blocks; b++)
-            {
-                var hp = HP[b];
-                var hn = HN[b];
+                if (b == last)
+                {
+                    if ((hp & highestBitMask) != 0UL) dist++;
+                    if ((hn & highestBitMask) != 0UL) dist--;
+                }
 
                 var hpHigh = hp >> 63;
                 var hnHigh = hn >> 63;
@@ -781,12 +748,20 @@ public sealed partial class Levenshtein
                 hp = (hp << 1) | carryHP;
                 hn = (hn << 1) | carryHN;
 
-                var d0 = D0[b];
                 VP[b] = hn | ~(d0 | hp);
                 VN[b] = hp & d0;
 
                 carryHP = hpHigh;
                 carryHN = hnHigh;
+            }
+
+            if (scoreCutoff.HasValue)
+            {
+                var remaining = target.Length - (i + 1);
+                if (dist > scoreCutoff.Value + remaining)
+                {
+                    return scoreCutoff.Value + 1;
+                }
             }
         }
 
@@ -820,7 +795,8 @@ public sealed partial class Levenshtein
             if ((HP & highestBit) != 0) dist++;
             if ((HN & highestBit) != 0) dist--;
 
-            if (dist > scoreCutoff)
+            var remaining = target.Length - (i + 1);
+            if (dist > scoreCutoff + remaining)
                 return scoreCutoff + 1;
 
             // shift in
