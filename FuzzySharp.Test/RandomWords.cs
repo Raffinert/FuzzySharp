@@ -1,4 +1,3 @@
-﻿using NUnit.Framework;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -8,13 +7,13 @@ namespace Raffinert.FuzzySharp.Test;
 
 public static class RandomWordPairs
 {
-    public static IEnumerable<TestCaseData> GetWordPairs()
+    public static IEnumerable<object[]> GetWordPairs()
     {
         var words = RandomWords.Create(50, 1024);
 
         var result = from word1 in words
                      from word2 in words
-                     select new TestCaseData(word1, word2);
+                     select new object[] { word1, word2 };
 
         return result;
     }
@@ -76,3 +75,4 @@ public static class RandomWords
     public delegate void SpanAction<T, in TArg>(Span<T> span, TArg arg);
 #endif
 }
+

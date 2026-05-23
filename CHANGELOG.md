@@ -1,5 +1,16 @@
 # Changelog
 
+## v5.0.2
+
+*Levenshtein/LCS correctness and cutoff semantics*
+
+- Fixed `Levenshtein.Distance<T>` weighted dispatch so non-fast-path weights correctly use `GenericDistance` and return the computed value.
+- Corrected `LevenshteinMaximum` length-difference math and aligned `Similarity` cutoff handling with RapidFuzz semantics by converting similarity cutoffs to distance cutoffs.
+- Fixed `NormalizedSimilarity` cutoff flow to use the corresponding normalized-distance cutoff (`1 - similarityCutoff`).
+- Made Levenshtein cutoff short-circuit strict-safe in both single- and multi-block paths using a remaining-length lower bound (`dist > cutoff + remaining`).
+- Added Levenshtein tests for weighted cases, cutoff behavior, maximum formula, and recoverable-prefix cutoff safety.
+- Updated multi-block LCS update logic and matrix construction to use the correct `u = S & U` transition form with consolidated per-block loops.
+
 ## v5.0.1
 
 *LongestCommonSubsequence matrix correctness for long inputs*

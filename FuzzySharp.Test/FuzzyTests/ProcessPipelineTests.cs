@@ -2,29 +2,22 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using NUnit.Framework;
+using Xunit;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
 
 namespace Raffinert.FuzzySharp.Test.FuzzyTests;
 
-[TestFixture]
 public class ProcessPipelineTests
 {
-    private string[] _baseballStrings;
-
-    [SetUp]
-    public void Setup()
+    private readonly string[] _baseballStrings = new[]
     {
-        _baseballStrings = new[]
-        {
-            "new york mets vs chicago cubs",
-            "chicago cubs vs chicago white sox",
-            "philladelphia phillies vs atlanta braves",
-            "braves vs mets",
-        };
-    }
+        "new york mets vs chicago cubs",
+        "chicago cubs vs chicago white sox",
+        "philladelphia phillies vs atlanta braves",
+        "braves vs mets",
+    };
 
-    [Test]
+    [Fact]
     public void TestOrderIndependence_CachedThenParallel()
     {
         var query = "new york mets at atlanta braves";
@@ -42,12 +35,12 @@ public class ProcessPipelineTests
         var result1 = pipeline1.ExtractOne(query, _baseballStrings);
         var result2 = pipeline2.ExtractOne(query, _baseballStrings);
 
-        Assert.AreEqual(result1.Value, result2.Value);
-        Assert.AreEqual(result1.Score, result2.Score);
-        Assert.AreEqual(result1.Index, result2.Index);
+        Assert.Equal(result1.Value, result2.Value);
+        Assert.Equal(result1.Score, result2.Score);
+        Assert.Equal(result1.Index, result2.Index);
     }
 
-    [Test]
+    [Fact]
     public void TestSimplifiedSyntax_EquivalentToExplicitSyntax()
     {
         var query = "chicago cubs vs new york mets";
@@ -71,7 +64,7 @@ public class ProcessPipelineTests
         var result2 = pipeline2.ExtractOne(_baseballStrings);
     }
 
-    [Test]
+    [Fact]
     public void TestSimplifiedSyntax_ParallelOnly()
     {
         var query = "atlanta braves vs philadelphia phillies";
@@ -83,11 +76,11 @@ public class ProcessPipelineTests
 
         var result = pipeline.ExtractOne(query, _baseballStrings);
 
-        Assert.IsNotNull(result);
-        Assert.IsNotNull(result.Value);
+        Assert.NotNull(result);
+        Assert.NotNull(result.Value);
     }
 
-    [Test]
+    [Fact]
     public void TestSimplifiedSyntax_CachedOnly()
     {
         var query = "new york mets at chicago cubs";
@@ -99,11 +92,11 @@ public class ProcessPipelineTests
 
         var result = pipeline.ExtractOne(_baseballStrings);
 
-        Assert.IsNotNull(result);
-        Assert.IsNotNull(result.Value);
+        Assert.NotNull(result);
+        Assert.NotNull(result.Value);
     }
 
-    [Test]
+    [Fact]
     public void TestPipelineVsStaticAPI_ExtractOne()
     {
         var query = "philadelphia phillies at atlanta braves";
@@ -113,12 +106,12 @@ public class ProcessPipelineTests
         var pipeline = Process.Configure().Build();
         var pipelineResult = pipeline.ExtractOne(query, _baseballStrings);
 
-        Assert.AreEqual(staticResult.Value, pipelineResult.Value);
-        Assert.AreEqual(staticResult.Score, pipelineResult.Score);
-        Assert.AreEqual(staticResult.Index, pipelineResult.Index);
+        Assert.Equal(staticResult.Value, pipelineResult.Value);
+        Assert.Equal(staticResult.Score, pipelineResult.Score);
+        Assert.Equal(staticResult.Index, pipelineResult.Index);
     }
 
-    [Test]
+    [Fact]
     public void TestPipelineVsStaticAPI_ExtractAll()
     {
         var query = "atlanta braves at philadelphia phillies";
@@ -128,16 +121,16 @@ public class ProcessPipelineTests
         var pipeline = Process.Configure().Build();
         var pipelineResults = pipeline.ExtractAll(query, _baseballStrings).OrderBy(r => r.Index).ToList();
 
-        Assert.AreEqual(staticResults.Count, pipelineResults.Count);
+        Assert.Equal(staticResults.Count, pipelineResults.Count);
         for (int i = 0; i < staticResults.Count; i++)
         {
-            Assert.AreEqual(staticResults[i].Value, pipelineResults[i].Value);
-            Assert.AreEqual(staticResults[i].Score, pipelineResults[i].Score);
-            Assert.AreEqual(staticResults[i].Index, pipelineResults[i].Index);
+            Assert.Equal(staticResults[i].Value, pipelineResults[i].Value);
+            Assert.Equal(staticResults[i].Score, pipelineResults[i].Score);
+            Assert.Equal(staticResults[i].Index, pipelineResults[i].Index);
         }
     }
 
-    [Test]
+    [Fact]
     public void TestPipelineVsStaticAPI_ExtractTop()
     {
         var query = "chicago cubs vs new york mets";
@@ -147,15 +140,15 @@ public class ProcessPipelineTests
         var pipeline = Process.Configure().Build();
         var pipelineResults = pipeline.ExtractTop(query, _baseballStrings, limit: 2).ToList();
 
-        Assert.AreEqual(staticResults.Count, pipelineResults.Count);
+        Assert.Equal(staticResults.Count, pipelineResults.Count);
         for (int i = 0; i < staticResults.Count; i++)
         {
-            Assert.AreEqual(staticResults[i].Value, pipelineResults[i].Value);
-            Assert.AreEqual(staticResults[i].Score, pipelineResults[i].Score);
+            Assert.Equal(staticResults[i].Value, pipelineResults[i].Value);
+            Assert.Equal(staticResults[i].Score, pipelineResults[i].Score);
         }
     }
 
-    [Test]
+    [Fact]
     public void TestCancellationToken_Parallel()
     {
         var longList = Enumerable.Range(0, 10000).Select(i => $"team {i} vs team {i + 1}").ToArray();
@@ -180,7 +173,7 @@ public class ProcessPipelineTests
         });
     }
 
-    [Test]
+    [Fact]
     public void TestCancellationToken_ParallelDuringExecution()
     {
         // Create a large dataset
@@ -209,7 +202,7 @@ public class ProcessPipelineTests
         });
     }
 
-    [Test]
+    [Fact]
     public void TestParallelResultsMatchSequential()
     {
         var query = "new york mets at atlanta braves";
@@ -225,16 +218,16 @@ public class ProcessPipelineTests
         var parallelResults = parallelPipeline.ExtractAll(query, _baseballStrings)
             .OrderBy(r => r.Index).ToList();
 
-        Assert.AreEqual(sequentialResults.Count, parallelResults.Count);
+        Assert.Equal(sequentialResults.Count, parallelResults.Count);
         for (int i = 0; i < sequentialResults.Count; i++)
         {
-            Assert.AreEqual(sequentialResults[i].Value, parallelResults[i].Value);
-            Assert.AreEqual(sequentialResults[i].Score, parallelResults[i].Score);
-            Assert.AreEqual(sequentialResults[i].Index, parallelResults[i].Index);
+            Assert.Equal(sequentialResults[i].Value, parallelResults[i].Value);
+            Assert.Equal(sequentialResults[i].Score, parallelResults[i].Score);
+            Assert.Equal(sequentialResults[i].Index, parallelResults[i].Index);
         }
     }
 
-    [Test]
+    [Fact]
     public void TestCachedWithExternalScorer()
     {
         var query = "new york mets at atlanta braves";
@@ -248,11 +241,11 @@ public class ProcessPipelineTests
         var result1 = pipeline.ExtractOne(_baseballStrings);
         var result2 = pipeline.ExtractOne(_baseballStrings);
 
-        Assert.AreEqual(result1.Value, result2.Value);
-        Assert.AreEqual(result1.Score, result2.Score);
+        Assert.Equal(result1.Value, result2.Value);
+        Assert.Equal(result1.Score, result2.Score);
     }
 
-    [Test]
+    [Fact]
     public void TestCachedParallelWithExternalScorer()
     {
         var query = "chicago cubs vs new york mets";
@@ -266,11 +259,11 @@ public class ProcessPipelineTests
 
         var results = pipeline.ExtractAll(_baseballStrings).OrderBy(r => r.Index).ToList();
 
-        Assert.IsTrue(results.Count > 0);
-        Assert.IsTrue(results.Any(r => r.Score > 50));
+        Assert.True(results.Count > 0);
+        Assert.Contains(results, r => r.Score > 50);
     }
 
-    [Test]
+    [Fact]
     public void TestGenericTypeExtractOne()
     {
         var events = new[]
@@ -286,11 +279,11 @@ public class ProcessPipelineTests
         var pipeline = Process.Configure().Build();
         var pipelineResult = pipeline.ExtractOneBy(query, events, strings => strings[0]);
 
-        Assert.AreEqual(staticResult.Value, pipelineResult.Value);
-        Assert.AreEqual(staticResult.Score, pipelineResult.Score);
+        Assert.Equal(staticResult.Value, pipelineResult.Value);
+        Assert.Equal(staticResult.Score, pipelineResult.Score);
     }
 
-    [Test]
+    [Fact]
     public void TestGenericTypeExtractOne_Parallel()
     {
         var events = new[]
@@ -307,11 +300,11 @@ public class ProcessPipelineTests
         var sequentialResult = sequentialPipeline.ExtractOneBy(query, events, strings => strings[0]);
         var parallelResult = parallelPipeline.ExtractOneBy(query, events, strings => strings[0]);
 
-        Assert.AreEqual(sequentialResult.Value, parallelResult.Value);
-        Assert.AreEqual(sequentialResult.Score, parallelResult.Score);
+        Assert.Equal(sequentialResult.Value, parallelResult.Value);
+        Assert.Equal(sequentialResult.Score, parallelResult.Score);
     }
 
-    [Test]
+    [Fact]
     public void TestExtractSorted()
     {
         var query = "new york mets at atlanta braves";
@@ -321,15 +314,15 @@ public class ProcessPipelineTests
         var pipeline = Process.Configure().Build();
         var pipelineResults = pipeline.ExtractSorted(query, _baseballStrings).ToList();
 
-        Assert.AreEqual(staticResults.Count, pipelineResults.Count);
+        Assert.Equal(staticResults.Count, pipelineResults.Count);
         for (int i = 0; i < staticResults.Count; i++)
         {
-            Assert.AreEqual(staticResults[i].Value, pipelineResults[i].Value);
-            Assert.AreEqual(staticResults[i].Score, pipelineResults[i].Score);
+            Assert.Equal(staticResults[i].Value, pipelineResults[i].Value);
+            Assert.Equal(staticResults[i].Score, pipelineResults[i].Score);
         }
     }
 
-    [Test]
+    [Fact]
     public void TestExtractSorted_Parallel()
     {
         var query = "new york mets at atlanta braves";
@@ -340,15 +333,15 @@ public class ProcessPipelineTests
         var sequentialResults = sequentialPipeline.ExtractSorted(query, _baseballStrings).ToList();
         var parallelResults = parallelPipeline.ExtractSorted(query, _baseballStrings).ToList();
 
-        Assert.AreEqual(sequentialResults.Count, parallelResults.Count);
+        Assert.Equal(sequentialResults.Count, parallelResults.Count);
         for (int i = 0; i < sequentialResults.Count; i++)
         {
-            Assert.AreEqual(sequentialResults[i].Value, parallelResults[i].Value);
-            Assert.AreEqual(sequentialResults[i].Score, parallelResults[i].Score);
+            Assert.Equal(sequentialResults[i].Value, parallelResults[i].Value);
+            Assert.Equal(sequentialResults[i].Score, parallelResults[i].Score);
         }
     }
 
-    [Test]
+    [Fact]
     public void TestMultiplePipelinesReusable()
     {
         var query1 = "new york mets at atlanta braves";
@@ -362,8 +355,9 @@ public class ProcessPipelineTests
         var result1 = pipeline.ExtractOne(query1, _baseballStrings);
         var result2 = pipeline.ExtractOne(query2, _baseballStrings);
 
-        Assert.IsNotNull(result1);
-        Assert.IsNotNull(result2);
-        Assert.AreNotEqual(result1.Value, result2.Value);
+        Assert.NotNull(result1);
+        Assert.NotNull(result2);
+        Assert.NotEqual(result1.Value, result2.Value);
     }
 }
+

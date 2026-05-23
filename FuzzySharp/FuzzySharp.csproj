@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <FileVersion>5.0.1.0</FileVersion>
-    <Version>5.0.1</Version>
-    <PackageVersion>5.0.1</PackageVersion>
-    <AssemblyVersion>5.0.1.0</AssemblyVersion>
-    <FileVersion>5.0.1.0</FileVersion>
-    <Version>5.0.1</Version>
-    <PackageVersion>5.0.1</PackageVersion>
+    <FileVersion>5.0.2.0</FileVersion>
+    <Version>5.0.2</Version>
+    <PackageVersion>5.0.2</PackageVersion>
+    <AssemblyVersion>5.0.2.0</AssemblyVersion>
+    <FileVersion>5.0.2.0</FileVersion>
+    <Version>5.0.2</Version>
+    <PackageVersion>5.0.2</PackageVersion>
     <Authors>Jacob Bayer;Yevhen Cherkes</Authors>
     <Company />
     <Description>
@@ -31,7 +31,7 @@
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netcoreapp3.1' OR '$(TargetFramework)' == 'net45' OR '$(TargetFramework)' == 'net46' OR '$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48'">
-    <PackageReference Include="IndexRange" Version="1.0.3" />
+    <PackageReference Include="IndexRange" Version="1.1.1" />
     <PackageReference Include="System.Memory" Version="4.5.5" />
   </ItemGroup>
 
@@ -40,7 +40,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Meziantou.Polyfill" Version="1.0.49">
+        <PackageReference Include="Meziantou.Polyfill" Version="1.0.131">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
