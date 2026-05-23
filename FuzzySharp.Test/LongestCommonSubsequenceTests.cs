@@ -1,16 +1,16 @@
-﻿using System;
-using NUnit.Framework;
+using System;
+using Xunit;
 using Raffinert.FuzzySharp.Edits;
 
 namespace Raffinert.FuzzySharp.Test;
 
 public class LongestCommonSubsequenceTests
 {
-    [Test]
+    [Fact]
     public void LongestCommonSubsequence_MatchingBlocks_ReturnsExpectedEditOps()
     {
         var lcsBlocks = LongestCommonSubsequence.MatchingBlocks("xasdfxxxxxxxxxxxxxxxxxxxasdfxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxasdfx".AsSpan(), "aabbcc".AsSpan());
-        Assert.That(lcsBlocks, Is.EquivalentTo(new[]
+        Assert.Equivalent(lcsBlocks, new[]
         {
             new MatchingBlock
             {
@@ -28,6 +28,6 @@ public class LongestCommonSubsequenceTests
                 SourcePos = 73,
                 DestPos = 6,
                 Length = 0
-            }}));
+            }});
     }
 }

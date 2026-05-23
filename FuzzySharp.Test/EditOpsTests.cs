@@ -1,12 +1,11 @@
-﻿using NUnit.Framework;
+using Xunit;
 using Raffinert.FuzzySharp.Edits;
 
 namespace Raffinert.FuzzySharp.Test;
 
-[TestFixture]
 public class EditOpsTests
 {
-    [Test]
+    [Fact]
     public void GetEditOps_KittenToSitting_ReturnsExpectedEditOps()
     {
         // Arrange
@@ -17,23 +16,23 @@ public class EditOpsTests
         var ops = Levenshtein.GetEditOps(source, target);
 
         // Assert
-        Assert.IsNotNull(ops);
-        Assert.AreEqual(3, ops.Length);
+        Assert.NotNull(ops);
+        Assert.Equal(3, ops.Length);
 
-        Assert.AreEqual(EditType.REPLACE, ops[0].EditType);
-        Assert.AreEqual(0, ops[0].SourcePos);
-        Assert.AreEqual(0, ops[0].DestPos);
+        Assert.Equal(EditType.REPLACE, ops[0].EditType);
+        Assert.Equal(0, ops[0].SourcePos);
+        Assert.Equal(0, ops[0].DestPos);
 
-        Assert.AreEqual(EditType.REPLACE, ops[1].EditType);
-        Assert.AreEqual(4, ops[1].SourcePos);
-        Assert.AreEqual(4, ops[1].DestPos);
+        Assert.Equal(EditType.REPLACE, ops[1].EditType);
+        Assert.Equal(4, ops[1].SourcePos);
+        Assert.Equal(4, ops[1].DestPos);
 
-        Assert.AreEqual(EditType.INSERT, ops[2].EditType);
-        Assert.AreEqual(6, ops[2].SourcePos);
-        Assert.AreEqual(6, ops[2].DestPos);
+        Assert.Equal(EditType.INSERT, ops[2].EditType);
+        Assert.Equal(6, ops[2].SourcePos);
+        Assert.Equal(6, ops[2].DestPos);
     }
 
-    [Test]
+    [Fact]
     public void GetEditOps_putinIsWarCriminal_ReturnsExpectedEditOps()
     {
         // Arrange
@@ -43,7 +42,7 @@ public class EditOpsTests
         // Act
         var ops = Levenshtein.GetEditOps(source, target);
 
-        Assert.That(ops, Is.EquivalentTo(new[]
+        Assert.Equivalent(ops, new[]
         {
             new EditOp
             {
@@ -105,6 +104,6 @@ public class EditOpsTests
                 SourcePos = 5,
                 DestPos = 11
             }
-        }));
+        });
     }
 }

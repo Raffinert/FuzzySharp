@@ -1,12 +1,11 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
-using NUnit.Framework;
+using Xunit;
 using Raffinert.FuzzySharp.SimilarityRatio;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 
 namespace Raffinert.FuzzySharp.Test.FuzzyTests;
 
-[TestFixture]
 public class ProcessTests
 {
     private string   _s1;
@@ -19,16 +18,15 @@ public class ProcessTests
     private string[] _cirqueStrings;
     private string[] _baseballStrings;
 
-    [SetUp]
-    public void Setup()
+    public ProcessTests()
     {
-        _s1  = "new york mets";
+        _s1 = "new york mets";
         _s1A = "new york mets";
-        _s2  = "new YORK mets";
-        _s3  = "the wonderful new york mets";
-        _s4  = "new york mets vs atlanta braves";
-        _s5  = "atlanta braves vs new york mets";
-        _s6  = "new york mets - atlanta braves";
+        _s2 = "new YORK mets";
+        _s3 = "the wonderful new york mets";
+        _s4 = "new york mets vs atlanta braves";
+        _s5 = "atlanta braves vs new york mets";
+        _s6 = "new york mets - atlanta braves";
         _cirqueStrings = new[]
         {
             "cirque du soleil - zarkana - las vegas",
@@ -48,43 +46,43 @@ public class ProcessTests
         };
     }
 
-    [Test]
+    [Fact]
     public void TestGetBestChoice1()
     {
         var query = "new york mets at atlanta braves";
         var best  = Process.ExtractOne(query, _baseballStrings);
-        Assert.AreEqual(best.Value, "braves vs mets");
+        Assert.Equal(best.Value, "braves vs mets");
 
     }
 
-    [Test]
+    [Fact]
     public void TestGetBestChoice2()
     {
         var query = "philadelphia phillies at atlanta braves";
         var best  = Process.ExtractOne(query, _baseballStrings);
-        Assert.AreEqual(best.Value, _baseballStrings[2]);
+        Assert.Equal(best.Value, _baseballStrings[2]);
 
     }
 
-    [Test]
+    [Fact]
     public void TestGetBestChoice3()
     {
         var query = "atlanta braves at philadelphia phillies";
         var best  = Process.ExtractOne(query, _baseballStrings);
-        Assert.AreEqual(best.Value, _baseballStrings[2]);
+        Assert.Equal(best.Value, _baseballStrings[2]);
 
     }
 
-    [Test]
+    [Fact]
     public void TestGetBestChoice4()
     {
         var query = "chicago cubs vs new york mets";
         var best  = Process.ExtractOne(query, _baseballStrings);
-        Assert.AreEqual(best.Value, _baseballStrings[0]);
+        Assert.Equal(best.Value, _baseballStrings[0]);
 
     }
 
-    [Test]
+    [Fact]
     public void TestWithProcessor()
     {
         var events = new[]
@@ -96,10 +94,10 @@ public class ProcessTests
         var query = new[] { "new york mets vs chicago cubs", "CitiField", "2017-03-19", "8pm" };
 
         var best = Process.ExtractOneBy(query, events, strings => strings[0]);
-        Assert.AreEqual(best.Value, events[0]);
+        Assert.Equal(best.Value, events[0]);
     }
 
-    [Test]
+    [Fact]
     public void TestWithScorer()
     {
         var choices = new[]
@@ -125,19 +123,19 @@ public class ProcessTests
         // 'complete' match of choices[1]"
 
         var best = Process.ExtractOne(query, choices);
-        Assert.AreEqual(best.Value, choices[1]);
+        Assert.Equal(best.Value, choices[1]);
 
         // now, use the custom scorer
 
         best = Process.ExtractOne(query, choices, null, ScorerCache.Get<DefaultRatioScorer>());
-        Assert.AreEqual(best.Value, choices[0]);
+        Assert.Equal(best.Value, choices[0]);
 
         best = Process.ExtractOne(query, choicesDict.Select(k => k.Value));
-        Assert.AreEqual(best.Value, choicesDict[1]);
+        Assert.Equal(best.Value, choicesDict[1]);
 
     }
 
-    [Test]
+    [Fact]
     public void TestWithCutoff()
     {
         var choices = new[]
@@ -154,7 +152,7 @@ public class ProcessTests
         // we don't want to randomly match to something, so we use a reasonable cutoff
 
         var best = Process.ExtractSorted(query, choices, cutoff: 50);
-        Assert.IsTrue(!best.Any());
+        Assert.True(!best.Any());
         // .assertIsNone(best) // unittest.TestCase did not have assertIsNone until Python 2.7
 
         // however if we had no cutoff, something would get returned
@@ -164,7 +162,7 @@ public class ProcessTests
 
     }
 
-    [Test]
+    [Fact]
     public void TestWithCutoff2()
     {
         var choices = new[]
@@ -178,13 +176,13 @@ public class ProcessTests
         var query = "new york mets vs chicago cubs";
         // Only find 100-score cases
         var res = Process.ExtractSorted(query, choices, cutoff: 100);
-        Assert.IsTrue(res.Any());
+        Assert.True(res.Any());
         var bestMatch = res.First();
-        Assert.IsTrue(bestMatch.Value == choices[0]);
+        Assert.True(bestMatch.Value == choices[0]);
 
     }
 
-    [Test]
+    [Fact]
     public void TestEmptyStrings()
     {
         var choices = new[]
@@ -199,10 +197,10 @@ public class ProcessTests
         var query = "new york mets at chicago cubs";
 
         var best = Process.ExtractOne(query, choices);
-        Assert.AreEqual(best.Value, choices[1]);
+        Assert.Equal(best.Value, choices[1]);
     }
 
-//[Test]
+//[Fact]
 //public void  generate_choices() {
 //            choices = ['a', 'Bb', 'CcC']
 //            for choice in choices {
@@ -214,7 +212,7 @@ public class ProcessTests
 
 //    }
 
-//[Test]
+//[Fact]
 //public void  test_dict_like_Extract() {
 //        """We should be able to use a dict-like object for choices, not only a
 //        dict, and still get dict-like output.
@@ -232,7 +230,7 @@ public class ProcessTests
 
 //    }
 
-//[Test]
+//[Fact]
 //public void  test_dedupe() {
 //        """We should be able to use a list-like object for contains_dupes
 //        """
@@ -249,11 +247,11 @@ public class ProcessTests
 //        deduped_list = ['Tom', 'Dick', 'Harry']
 
 //        result = Process.dedupe(contains_dupes)
-//        Assert.AreEqual(result, deduped_list)
+//        Assert.Equal(result, deduped_list)
 
 //    }
 
-//[Test]
+//[Fact]
 //public void  test_simplematch() {
 //        basic_string = 'a, b'
 //        match_strings = ['a, b']
@@ -261,8 +259,9 @@ public class ProcessTests
 //        result = Process.ExtractOne(basic_string, match_strings, scorer=fuzz.ratio)
 //        part_result = Process.ExtractOne(basic_string, match_strings, scorer=fuzz.partial_ratio)
 
-//        Assert.AreEqual(result, ('a, b', 100))
-//        Assert.AreEqual(part_result, ('a, b', 100))
+//        Assert.Equal(result, ('a, b', 100))
+//        Assert.Equal(part_result, ('a, b', 100))
 
 //    }
 }
+

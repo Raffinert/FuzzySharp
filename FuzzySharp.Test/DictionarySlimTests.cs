@@ -1,13 +1,13 @@
-﻿using NUnit.Framework;
+using Xunit;
 using Raffinert.FuzzySharp.Utils;
 using System.Collections.Generic;
 
 namespace Raffinert.FuzzySharp.Test;
 
-[TestFixture]
 public class DictionarySlimTests
 {
-    [Test, TestCaseSource(typeof(RandomWordPairs), nameof(RandomWordPairs.GetWordPairs))]
+    [Theory]
+    [MemberData(nameof(RandomWordPairs.GetWordPairs), MemberType = typeof(RandomWordPairs))]
     public void DictionarySlim_And_Dictionary_ShouldHaveEqualResults(string s1, string s2)
     {
         var ds1 = new DictionarySlimPooled<char, int>(64);
@@ -24,7 +24,7 @@ public class DictionarySlimTests
         foreach (var c in s1)
         {
             Assert.True(ds1.TryGetValue(c, out var value));
-            Assert.AreEqual(value, d1[c]);
+            Assert.Equal(value, d1[c]);
         }
 
         var ds2 = new DictionarySlimPooled<char, int>(64);
@@ -42,7 +42,8 @@ public class DictionarySlimTests
         foreach (var c in s2)
         {
             Assert.True(ds2.TryGetValue(c, out var value));
-            Assert.AreEqual(value, d2[c]);
+            Assert.Equal(value, d2[c]);
         }
     }
 }
+

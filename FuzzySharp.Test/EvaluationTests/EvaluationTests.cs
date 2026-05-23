@@ -1,4 +1,4 @@
-using NUnit.Framework;
+using Xunit;
 using Raffinert.FuzzySharp.PreProcess;
 using Raffinert.FuzzySharp.SimilarityRatio;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
@@ -8,10 +8,9 @@ using System.Linq;
 
 namespace Raffinert.FuzzySharp.Test.EvaluationTests;
 
-[TestFixture]
 public class EvaluationTests
 {
-    [Test]
+    [Fact]
     public void Evaluate()
     {
         var a1 = Fuzz.Ratio("mysmilarstring", "myawfullysimilarstirng");
@@ -79,7 +78,7 @@ public class EvaluationTests
         var weighted = ScorerCache.Get<WeightedRatioScorer>();
     }
 
-    [Test]
+    [Fact]
     public void TokenInitialismScorer_WhenGivenStringWithTrailingSpaces_DoesNotBreak()
     {
         // arrange
@@ -90,12 +89,12 @@ public class EvaluationTests
         var ratio = Fuzz.TokenInitialismRatio(shorter, longer);
 
         // assert
-        Assert.IsTrue(ratio >= 0);
+        Assert.True(ratio >= 0);
     }
 
     [Theory]
-    [TestCase("+30.0% Damage to Close Enemies [30.01%", 1)]
-    [TestCase("+14.3% Damage to Crowd Controlled Enemies [7.5 - 18.0]%", 2)]
+    [InlineData("+30.0% Damage to Close Enemies [30.01%", 1)]
+    [InlineData("+14.3% Damage to Crowd Controlled Enemies [7.5 - 18.0]%", 2)]
     public void FullPreprocessor(string input, int caseNumber)
     {
         // Arrange
@@ -118,18 +117,18 @@ public class EvaluationTests
         var regularResults = Process.ExtractTop(input, choices, limit: 2).ToArray();
 
         // Assert
-        Assert.IsNotEmpty(cachedResults);
-        Assert.IsNotEmpty(cachedParallelResults);
-        Assert.IsNotEmpty(regularResults);
-        Assert.AreEqual(regularResults[0].Value, cachedResults[0].Value, $"Case {caseNumber}: top match differs");
-        Assert.AreEqual(regularResults[0].Score, cachedResults[0].Score, $"Case {caseNumber}: top score differs");
-        Assert.AreEqual(cachedParallelResults[0].Value, cachedResults[0].Value, $"Case {caseNumber}: top match differs");
-        Assert.AreEqual(cachedParallelResults[0].Score, cachedResults[0].Score, $"Case {caseNumber}: top score differs");
+        Assert.NotEmpty(cachedResults);
+        Assert.NotEmpty(cachedParallelResults);
+        Assert.NotEmpty(regularResults);
+        Assert.True(regularResults[0].Value == cachedResults[0].Value, $"Case {caseNumber}: top match differs");
+        Assert.True(regularResults[0].Score == cachedResults[0].Score, $"Case {caseNumber}: top score differs");
+        Assert.True(cachedParallelResults[0].Value == cachedResults[0].Value, $"Case {caseNumber}: top match differs");
+        Assert.True(cachedParallelResults[0].Score == cachedResults[0].Score, $"Case {caseNumber}: top score differs");
     }
 
     [Theory]
-    [TestCase("+30.0% Damage to Close Enemies [30.01%", 1)]
-    [TestCase("+14.3% Damage to Crowd Controlled Enemies [7.5 - 18.0]%", 2)]
+    [InlineData("+30.0% Damage to Close Enemies [30.01%", 1)]
+    [InlineData("+14.3% Damage to Crowd Controlled Enemies [7.5 - 18.0]%", 2)]
     public void NonePreprocessor(string input, int caseNumber)
     {
         // Arrange
@@ -152,12 +151,13 @@ public class EvaluationTests
         var cachedResults = Process.Configure().Cached().Build().ExtractTop(input, choices, processor: StringPreprocessor.None, limit: 2).ToArray();
 
         // Assert
-        Assert.IsNotEmpty(cachedResults);
-        Assert.IsNotEmpty(cachedParallelResults);
-        Assert.IsNotEmpty(regularResults);
-        Assert.AreEqual(regularResults[0].Value, cachedResults[0].Value, $"Case {caseNumber}: top match differs");
-        Assert.AreEqual(regularResults[0].Score, cachedResults[0].Score, $"Case {caseNumber}: top score differs");
-        Assert.AreEqual(cachedParallelResults[0].Value, cachedResults[0].Value, $"Case {caseNumber}: top match differs");
-        Assert.AreEqual(cachedParallelResults[0].Score, cachedResults[0].Score, $"Case {caseNumber}: top score differs");
+        Assert.NotEmpty(cachedResults);
+        Assert.NotEmpty(cachedParallelResults);
+        Assert.NotEmpty(regularResults);
+        Assert.True(regularResults[0].Value == cachedResults[0].Value, $"Case {caseNumber}: top match differs");
+        Assert.True(regularResults[0].Score == cachedResults[0].Score, $"Case {caseNumber}: top score differs");
+        Assert.True(cachedParallelResults[0].Value == cachedResults[0].Value, $"Case {caseNumber}: top match differs");
+        Assert.True(cachedParallelResults[0].Score == cachedResults[0].Score, $"Case {caseNumber}: top score differs");
     }
 }
+

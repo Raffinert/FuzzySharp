@@ -1,20 +1,19 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Reflection;
-using NUnit.Framework;
+using Xunit;
 using Raffinert.FuzzySharp.SimilarityRatio;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
 
 namespace Raffinert.FuzzySharp.Test.FuzzyTests;
 
-[TestFixture]
 public class RegressionTests
 {
 
     /// <summary>
     /// Test to ensure that all IRatioScorer implementations handle scoring empty strings & whitespace strings
     /// </summary>
-    [Test]
+    [Fact]
     public void TestScoringEmptyString()
     {
         var scorerType = typeof(IRatioScorer);
