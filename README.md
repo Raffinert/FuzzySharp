@@ -523,8 +523,6 @@ The package name is `Raffinert.FuzzySharp`, and the default namespace is `Raffin
 - Use `StringPreprocessor.Full`, `StringPreprocessor.None`, or a custom delegate instead of `PreprocessMode.Full` or `PreprocessMode.None`.
 - Generic extraction methods that use extractor delegates are now named `Extract*By`, such as `ExtractOneBy` and `ExtractTopBy`.
 
-See [CHANGELOG.md](CHANGELOG.md) for full release history.
-
 ## Credits
 
 - [Adam Cohen (seatgeek/fuzzywuzzy)](https://chairnerd.seatgeek.com/fuzzywuzzy-fuzzy-string-matching-in-python/)
