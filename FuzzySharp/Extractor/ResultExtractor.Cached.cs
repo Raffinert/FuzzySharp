@@ -1,4 +1,3 @@
-﻿using Raffinert.FuzzySharp.Extensions;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
 using System;
 using System.Collections.Generic;
@@ -42,12 +41,12 @@ public static partial class ResultExtractor
 
         public static ExtractedResult<T> ExtractOne<T>(IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, ICachedRatioScorer scorer, int cutoff = 0)
         {
-            return ExtractWithoutOrder(choices, extractor, processor, scorer, cutoff).Max();
+            return ExtractOneCore(choices, choice => scorer.Score(processor(extractor(choice))), cutoff);
         }
 
         public static ExtractedResult<string> ExtractOne(IEnumerable<string> choices, Func<string, string> processor, ICachedRatioScorer scorer, int cutoff = 0)
         {
-            return ExtractWithoutOrder(choices, processor, scorer, cutoff).Max();
+            return ExtractOneCore(choices, choice => scorer.Score(processor(choice)), cutoff);
         }
 
         public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, ICachedRatioScorer scorer, int cutoff = 0)
@@ -62,12 +61,12 @@ public static partial class ResultExtractor
 
         public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, ICachedRatioScorer scorer, int limit, int cutoff = 0)
         {
-            return ExtractWithoutOrder(choices, extractor, processor, scorer, cutoff).MaxN(limit).Reverse();
+            return ExtractTopCore(choices, choice => scorer.Score(processor(extractor(choice))), limit, cutoff);
         }
 
         public static IEnumerable<ExtractedResult<string>> ExtractTop(IEnumerable<string> choices, Func<string, string> processor, ICachedRatioScorer scorer, int limit, int cutoff = 0)
         {
-            return ExtractWithoutOrder(choices, processor, scorer, cutoff).MaxN(limit).Reverse();
+            return ExtractTopCore(choices, choice => scorer.Score(processor(choice)), limit, cutoff);
         }
     }
 }
