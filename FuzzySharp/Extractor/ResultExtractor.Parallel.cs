@@ -48,7 +48,7 @@ public static partial class ResultExtractor
 
             if (!globalBest.HasValue)
             {
-                return Enumerable.Empty<ExtractedResult<T>>().Max();
+                return null;
             }
 
             var candidate = globalBest.Candidate;

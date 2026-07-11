@@ -35,7 +35,7 @@ public static partial class ResultExtractor
 
         if (!hasBest)
         {
-            return Enumerable.Empty<ExtractedResult<T>>().Max();
+            return null;
         }
 
         return new ExtractedResult<T>(bestValue, bestScore, bestIndex);
