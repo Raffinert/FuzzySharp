@@ -23,15 +23,13 @@ Refactored `ResultExtractor` to eliminate double-iteration from LINQ `.Max()` / 
 
 ## Findings
 
-### 🔴 HIGH — Empty sequence throws on no-match (`ResultExtractor.cs:38`, `.Parallel.cs:51`)
+### 🟡 MEDIUM — Silent null return on no-match (`ResultExtractor.cs:38`, `.Parallel.cs:51`)
 
 ```csharp
 return Enumerable.Empty<ExtractedResult<T>>().Max();
 ```
 
-When no candidates meet the cutoff, this calls `.Max()` on an empty `IEnumerable` and throws `InvalidOperationException`. This is a **pre-existing bug** (old code did the same), so functionally unchanged — but should be addressed in a follow-up. Consider returning a default or throwing with a clearer message.
-
-### 🟡 MEDIUM — Tie-breaking inconsistency (`ScoredCandidate.cs:18-20`)
+## 🟡 MEDIUM — Tie-breaking inconsistency (`ScoredCandidate.cs:18-20`)
 
 ```csharp
 public override int Compare(ScoredCandidate<T> x, ScoredCandidate<T> y)
