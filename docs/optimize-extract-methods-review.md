@@ -8,7 +8,7 @@
 
 ## Summary
 
-Refactored `ResultExtractor` to eliminate double-iteration from LINQ `.Max()` / `.MaxN(limit).Reverse()` chains. Introduced single-pass extraction with dedicated core methods and a min-heap for top-N selection.
+Refactored `ResultExtractor` to select the best and top-N results directly, avoiding intermediate `ExtractedResult` allocations. The prior LINQ pipelines already enumerated their input once; this change reduces per-candidate overhead while preserving their selection behavior.
 
 **Files changed:**
 | File | Change |
@@ -23,28 +23,9 @@ Refactored `ResultExtractor` to eliminate double-iteration from LINQ `.Max()` / 
 
 ## Findings
 
-### 🟡 MEDIUM — Silent null return on no-match (`ResultExtractor.cs:38`, `.Parallel.cs:51`)
+### ✅ Selection behavior is preserved
 
-```csharp
-return Enumerable.Empty<ExtractedResult<T>>().Max();
-```
-
-## 🟡 MEDIUM — Tie-breaking inconsistency (`ScoredCandidate.cs:18-20`)
-
-```csharp
-public override int Compare(ScoredCandidate<T> x, ScoredCandidate<T> y)
-{
-    return x.Score.CompareTo(y.Score);  // only compares score!
-}
-```
-
-When two candidates have equal scores, the comparer returns `0` without considering index. The old `.MaxN(limit)` preserved original order for ties; the heap-based approach may return arbitrary candidates. For deterministic results:
-
-```csharp
-int cmp = x.Score.CompareTo(y.Score);
-if (cmp != 0) return cmp;
-return x.Index.CompareTo(y.Index);
-```
+The new score-only `ScoredCandidateComparer<T>` matches the previous `ExtractedResult<T>.CompareTo` behavior used by `.MaxN(limit)`. Both implementations retain the same candidates and ordering for equal scores. `ExtractOne` continues to select the first highest-scoring candidate, while the parallel implementation resolves equal scores by their original index.
 
 ### 🟡 MEDIUM — Lock contention in parallel ExtractOne (`ResultExtractor.Parallel.cs:43-46`)
 
@@ -60,7 +41,7 @@ Every thread that finds a qualifying candidate acquires the lock. For large data
 ## ✅ Good Patterns
 
 - `BestCandidate<T>` struct with thread-local state for parallel merge is correct
-- Single-pass extraction eliminates double iteration (old code: score → Max/MaxN)
+- Direct selection avoids creating intermediate `ExtractedResult` instances for every candidate
 - Cutoff filtering before heap insertion avoids unnecessary allocations
 - `ScoreParallel` writes to distinct array indices — safe without synchronization
 
@@ -68,4 +49,4 @@ Every thread that finds a qualifying candidate acquires the lock. For large data
 
 ## Overall Assessment
 
-The refactoring is sound and achieves the stated goal of eliminating double-iteration. The main concern is the tie-breaking behavior change for equal-score candidates in ExtractTop, which could produce different results than before on edge cases.
+The refactoring is sound and reduces per-candidate allocation and selection overhead without changing the established tie-breaking behavior.
