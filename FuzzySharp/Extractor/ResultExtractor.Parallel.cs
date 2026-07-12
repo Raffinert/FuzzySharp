@@ -35,24 +35,18 @@ public static partial class ResultExtractor
                 },
                 localBest =>
                 {
-                    if (!localBest.HasValue)
+                    if (localBest.HasValue)
                     {
-                        return;
-                    }
-
-                    lock (sync)
-                    {
-                        globalBest.Consider(localBest);
+                        lock (sync)
+                        {
+                            globalBest.Consider(localBest);
+                        }
                     }
                 });
 
-            if (!globalBest.HasValue)
-            {
-                return null;
-            }
-
-            var candidate = globalBest.Candidate;
-            return new ExtractedResult<T>(candidate.Value, candidate.Score, candidate.Index);
+            return globalBest.HasValue 
+                ? new ExtractedResult<T>(globalBest.Candidate.Value, globalBest.Candidate.Score, globalBest.Candidate.Index) 
+                : null;
         }
 
         private static IEnumerable<ExtractedResult<T>> ExtractTopParallelCore<T>(

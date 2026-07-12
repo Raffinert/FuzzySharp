@@ -47,8 +47,8 @@ public static partial class ResultExtractor
         int limit,
         int cutoff)
     {
-        var heap = new MinHeap<ScoredCandidate<T>>(ScoredCandidateComparer<T>.Instance);
         var comparer = ScoredCandidateComparer<T>.Instance;
+        var heap = new MinHeap<ScoredCandidate<T>>(comparer);
         var index = 0;
 
         foreach (var choice in choices)
