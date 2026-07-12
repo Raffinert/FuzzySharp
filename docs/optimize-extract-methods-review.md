@@ -31,11 +31,6 @@ The new score-only `ScoredCandidateComparer<T>` matches the previous `ExtractedR
 
 Every thread that finds a qualifying candidate acquires the lock. For large datasets with many candidates above cutoff, this serializes all merges. Consider merging locally first (already done), then doing one final merge at the end instead of locking per-thread.
 
-### 🟢 LOW — Minor inefficiencies
-
-- **Redundant variable** (`ResultExtractor.cs:51`): `var comparer = ScoredCandidateComparer<T>.Instance;` — already stored in MinHeap constructor
-- **Double `.Instance` access** on lines 50-51 of the same file
-
 ---
 
 ## ✅ Good Patterns
