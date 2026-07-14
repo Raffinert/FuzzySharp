@@ -1,5 +1,9 @@
 # Changelog
 
+## v5.0.3
+
+- Improved parallel `ExtractOne` selection by reducing each worker's local best candidate before the final result is selected, preserving deterministic score and index tie-breaking.
+
 ## v5.0.2
 
 *Levenshtein/LCS correctness and cutoff semantics*
