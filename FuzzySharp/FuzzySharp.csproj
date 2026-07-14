@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <FileVersion>5.0.2.0</FileVersion>
-    <Version>5.0.2</Version>
-    <PackageVersion>5.0.2</PackageVersion>
-    <AssemblyVersion>5.0.2.0</AssemblyVersion>
-    <FileVersion>5.0.2.0</FileVersion>
-    <Version>5.0.2</Version>
-    <PackageVersion>5.0.2</PackageVersion>
-    <Authors>Jacob Bayer;Yevhen Cherkes</Authors>
+    <FileVersion>5.0.3.0</FileVersion>
+    <Version>5.0.3</Version>
+    <PackageVersion>5.0.3</PackageVersion>
+    <AssemblyVersion>5.0.3.0</AssemblyVersion>
+    <FileVersion>5.0.3.0</FileVersion>
+    <Version>5.0.3</Version>
+    <PackageVersion>5.0.3</PackageVersion>
+    <Authors>Yevhen Cherkes;Jacob Bayer</Authors>
     <Company />
     <Description>
         Fuzzy string matcher based on FuzzyWuzzy algorithm from SeatGeek and RapidFuzz python and cpp libraries from Max Bachmann.
