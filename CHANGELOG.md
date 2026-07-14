@@ -1,5 +1,14 @@
 # Changelog
 
+## v5.0.3
+
+*Extractor selection performance and allocation improvements*
+
+- Optimized `ExtractOne` and `ExtractTop` across the standard, cached, parallel, and parallel-cached extractors by selecting candidates directly instead of materializing every qualifying `ExtractedResult` and then using LINQ `Max` or `MaxN`.
+- `ExtractOne` now tracks the best candidate during scoring; `ExtractTop` retains only the requested number of candidates in a bounded heap.
+- Parallel extractors score candidates independently and reduce local results while preserving score ordering and first-occurrence tie-breaking.
+- Added extractor selection regression tests and benchmarks for sequential, cached, parallel, and parallel-cached paths.
+
 ## v5.0.2
 
 *Levenshtein/LCS correctness and cutoff semantics*
