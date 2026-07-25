@@ -31,6 +31,17 @@ internal sealed class CachedApproximateSubstringRatioStrategy : ICachedStrategy
                 : 0;
         }
 
+        ReadOnlySpan<char> pattern = _processedInput1.Length <= processedInput2.Length
+            ? _processedInput1.AsSpan()
+            : processedInput2.AsSpan();
+        ReadOnlySpan<char> text = _processedInput1.Length <= processedInput2.Length
+            ? processedInput2.AsSpan()
+            : _processedInput1.AsSpan();
+        if (text.IndexOf(pattern) >= 0)
+        {
+            return 100;
+        }
+
         if (_processedInput1.Length < processedInput2.Length)
         {
             return Score(_input1PatternVector, processedInput2.AsSpan());

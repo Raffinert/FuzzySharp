@@ -59,6 +59,48 @@ public sealed partial class Indel
 {
     /// <summary>
     /// Finds the minimum insertion-deletion distance between the complete
+    /// character pattern and any substring of text.
+    ///
+    /// The returned EndIndex identifies the text position at which the best
+    /// approximate substring match ends.
+    /// </summary>
+    public static IndelSubstringMatch BestSubstringMatch(
+        ReadOnlySpan<char> pattern,
+        ReadOnlySpan<char> text)
+    {
+        if (pattern.IsEmpty)
+        {
+            return new IndelSubstringMatch(
+                distance: 0,
+                endIndex: -1);
+        }
+
+        if (text.IsEmpty)
+        {
+            return new IndelSubstringMatch(
+                distance: pattern.Length,
+                endIndex: -1);
+        }
+
+        // Exact ordinal span search is heavily optimized by the runtime and
+        // avoids running the more expensive recurrence up to a distant exact
+        // occurrence. IndexOf also preserves the earliest-zero tie behavior.
+        int exactStart = text.IndexOf(pattern);
+        if (exactStart >= 0)
+        {
+            return new IndelSubstringMatch(
+                distance: 0,
+                endIndex: exactStart + pattern.Length - 1);
+        }
+
+        using var patternMatchVector = PatternMatchVector.Create(pattern);
+        return BestSubstringMatchImpl(
+            patternMatchVector,
+            text);
+    }
+
+    /// <summary>
+    /// Finds the minimum insertion-deletion distance between the complete
     /// pattern and any substring of text.
     ///
     /// The returned EndIndex identifies the text position at which the best
