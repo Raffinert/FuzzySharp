@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Added `Fuzz.ApproximateSubstringRatio`, `ApproximateSubstringRatioScorer`, and `CachedApproximateSubstringRatioScorer` for best approximate substring scoring using Indel distance.
+- Added public `Indel.BestSubstringMatch` APIs that return the best raw distance and matching endpoint for generic spans.
+
 ## v5.0.3
 
 *Extractor selection performance and allocation improvements*

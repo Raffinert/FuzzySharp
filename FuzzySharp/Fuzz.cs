@@ -63,6 +63,41 @@ public static class Fuzz
     }
     #endregion
 
+    #region ApproximateSubstringRatio
+    /// <summary>
+    /// Searches the shorter input approximately within the longer input using
+    /// insertions and deletions. A substitution costs two edits, so this metric
+    /// is not numerically equivalent to <see cref="PartialRatio(string,string)"/>.
+    /// </summary>
+    /// <param name="input1">The first input.</param>
+    /// <param name="input2">The second input.</param>
+    /// <returns>A score from 0 to 100.</returns>
+    public static int ApproximateSubstringRatio(string input1, string input2)
+    {
+        return ScorerCache.Get<ApproximateSubstringRatioScorer>()
+            .Score(input1, input2);
+    }
+
+    /// <summary>
+    /// Searches the shorter processed input approximately within the longer
+    /// processed input using insertions and deletions. A substitution costs two
+    /// edits, so this metric is not numerically equivalent to
+    /// <see cref="PartialRatio(string,string)"/>.
+    /// </summary>
+    /// <param name="input1">The first input.</param>
+    /// <param name="input2">The second input.</param>
+    /// <param name="preprocessor">A preprocessor applied to both inputs.</param>
+    /// <returns>A score from 0 to 100.</returns>
+    public static int ApproximateSubstringRatio(
+        string input1,
+        string input2,
+        Func<string, string> preprocessor)
+    {
+        return ScorerCache.Get<ApproximateSubstringRatioScorer>()
+            .Score(input1, input2, preprocessor);
+    }
+    #endregion
+
     #region TokenSortRatio
     /// <summary>
     /// Find all alphanumeric tokens in the string and sort

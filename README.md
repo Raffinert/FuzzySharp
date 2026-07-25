@@ -100,6 +100,7 @@ By default, `Fuzz` methods compare strings as-is. `Process` extraction methods u
 |--------|----------|
 | `Fuzz.Ratio` | You need direct similarity between two strings. |
 | `Fuzz.PartialRatio` | One string may be a substring or close substring of the other. |
+| `Fuzz.ApproximateSubstringRatio` | You need the best Indel-distance match of the shorter input within the longer input. |
 | `Fuzz.TokenSortRatio` | Word order should not matter. |
 | `Fuzz.TokenSetRatio` | Duplicate words or extra common words should have less impact. |
 | `Fuzz.TokenInitialismRatio` | You need to compare an initialism with its expanded phrase. |
@@ -127,6 +128,26 @@ Fuzz.Ratio("mysmilarstring", "mysimilarstring");
 Fuzz.PartialRatio("similar", "somewhresimlrbetweenthisstring");
 // 71
 ```
+
+### Approximate Substring Ratio
+
+```csharp
+int score = Fuzz.ApproximateSubstringRatio(
+    "invoice number 12345",
+    "processed invoice number 12345 successfully");
+// 100
+```
+
+`ApproximateSubstringRatio` searches for the best approximate occurrence of the
+shorter input, considering every possible start position implicitly. It uses the
+Indel edit model: insertions and deletions cost one, while a substitution costs
+two. The score is normalized relative to the shorter input's length, and later
+exact occurrences are not hidden by earlier inferior ones.
+
+For endpoint information, call `Indel.BestSubstringMatch` directly; its
+`EndIndex` identifies where the best match ends. This API does not return a start
+index or edit script, and its numeric scores are not compatible with
+`PartialRatio`.
 
 ### Token Sort Ratio
 <p align="right"><a href="https://dotnetfiddle.net/b5RVp2">Run .NET fiddle</a></p>
@@ -373,6 +394,7 @@ Stateless scorers for use with `Process` static methods and the `WithScorer()` b
 ```csharp
 var ratio              = ScorerCache.Get<DefaultRatioScorer>();
 var partialRatio       = ScorerCache.Get<PartialRatioScorer>();
+var approximateSubstring = ScorerCache.Get<ApproximateSubstringRatioScorer>();
 var tokenSet           = ScorerCache.Get<TokenSetScorer>();
 var partialTokenSet    = ScorerCache.Get<PartialTokenSetScorer>();
 var tokenSort          = ScorerCache.Get<TokenSortScorer>();
@@ -395,6 +417,7 @@ int score = scorer.Score("candidate string");
 Available cached scorers:
 - `CachedWeightedRatioScorer` -- weighted combination (default for `.Cached()`)
 - `CachedDefaultRatioScorer` -- simple Levenshtein ratio
+- `CachedApproximateSubstringRatioScorer` -- approximate substring Indel ratio
 - `CachedTokenSortScorer` -- token sort ratio
 - `CachedTokenSetScorer` -- token set ratio
 - `CachedPartialTokenSetScorer` -- partial token set ratio
@@ -454,6 +477,16 @@ int distance = indel.DistanceFrom("chicago white sox");
 // 11
 double similarity = indel.NormalizedSimilarityWith("chicago white sox");
 // 0.6206896551724138
+```
+
+The static approximate-substring API returns the best raw Indel distance and its
+endpoint:
+
+```csharp
+IndelSubstringMatch match = Indel.BestSubstringMatch(
+    "invoice number 12345".AsSpan(),
+    "processed invoice number 12345 successfully".AsSpan());
+// match.Distance == 0; match.EndIndex identifies the final '5'
 ```
 
 A generic variant `IndelT<T>` is available for comparing sequences of any `IEquatable<T>`:
