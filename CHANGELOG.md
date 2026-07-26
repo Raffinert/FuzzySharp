@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Added approximate-substring scoring based on bit-parallel Indel distance, including stateless and cached scorers.
+- Added directional `Indel.BestSubstringMatch` APIs that return the best raw distance and first strict-improvement endpoint for generic spans.
+
 ## v5.0.3
 
 *Extractor selection performance and allocation improvements*
