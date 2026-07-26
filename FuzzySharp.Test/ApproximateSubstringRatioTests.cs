@@ -127,12 +127,18 @@ public class ApproximateSubstringRatioTests
             expected[index] = Fuzz.ApproximateSubstringRatio(query, candidates[index]);
         }
 
+        var actual = new int[256];
         using var scorer = new CachedApproximateSubstringRatioScorer(query);
         Parallel.For(0, 256, iteration =>
         {
             int index = iteration % candidates.Length;
-            Assert.Equal(expected[index], scorer.Score(candidates[index]));
+            actual[iteration] = scorer.Score(candidates[index]);
         });
+
+        for (int iteration = 0; iteration < actual.Length; iteration++)
+        {
+            Assert.Equal(expected[iteration % candidates.Length], actual[iteration]);
+        }
     }
 
     [Fact]
@@ -155,6 +161,46 @@ public class ApproximateSubstringRatioTests
     }
 
     [Fact]
+    public void CachedApproximateSubstringRatioScorer_ThrowsAfterDisposal()
+    {
+        var scorer = new CachedApproximateSubstringRatioScorer("query");
+
+        scorer.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => scorer.Score("candidate"));
+        scorer.Dispose();
+    }
+
+    [Fact]
+    public void CachedApproximateSubstringRatioScorer_MatchesNonCachedAcrossBoundaryLengths()
+    {
+        var random = new Random(81927);
+        int[] queryLengths = { 63, 64, 65, 127, 128, 129 };
+
+        foreach (int queryLength in queryLengths)
+        {
+            string query = CreateRandomString(random, queryLength);
+            string[] candidates =
+            {
+                string.Empty,
+                query,
+                query.Substring(0, queryLength - 1),
+                "prefix-" + query + "-suffix",
+                new string('z', queryLength + 17),
+                query.Substring(0, queryLength / 2) + "#" + query.Substring(queryLength / 2 + 1)
+            };
+
+            using var scorer = new CachedApproximateSubstringRatioScorer(query);
+            foreach (string candidate in candidates)
+            {
+                Assert.Equal(
+                    Fuzz.ApproximateSubstringRatio(query, candidate),
+                    scorer.Score(candidate));
+            }
+        }
+    }
+
+    [Fact]
     public void ApproximateSubstringRatioScorer_IsAvailableToProcessBuilder()
     {
         var pipeline = new ProcessBuilder()
@@ -168,8 +214,9 @@ public class ApproximateSubstringRatioTests
     {
         IndelSubstringMatch match = Indel.BestSubstringMatch(
             pattern.AsSpan(), text.AsSpan());
-        return Math.Max(0, Math.Min(100,
-            (int)Math.Round(100.0 * (1.0 - match.Distance / (double)pattern.Length))));
+        return ApproximateSubstringScore.FromDistance(
+            match.Distance,
+            pattern.Length);
     }
 
     private static string CreateRandomString(Random random, int length)

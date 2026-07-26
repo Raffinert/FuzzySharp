@@ -141,13 +141,16 @@ int score = Fuzz.ApproximateSubstringRatio(
 `ApproximateSubstringRatio` searches for the best approximate occurrence of the
 shorter input, considering every possible start position implicitly. It uses the
 Indel edit model: insertions and deletions cost one, while a substitution costs
-two. The score is normalized relative to the shorter input's length, and later
-exact occurrences are not hidden by earlier inferior ones.
+two. The score is normalized relative to the shorter input's length. Equal-length
+inputs are evaluated in both directions unless the first direction is an exact
+match, so the high-level score is symmetric. Its numeric results are not
+equivalent to `PartialRatio`.
 
 For endpoint information, call `Indel.BestSubstringMatch` directly; its
-`EndIndex` identifies where the best match ends. This API does not return a start
-index or edit script, and its numeric scores are not compatible with
-`PartialRatio`.
+`FirstBestEndIndex` is the first endpoint that strictly improves on the distance
+of deleting the complete pattern. Equal-distance later endpoints do not replace
+it, so it is not a unique match boundary. This directional API does not return a
+start index or edit script.
 
 ### Token Sort Ratio
 <p align="right"><a href="https://dotnetfiddle.net/b5RVp2">Run .NET fiddle</a></p>
@@ -486,7 +489,7 @@ endpoint:
 IndelSubstringMatch match = Indel.BestSubstringMatch(
     "invoice number 12345".AsSpan(),
     "processed invoice number 12345 successfully".AsSpan());
-// match.Distance == 0; match.EndIndex identifies the final '5'
+// match.FirstBestEndIndex identifies the first strict improvement (the final '5')
 ```
 
 A generic variant `IndelT<T>` is available for comparing sequences of any `IEquatable<T>`:

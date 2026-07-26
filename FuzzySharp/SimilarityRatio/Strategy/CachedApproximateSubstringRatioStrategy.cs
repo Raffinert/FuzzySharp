@@ -22,6 +22,12 @@ internal sealed class CachedApproximateSubstringRatioStrategy : ICachedStrategy
 
     public int Calculate(string input2)
     {
+        if (_disposed)
+        {
+            throw new ObjectDisposedException(
+                nameof(CachedApproximateSubstringRatioStrategy));
+        }
+
         string processedInput2 = _preprocessor(input2);
 
         if (_processedInput1.Length == 0 || processedInput2.Length == 0)
@@ -78,8 +84,8 @@ internal sealed class CachedApproximateSubstringRatioStrategy : ICachedStrategy
     {
         IndelSubstringMatch match =
             Indel.BestSubstringMatchImpl(patternVector, text);
-        double similarity = 1.0 - match.Distance / (double)patternVector.Length;
-        int score = (int)Math.Round(100.0 * similarity);
-        return Math.Max(0, Math.Min(100, score));
+        return ApproximateSubstringScore.FromDistance(
+            match.Distance,
+            patternVector.Length);
     }
 }

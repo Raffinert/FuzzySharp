@@ -43,8 +43,8 @@ internal static class ApproximateSubstringRatioStrategy<T>
             return pattern.IsEmpty && text.IsEmpty ? 100 : 0;
         }
 
-        double similarity = 1.0 - match.Distance / (double)pattern.Length;
-        int score = (int)Math.Round(100.0 * similarity);
-        return Math.Max(0, Math.Min(100, score));
+        return ApproximateSubstringScore.FromDistance(
+            match.Distance,
+            pattern.Length);
     }
 }

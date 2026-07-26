@@ -36,25 +36,26 @@ public class IndelBestSubstringTests
     public void BestSubstringMatch_ExactMatch_ReturnsEarliestExactEndpoint(
         string pattern,
         string text,
-        int expectedEndIndex)
+        int expectedFirstBestEndIndex)
     {
         IndelSubstringMatch result = Indel.BestSubstringMatch(
             pattern.AsSpan(),
             text.AsSpan());
 
         Assert.Equal(0, result.Distance);
-        Assert.Equal(expectedEndIndex, result.EndIndex);
-        Assert.True(result.Found);
+        Assert.Equal(expectedFirstBestEndIndex, result.FirstBestEndIndex);
+        Assert.True(result.ImprovedOverEmptyMatch);
     }
 
     [Fact]
-    public void BestSubstringMatch_SubstitutionCostsTwoEdits()
+    public void BestSubstringMatch_UsesFirstStrictImprovementForEqualDistanceTies()
     {
         IndelSubstringMatch result = Indel.BestSubstringMatch(
             "abc".AsSpan(),
             "axc".AsSpan());
 
         Assert.Equal(new IndelSubstringMatch(2, 0), result);
+        Assert.Equal(0, result.FirstBestEndIndex);
     }
 
     [Fact]
@@ -72,7 +73,8 @@ public class IndelBestSubstringTests
             "xxx".AsSpan());
 
         Assert.Equal(3, result.Distance);
-        Assert.False(result.Found);
+        Assert.Equal(-1, result.FirstBestEndIndex);
+        Assert.False(result.ImprovedOverEmptyMatch);
     }
 
     [Fact]
@@ -95,7 +97,10 @@ public class IndelBestSubstringTests
     [InlineData(127)]
     [InlineData(128)]
     [InlineData(129)]
-    public void BestSubstringMatch_HandlesWordBoundariesAndLastBlockMasking(
+    [InlineData(2047)]
+    [InlineData(2048)]
+    [InlineData(2049)]
+    public void BestSubstringMatch_HandlesBoundaryLengthsAndFinalBlockMasking(
         int patternLength)
     {
         string pattern = CreateSequence(patternLength);
@@ -103,6 +108,19 @@ public class IndelBestSubstringTests
 
         Assert.Equal(new IndelSubstringMatch(0, "prefix-".Length + patternLength - 1),
             Indel.BestSubstringMatch(pattern.AsSpan(), text.AsSpan()));
+
+        AssertMatchesOracle(pattern, pattern.Substring(0, patternLength - 1));
+        AssertMatchesOracle(pattern, pattern.Insert(patternLength / 2, "#"));
+
+        char replacement = pattern[patternLength / 2] == '#' ? '!' : '#';
+        string substituted = pattern.Remove(patternLength / 2, 1)
+            .Insert(patternLength / 2, replacement.ToString());
+        AssertMatchesOracle(pattern, substituted);
+
+        AssertMatchesOracle(pattern,
+            pattern.Substring(0, patternLength / 2)
+            + "#"
+            + pattern.Substring(patternLength / 2 + 1));
     }
 
     [Fact]
@@ -153,16 +171,34 @@ public class IndelBestSubstringTests
         var random = new Random(RandomSeed);
         string[] alphabets = { "ab", "abcd", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" };
 
-        for (int sample = 0; sample < 4_000; sample++)
+        for (int sample = 0; sample < 1_500; sample++)
         {
             string alphabet = alphabets[sample % alphabets.Length];
-            int patternLength = random.Next(1, 141);
-            int textLength = random.Next(0, 201);
+            int patternLength = random.Next(1, 201);
+            int textLength = random.Next(0, 301);
             string pattern = CreateRandomString(random, patternLength, alphabet);
             string text = CreateRandomString(random, textLength, alphabet);
 
             AssertMatchesOracle(pattern, text);
         }
+    }
+
+    [Theory]
+    [InlineData("aaaa", "aa", 2, 1)]
+    [InlineData("abc", "abxabc", 0, 5)]
+    [InlineData("abc", "abcxxxabc", 0, 2)]
+    public void BestSubstringMatch_RecordsOnlyTheFirstStrictImprovement(
+        string pattern,
+        string text,
+        int expectedDistance,
+        int expectedFirstBestEndIndex)
+    {
+        IndelSubstringMatch result = Indel.BestSubstringMatch(
+            pattern.AsSpan(), text.AsSpan());
+
+        Assert.Equal(expectedDistance, result.Distance);
+        Assert.Equal(expectedFirstBestEndIndex, result.FirstBestEndIndex);
+        Assert.True(result.ImprovedOverEmptyMatch);
     }
 
     private static void AssertMatchesOracle(string pattern, string text)

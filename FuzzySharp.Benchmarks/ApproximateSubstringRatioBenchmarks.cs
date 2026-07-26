@@ -3,60 +3,92 @@ using Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 
 namespace Raffinert.FuzzySharp.Benchmarks;
 
+/// <summary>
+/// Reproducible approximate-substring benchmark matrix. Equal-length and
+/// shorter-candidate data sets deliberately normalize the requested text length
+/// to preserve their named relationship to <see cref="PatternLength"/>.
+/// </summary>
 [MemoryDiagnoser]
 [RankColumn]
 public class ApproximateSubstringRatioBenchmarks
 {
+    private const string Alphabet = "abcdef";
     private string _pattern = string.Empty;
     private string _text = string.Empty;
     private CachedApproximateSubstringRatioScorer _cachedScorer = null!;
 
-    [Params(64, 256, 1024)]
+    [Params(32, 63, 64, 65, 127, 128, 129, 256, 1024, 2048, 2049)]
     public int PatternLength { get; set; }
 
-    [Params(1024, 4096)]
+    [Params(128, 1024, 4096, 16384)]
     public int TextLength { get; set; }
 
-    [Params(
-        BenchmarkDataSet.RepeatedApproximateAndExact,
-        BenchmarkDataSet.RandomLowSimilarity)]
+    [ParamsAllValues]
     public BenchmarkDataSet DataSet { get; set; }
 
     [GlobalSetup]
     public void Setup()
     {
         var random = new Random(42);
-        _pattern = GenerateString(PatternLength, random, "abcdefghijklmnopqrstuvwxyz");
-        int actualTextLength = Math.Max(TextLength, PatternLength * 2);
-        var characters = GenerateString(actualTextLength, random, "abcdefghijklmnopqrstuvwxyz").ToCharArray();
+        _pattern = GenerateString(PatternLength, random, Alphabet);
 
-        switch (DataSet)
+        if (DataSet == BenchmarkDataSet.CandidateShorterThanCachedQuery)
         {
-            case BenchmarkDataSet.ExactNearStart:
-                CopyPattern(characters, _pattern, 1);
-                break;
+            _text = GenerateString(
+                Math.Max(1, Math.Min(TextLength, PatternLength - 1)),
+                random,
+                Alphabet);
+        }
+        else if (DataSet == BenchmarkDataSet.EqualLengthHighSimilarity ||
+                 DataSet == BenchmarkDataSet.EqualLengthLowSimilarity)
+        {
+            char[] equalLengthText = _pattern.ToCharArray();
+            if (DataSet == BenchmarkDataSet.EqualLengthHighSimilarity)
+            {
+                equalLengthText[PatternLength / 2] = '#';
+            }
+            else
+            {
+                for (int index = 0; index < equalLengthText.Length; index++)
+                {
+                    equalLengthText[index] = 'z';
+                }
+            }
 
-            case BenchmarkDataSet.ExactNearEnd:
-                CopyPattern(characters, _pattern, characters.Length - PatternLength - 1);
-                break;
+            _text = new string(equalLengthText);
+        }
+        else
+        {
+            int actualTextLength = Math.Max(TextLength, PatternLength + 2);
+            char[] text = GenerateString(actualTextLength, random, Alphabet).ToCharArray();
 
-            case BenchmarkDataSet.NoExactMatch:
-                _pattern = GenerateString(PatternLength, random, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-                break;
+            switch (DataSet)
+            {
+                case BenchmarkDataSet.ExactNearStart:
+                    CopyPattern(text, _pattern, 1);
+                    break;
+                case BenchmarkDataSet.ExactNearEnd:
+                    CopyPattern(text, _pattern, text.Length - PatternLength - 1);
+                    break;
+                case BenchmarkDataSet.ApproximateNearStart:
+                    CopyApproximatePattern(text, _pattern, 1);
+                    break;
+                case BenchmarkDataSet.ApproximateNearEnd:
+                    CopyApproximatePattern(text, _pattern, text.Length - PatternLength - 1);
+                    break;
+                case BenchmarkDataSet.NoExactMatch:
+                case BenchmarkDataSet.RandomLowSimilarity:
+                    _pattern = GenerateString(PatternLength, random, "ABCDEF");
+                    break;
+                case BenchmarkDataSet.RepeatedApproximateAndExact:
+                    CopyApproximatePattern(text, _pattern, 1);
+                    CopyPattern(text, _pattern, text.Length - PatternLength - 1);
+                    break;
+            }
 
-            case BenchmarkDataSet.RepeatedApproximateAndExact:
-                CopyPattern(characters, _pattern, 1);
-                characters[1 + PatternLength / 2] = '#';
-                CopyPattern(characters, _pattern, characters.Length - PatternLength - 1);
-                break;
-
-            case BenchmarkDataSet.HighSimilarity:
-                CopyPattern(characters, _pattern, characters.Length / 2 - PatternLength / 2);
-                characters[characters.Length / 2] = '#';
-                break;
+            _text = new string(text);
         }
 
-        _text = new string(characters);
         _cachedScorer = new CachedApproximateSubstringRatioScorer(_pattern);
     }
 
@@ -79,19 +111,19 @@ public class ApproximateSubstringRatioBenchmarks
     }
 
     [Benchmark]
-    public int CachedApproximateSubstringRatio()
+    public int CachedApproximateSubstringRatioScorerScore()
     {
         return _cachedScorer.Score(_text);
     }
 
     [Benchmark]
-    public IndelSubstringMatch ScalarDynamicProgrammingBaseline()
+    public IndelSubstringMatch ScalarDynamicProgrammingOracle()
     {
         return ScalarBestSubstringMatch(_pattern.AsSpan(), _text.AsSpan());
     }
 
     [Benchmark]
-    public int PartialRatioReference()
+    public int PartialRatio()
     {
         return Fuzz.PartialRatio(_pattern, _text);
     }
@@ -133,6 +165,12 @@ public class ApproximateSubstringRatioBenchmarks
         return new IndelSubstringMatch(bestDistance, bestEndIndex);
     }
 
+    private static void CopyApproximatePattern(char[] destination, string pattern, int startIndex)
+    {
+        CopyPattern(destination, pattern, startIndex);
+        destination[startIndex + pattern.Length / 2] = '#';
+    }
+
     private static void CopyPattern(char[] destination, string pattern, int startIndex)
     {
         pattern.CopyTo(0, destination, startIndex, pattern.Length);
@@ -154,8 +192,12 @@ public enum BenchmarkDataSet
 {
     ExactNearStart,
     ExactNearEnd,
+    ApproximateNearStart,
+    ApproximateNearEnd,
     NoExactMatch,
-    RepeatedApproximateAndExact,
     RandomLowSimilarity,
-    HighSimilarity
+    RepeatedApproximateAndExact,
+    EqualLengthHighSimilarity,
+    EqualLengthLowSimilarity,
+    CandidateShorterThanCachedQuery
 }

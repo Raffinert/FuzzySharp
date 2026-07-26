@@ -66,8 +66,11 @@ public static class Fuzz
     #region ApproximateSubstringRatio
     /// <summary>
     /// Searches the shorter input approximately within the longer input using
-    /// insertions and deletions. A substitution costs two edits, so this metric
-    /// is not numerically equivalent to <see cref="PartialRatio(string,string)"/>.
+    /// Indel distance. Insertions and deletions cost one and a substitution
+    /// costs two edits. Equal-length inputs are evaluated in both directions
+    /// unless the first direction is exact. Two empty inputs score 100; exactly
+    /// one empty input scores 0. This metric is not numerically equivalent to
+    /// <see cref="PartialRatio(string,string)"/>.
     /// </summary>
     /// <param name="input1">The first input.</param>
     /// <param name="input2">The second input.</param>
@@ -80,9 +83,11 @@ public static class Fuzz
 
     /// <summary>
     /// Searches the shorter processed input approximately within the longer
-    /// processed input using insertions and deletions. A substitution costs two
-    /// edits, so this metric is not numerically equivalent to
-    /// <see cref="PartialRatio(string,string)"/>.
+    /// processed input using Indel distance. Insertions and deletions cost one
+    /// and a substitution costs two edits. Equal-length inputs are evaluated in
+    /// both directions unless the first direction is exact. Two empty processed
+    /// inputs score 100; exactly one empty processed input scores 0. This metric
+    /// is not numerically equivalent to <see cref="PartialRatio(string,string)"/>.
     /// </summary>
     /// <param name="input1">The first input.</param>
     /// <param name="input2">The second input.</param>
