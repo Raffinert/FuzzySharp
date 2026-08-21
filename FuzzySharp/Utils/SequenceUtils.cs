@@ -33,8 +33,8 @@ internal static class SequenceUtils
         }
 
         var suffixLength = source.Length - sourceEnd;
-        source = source.Slice(startIndex, sourceEnd - startIndex);
-        target = target.Slice(startIndex, targetEnd - startIndex);
+        source = source[startIndex..sourceEnd];
+        target = target[startIndex..targetEnd];
 
         return (startIndex, suffixLength);
     }

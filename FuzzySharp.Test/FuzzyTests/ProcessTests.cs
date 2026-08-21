@@ -51,7 +51,7 @@ public class ProcessTests
     {
         var query = "new york mets at atlanta braves";
         var best  = Process.ExtractOne(query, _baseballStrings);
-        Assert.Equal(best.Value, "braves vs mets");
+        Assert.Equal("braves vs mets", best.Value);
 
     }
 

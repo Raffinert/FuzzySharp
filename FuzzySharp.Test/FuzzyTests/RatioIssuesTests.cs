@@ -67,7 +67,6 @@ public class RatioIssuesTests
 
         var alignment = PartialRatioStrategy<char>.PartialRatioAlignment(str1.AsSpan(), str2.AsSpan());
 
-        Assert.NotNull(alignment);
         Assert.Equal(0, alignment.SrcStart);
         Assert.Equal(103, alignment.SrcEnd);
         Assert.Equal(0, alignment.DestStart);

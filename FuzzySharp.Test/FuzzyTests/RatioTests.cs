@@ -5,131 +5,109 @@ namespace Raffinert.FuzzySharp.Test.FuzzyTests;
 
 public class RatioTests
 {
-    #region Private Fields
-    private string _s1,
-        _s1A,
-        _s2,
-        _s3,
-        _s4,
-        _s5,
-        _s6,
-        _s7,
-        _s8,
-        _s8A,
-        _s9,
-        _s9A,
-        _s10,
-        _s10A;
+    private const string S1 = "new york mets", 
+        S1A = "new york mets", 
+        S2 = "new YORK mets", 
+        S3 = "the wonderful new york mets", 
+        S4 = "new york mets vs atlanta braves", 
+        S5 = "atlanta braves vs new york mets",
+        S7 = "new york city mets - atlanta braves", 
+        S8 = "{", 
+        S8A = "{", 
+        S9 = "{a", 
+        S9A = "{a", 
+        S10 = "a{", 
+        S10A = "{b";
 
-    private string[] _cirqueStrings, _baseballStrings;
-    #endregion
-
-    public RatioTests()
-    {
-        _s1  = "new york mets";
-        _s1A = "new york mets";
-        _s2  = "new YORK mets";
-        _s3  = "the wonderful new york mets";
-        _s4  = "new york mets vs atlanta braves";
-        _s5  = "atlanta braves vs new york mets";
-        _s6  = "new york mets - atlanta braves";
-        _s7  = "new york city mets - atlanta braves";
-        // Edge cases
-        _s8   = "{";
-        _s8A  = "{";
-        _s9   = "{a";
-        _s9A  = "{a";
-        _s10  = "a{";
-        _s10A = "{b";
-    }
+    // Edge cases
 
     [Fact]
     public void Test_Equal()
     {
-        Assert.Equal(Fuzz.Ratio(_s1, _s1A), 100);
-        Assert.Equal(Fuzz.Ratio(_s8, _s8A), 100);
-        Assert.Equal(Fuzz.Ratio(_s9, _s9A), 100);
+        Assert.Equal(100, Fuzz.Ratio(S1, S1A));
+        Assert.Equal(100, Fuzz.Ratio(S8, S8A));
+        Assert.Equal(100, Fuzz.Ratio(S9, S9A));
     }
 
     [Fact]
     public void Test_Case_Insensitive()
     {
-        Assert.NotEqual(Fuzz.Ratio(_s1, _s2), 100);
-        Assert.Equal(Fuzz.Ratio(_s1, _s2, StringPreprocessor.Full), 100);
+        Assert.NotEqual(100, Fuzz.Ratio(S1, S2));
+        Assert.Equal(100, Fuzz.Ratio(S1, S2, StringPreprocessor.Full));
     }
 
     [Fact]
     public void Test_Partial()
     {
-        Assert.Equal(Fuzz.PartialRatio(_s1, _s3), 100);
+        Assert.Equal(100, Fuzz.PartialRatio(S1, S3));
     }
 
     [Fact]
     public void TestTokenSortRatio()
     {
-        Assert.Equal(Fuzz.TokenSortRatio(_s1, _s1A), 100);
+        Assert.Equal(100, Fuzz.TokenSortRatio(S1, S1A));
     }
 
     [Fact]
     public void TestPartialTokenSortRatio()
     {
-        Assert.Equal(Fuzz.PartialTokenSortRatio(_s1, _s1A, StringPreprocessor.Full), 100);
-        Assert.Equal(Fuzz.PartialTokenSortRatio(_s4, _s5, StringPreprocessor.Full), 100);
-        Assert.Equal(Fuzz.PartialTokenSortRatio(_s8, _s8A), 100);
-        Assert.Equal(Fuzz.PartialTokenSortRatio(_s9, _s9A, StringPreprocessor.Full), 100);
-        Assert.Equal(Fuzz.PartialTokenSortRatio(_s9, _s9A), 100);
+        Assert.Equal(100, Fuzz.PartialTokenSortRatio(S1, S1A, StringPreprocessor.Full));
+        Assert.Equal(100, Fuzz.PartialTokenSortRatio(S4, S5, StringPreprocessor.Full));
+        Assert.Equal(100, Fuzz.PartialTokenSortRatio(S8, S8A));
+        Assert.Equal(100, Fuzz.PartialTokenSortRatio(S9, S9A, StringPreprocessor.Full));
+        Assert.Equal(100, Fuzz.PartialTokenSortRatio(S9, S9A));
 
         //var al =  Fuzz1.PartialRatioAlignment("a certain string".AsSpan(), "cetain".AsSpan());
             
-        Assert.Equal(66.66666666666667, Fuzz.PartialTokenSortRatio(_s10, _s10A), 10);
-        Assert.Equal(Fuzz.PartialTokenSortRatio(_s10, _s10A, StringPreprocessor.Full), 0);
+        Assert.Equal(66.66666666666667, Fuzz.PartialTokenSortRatio(S10, S10A), 10);
+        Assert.Equal(0, Fuzz.PartialTokenSortRatio(S10, S10A, StringPreprocessor.Full));
     }
 
     [Fact]
     public void TestTokenSetRatio()
     {
-        Assert.Equal(Fuzz.TokenSetRatio(_s4, _s5, StringPreprocessor.Full), 100);
-        Assert.Equal(Fuzz.TokenSetRatio(_s8, _s8A), 100);
-        Assert.Equal(Fuzz.TokenSetRatio(_s9, _s9A, StringPreprocessor.Full), 100);
-        Assert.Equal(Fuzz.TokenSetRatio(_s9, _s9A), 100);
-        Assert.Equal(Fuzz.TokenSetRatio(_s10, _s10A), 50);
+        Assert.Equal(100, Fuzz.TokenSetRatio(S4, S5, StringPreprocessor.Full));
+        Assert.Equal(100, Fuzz.TokenSetRatio(S8, S8A));
+        Assert.Equal(100, Fuzz.TokenSetRatio(S9, S9A, StringPreprocessor.Full));
+        Assert.Equal(100, Fuzz.TokenSetRatio(S9, S9A));
+        Assert.Equal(50, Fuzz.TokenSetRatio(S10, S10A));
     }
 
     [Fact]
     public void TestTokenAbbreviationRatio()
     {
-        Assert.Equal(Fuzz.TokenAbbreviationRatio("bl 420", "Baseline section 420", StringPreprocessor.Full), 40);
+        Assert.Equal(40, Fuzz.TokenAbbreviationRatio("bl 420", "Baseline section 420", StringPreprocessor.Full));
         Assert.Equal(66.66666666666667, Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", StringPreprocessor.Full), 10);
     }
 
     [Fact]
     public void TestPartialTokenSetRatio()
     {
-        Assert.Equal(Fuzz.PartialTokenSetRatio(_s4, _s7), 100);
+        Assert.Equal(100, Fuzz.PartialTokenSetRatio(S4, S7));
     }
 
     [Fact]
     public void TestWeightedRatioEqual()
     {
-        Assert.Equal(Fuzz.WeightedRatio(_s1, _s1A), 100);
+        Assert.Equal(100, Fuzz.WeightedRatio(S1, S1A));
     }
 
     [Fact]
     public void TestWeightedRatioCaseInsensitive()
     {
-        Assert.Equal(Fuzz.WeightedRatio(_s1, _s2, StringPreprocessor.Full), 100);
+        Assert.Equal(100, Fuzz.WeightedRatio(S1, S2, StringPreprocessor.Full));
     }
 
     [Fact]
     public void TestWeightedRatioPartialMatch()
     {
-        Assert.Equal(Fuzz.WeightedRatio(_s1, _s3), 90);
+        Assert.Equal(90, Fuzz.WeightedRatio(S1, S3));
     }
 
     [Fact]
     public void TestWeightedRatioMisorderedMatch()
     {
-        Assert.Equal(Fuzz.WeightedRatio(_s4, _s5), 95);
+        Assert.Equal(95, Fuzz.WeightedRatio(S4, S5));
     }
 
     [Fact]
@@ -144,14 +122,14 @@ public class RatioTests
     [Fact]
     public void TestIssueSeven()
     {
-        _s1 = "HSINCHUANG";
-        _s2 = "SINJHUAN";
-        _s3 = "LSINJHUANG DISTRIC";
-        _s4 = "SINJHUANG DISTRICT";
+        const string s1 = "HSINCHUANG";
+        const string s2 = "SINJHUAN";
+        const string s3 = "LSINJHUANG DISTRIC";
+        const string s4 = "SINJHUANG DISTRICT";
 
-        Assert.True(Fuzz.PartialRatio(_s1, _s2) > 75);
-        Assert.True(Fuzz.PartialRatio(_s1, _s3) > 75);
-        Assert.True(Fuzz.PartialRatio(_s1, _s4) > 75);
+        Assert.True(Fuzz.PartialRatio(s1, s2) > 75);
+        Assert.True(Fuzz.PartialRatio(s1, s3) > 75);
+        Assert.True(Fuzz.PartialRatio(s1, s4) > 75);
     }
 
     [Fact]
@@ -183,24 +161,28 @@ public class RatioTests
     [Fact]
     public void TestPartialRatioUnicodeString()
     {
-        _s1 = "\u00C1";
-        _s2 = "ABCD";
-        var score = Fuzz.PartialRatio(_s1, _s2);
+        const string s1 = "\u00C1";
+        const string s2 = "ABCD";
+        var score = Fuzz.PartialRatio(s1, s2);
         Assert.Equal(0, score);
     }
 
     [Fact]
     public void TestZeroRatio()
     {
-        var ratio = Fuzz.PartialTokenSortRatio("abc", "def");
+        const string s1 = "abc";
+        const string s2 = "def";
+        var ratio = Fuzz.PartialTokenSortRatio(s1, s2);
 
-        Assert.True(ratio == 0);
+        Assert.Equal(0, ratio);
     }
 
     [Fact]
     public void Test03()
     {
-        var ratio = Fuzz.PartialTokenSortRatio("new york mets", "atlanta braves vs new york mets");
+        const string s1 = "new york mets";
+        const string s2 = "atlanta braves vs new york mets";
+        var ratio = Fuzz.PartialTokenSortRatio(s1, s2);
 
         Assert.Equal(76.92307692307692, ratio, 10);
     }
@@ -208,21 +190,21 @@ public class RatioTests
     [Fact]
     public void TestRatioUnicodeString()
     {
-        _s1 = "\u00C1";
-        _s2 = "ABCD";
-        var score = Fuzz.WeightedRatio(_s1, _s2);
+        const string s1 = "\u00C1";
+        const string s2 = "ABCD";
+        var score = Fuzz.WeightedRatio(s1, s2);
         Assert.Equal(0, score);
 
         // Cyrillic.
-        _s1   = "\u043f\u0441\u0438\u0445\u043e\u043b\u043e\u0433";
-        _s2   = "\u043f\u0441\u0438\u0445\u043e\u0442\u0435\u0440\u0430\u043f\u0435\u0432\u0442";
-        score = Fuzz.WeightedRatio(_s1, _s2);
+        const string s3 = "\u043f\u0441\u0438\u0445\u043e\u043b\u043e\u0433";
+        const string s4 = "\u043f\u0441\u0438\u0445\u043e\u0442\u0435\u0440\u0430\u043f\u0435\u0432\u0442";
+        score = Fuzz.WeightedRatio(s3, s4);
         Assert.NotEqual(0, score);
 
         // Chinese.
-        _s1   = "\u6211\u4e86\u89e3\u6570\u5b66";
-        _s2   = "\u6211\u5b66\u6570\u5b66";
-        score = Fuzz.WeightedRatio(_s1, _s2);
+        const string s5 = "\u6211\u4e86\u89e3\u6570\u5b66";
+        const string s6 = "\u6211\u5b66\u6570\u5b66";
+        score = Fuzz.WeightedRatio(s5, s6);
         Assert.NotEqual(0, score);
     }
 }
