@@ -84,15 +84,15 @@ Compare two strings directly:
 
 ```csharp
 Fuzz.Ratio("mysmilarstring", "mysimilarstring");
-// 96.551724137931
+// 96.55172413793103
 
 Fuzz.WeightedRatio(
     "The quick brown fox jimps ofver the small lazy dog",
     "the quick brown fox jumps over the small lazy dog");
-// 94.9494949494949
+// 94.94949494949495
 ```
 
-Similarity scores are `double` values in the range 0–100. Some extraction output examples below are rounded for readability.
+Similarity scores are `double` values in the range 0–100.
 
 By default, `Fuzz` methods compare strings as-is. `Process` extraction methods use `StringPreprocessor.Full` by default, which normalizes whitespace, lowercases, and strips non-alphanumeric characters.
 
@@ -117,9 +117,9 @@ By default, `Fuzz` methods compare strings as-is. `Process` extraction methods u
 
 ```csharp
 Fuzz.Ratio("mysmilarstring", "myawfullysimilarstirng");
-// 72
+// 72.22222222222221
 Fuzz.Ratio("mysmilarstring", "mysimilarstring");
-// 97
+// 96.55172413793103
 ```
 
 ### Partial Ratio
@@ -127,7 +127,7 @@ Fuzz.Ratio("mysmilarstring", "mysimilarstring");
 
 ```csharp
 Fuzz.PartialRatio("similar", "somewhresimlrbetweenthisstring");
-// 71
+// 71.42857142857143
 ```
 
 ### Token Sort Ratio
@@ -155,12 +155,12 @@ Fuzz.PartialTokenSetRatio("fuzzy was a bear", "fuzzy fuzzy fuzzy bear");
 
 ```csharp
 Fuzz.TokenInitialismRatio("NASA", "National Aeronautics and Space Administration");
-// 89
+// 88.88888888888889
 Fuzz.TokenInitialismRatio("NASA", "National Aeronautics Space Administration");
 // 100
 
 Fuzz.TokenInitialismRatio("NASA", "National Aeronautics Space Administration, Kennedy Space Center, Cape Canaveral, Florida 32899");
-// 53
+// 53.333333333333336
 Fuzz.PartialTokenInitialismRatio("NASA", "National Aeronautics Space Administration, Kennedy Space Center, Cape Canaveral, Florida 32899");
 // 100
 ```
@@ -172,7 +172,7 @@ Fuzz.PartialTokenInitialismRatio("NASA", "National Aeronautics Space Administrat
 Fuzz.TokenAbbreviationRatio("bl 420", "Baseline section 420", StringPreprocessor.Full);
 // 40
 Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", StringPreprocessor.Full);
-// 67
+// 66.66666666666667
 ```
 
 ### Weighted Ratio
@@ -180,7 +180,7 @@ Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", StringPrepr
 
 ```csharp
 Fuzz.WeightedRatio("The quick brown fox jimps ofver the small lazy dog", "the quick brown fox jumps over the small lazy dog");
-// 95
+// 94.94949494949495
 ```
 
 ## Process Extraction
@@ -195,25 +195,25 @@ Process.ExtractOne("cowboys", new[] { "Atlanta Falcons", "New York Jets", "New Y
 ```
 ```csharp
 Process.ExtractTop("goolge", new[] { "google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl" }, limit: 3);
-// [(string: google, score: 83, index: 0), (string: googleplus, score: 75, index: 5), (string: plexoogl, score: 43, index: 7)]
+// [(string: google, score: 83.33333333333334, index: 0), (string: googleplus, score: 75.00000000000001, index: 5), (string: plexoogl, score: 42.85714285714286, index: 7)]
 ```
 ```csharp
 Process.ExtractAll("goolge", new[] { "google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl" });
-// [(string: google, score: 83, index: 0), (string: bing, score: 36, index: 1), ...]
+// [(string: google, score: 83.33333333333334, index: 0), (string: bing, score: 36, index: 1), ...]
 
 // With score cutoff
 Process.ExtractAll("goolge", new[] { "google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl" }, cutoff: 40);
-// [(string: google, score: 83, index: 0), (string: googleplus, score: 75, index: 5), (string: plexoogl, score: 43, index: 7)]
+// [(string: google, score: 83.33333333333334, index: 0), (string: googleplus, score: 75.00000000000001, index: 5), (string: plexoogl, score: 42.85714285714286, index: 7)]
 ```
 ```csharp
 Process.ExtractSorted("goolge", new[] { "google", "bing", "facebook", "linkedin", "twitter", "googleplus", "bingnews", "plexoogl" });
-// [(string: google, score: 83, index: 0), (string: googleplus, score: 75, index: 5), (string: plexoogl, score: 43, index: 7), ...]
+// [(string: google, score: 83.33333333333334, index: 0), (string: googleplus, score: 75.00000000000001, index: 5), (string: plexoogl, score: 42.85714285714286, index: 7), ...]
 ```
 
 Extraction uses `WeightedRatio` and `Full` preprocessing by default. Override these in the method parameters to use different scorers and processing:
 ```csharp
 Process.ExtractOne("cowboys", new[] { "Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys" }, s => s, ScorerCache.Get<DefaultRatioScorer>());
-// (string: Dallas Cowboys, score: 57, index: 3)
+// (string: Dallas Cowboys, score: 57.14285714285714, index: 3)
 ```
 
 ### Generic Type Extraction
@@ -289,7 +289,7 @@ var pipeline = Process.Configure()
     .Build();
 
 var result = pipeline.ExtractOne("cowboys", new[] { "Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys" });
-//(string: Dallas Cowboys, score: 67, index: 3)
+//(string: Dallas Cowboys, score: 66.66666666666667, index: 3)
 ```
 
 ### Parallel Execution
@@ -392,6 +392,7 @@ Pre-initialize with a query string for repeated comparisons. These implement `ID
 ```csharp
 using var scorer = new CachedWeightedRatioScorer("search query");
 double score = scorer.Score("candidate string");
+// 27.14285714285714
 ```
 
 Available cached scorers:
