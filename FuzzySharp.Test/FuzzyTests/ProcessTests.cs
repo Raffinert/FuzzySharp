@@ -8,43 +8,13 @@ namespace Raffinert.FuzzySharp.Test.FuzzyTests;
 
 public class ProcessTests
 {
-    private string   _s1;
-    private string   _s1A;
-    private string   _s2;
-    private string   _s3;
-    private string   _s4;
-    private string   _s5;
-    private string   _s6;
-    private string[] _cirqueStrings;
-    private string[] _baseballStrings;
-
-    public ProcessTests()
-    {
-        _s1 = "new york mets";
-        _s1A = "new york mets";
-        _s2 = "new YORK mets";
-        _s3 = "the wonderful new york mets";
-        _s4 = "new york mets vs atlanta braves";
-        _s5 = "atlanta braves vs new york mets";
-        _s6 = "new york mets - atlanta braves";
-        _cirqueStrings = new[]
-        {
-            "cirque du soleil - zarkana - las vegas",
-            "cirque du soleil ",
-            "cirque du soleil las vegas",
-            "zarkana las vegas",
-            "las vegas cirque du soleil at the bellagio",
-            "zarakana - cirque du soleil - bellagio"
-        };
-
-        _baseballStrings = new[]
-        {
-            "new york mets vs chicago cubs",
-            "chicago cubs vs chicago white sox",
-            "philladelphia phillies vs atlanta braves",
-            "braves vs mets",
-        };
-    }
+    private readonly string[] _baseballStrings =
+    [
+        "new york mets vs chicago cubs",
+        "chicago cubs vs chicago white sox",
+        "philladelphia phillies vs atlanta braves",
+        "braves vs mets"
+    ];
 
     [Fact]
     public void TestGetBestChoice1()
@@ -199,69 +169,4 @@ public class ProcessTests
         var best = Process.ExtractOne(query, choices);
         Assert.Equal(best.Value, choices[1]);
     }
-
-//[Fact]
-//public void  generate_choices() {
-//            choices = ['a', 'Bb', 'CcC']
-//            for choice in choices {
-//                yield choice
-//        search = 'aaa'
-//        result = [(value, confidence) for value, confidence in
-//                  Process.Extract(search, generate_choices())]
-//        .assertTrue(len(result) > 0)
-
-//    }
-
-//[Fact]
-//public void  test_dict_like_Extract() {
-//        """We should be able to use a dict-like object for choices, not only a
-//        dict, and still get dict-like output.
-//        """
-//        try {
-//            from UserDict import UserDict
-//        except ImportError {
-//            from collections import UserDict
-//        choices = UserDict({ 'aa' { 'bb', 'a1' { None})
-//        search = 'aaa'
-//        result = Process.Extract(search, choices)
-//        .assertTrue(len(result) > 0)
-//        for value, confidence, key in result {
-//            .assertTrue(value in choices.values())
-
-//    }
-
-//[Fact]
-//public void  test_dedupe() {
-//        """We should be able to use a list-like object for contains_dupes
-//        """
-//        // Test 1
-//        contains_dupes = ['Frodo Baggins', 'Tom Sawyer', 'Bilbo Baggin', 'Samuel L. Jackson', 'F. Baggins', 'Frody Baggins', 'Bilbo Baggins']
-
-//        result = Process.dedupe(contains_dupes)
-//        .assertTrue(len(result) < len(contains_dupes))
-
-//        // Test 2
-//        contains_dupes = ['Tom', 'Dick', 'Harry']
-
-//// we should end up with the same list since no duplicates are contained in the list (e.g. original list is returned)
-//        deduped_list = ['Tom', 'Dick', 'Harry']
-
-//        result = Process.dedupe(contains_dupes)
-//        Assert.Equal(result, deduped_list)
-
-//    }
-
-//[Fact]
-//public void  test_simplematch() {
-//        basic_string = 'a, b'
-//        match_strings = ['a, b']
-
-//        result = Process.ExtractOne(basic_string, match_strings, scorer=fuzz.ratio)
-//        part_result = Process.ExtractOne(basic_string, match_strings, scorer=fuzz.partial_ratio)
-
-//        Assert.Equal(result, ('a, b', 100))
-//        Assert.Equal(part_result, ('a, b', 100))
-
-//    }
 }
-

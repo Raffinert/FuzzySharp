@@ -33,7 +33,7 @@ public class RegressionTests
         string whitespaceString = " ";
 
         string[] nullOrWhitespaceStrings = [emptyString, whitespaceString];
-        MethodInfo getScorerCacheMethodInfo = typeof(ScorerCache).GetMethod("Get");
+        MethodInfo getScorerCacheMethodInfo = typeof(ScorerCache).GetMethod("Get")!;
 
         foreach (var t in scorerTypes)
         {
@@ -63,15 +63,11 @@ public class RegressionTests
                 {
                     scorer.Score(s, s);
                 }
-                catch (InvalidOperationException e)
+                catch (InvalidOperationException)
                 {
                     Assert.Fail($"{t.Name}.score failed with empty string as both parameters");
                 }
-
             }
-
         }
-
     }
-        
 }
