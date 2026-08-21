@@ -9,7 +9,8 @@ permissions:
   contents: read
 
 jobs:
-  build-test-package:
+  build:
+    name: Build, test, and pack
     runs-on: windows-latest
 
     steps:
