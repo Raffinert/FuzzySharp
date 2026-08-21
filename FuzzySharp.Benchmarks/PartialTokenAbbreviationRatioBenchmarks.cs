@@ -9,13 +9,13 @@ namespace Raffinert.FuzzySharp.Benchmarks;
 public class PartialTokenAbbreviationRatioBenchmarks
 {
     [Benchmark]
-    public int PartialTokenAbbreviationRatio()
+    public double PartialTokenAbbreviationRatio()
     {
         return Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", StringPreprocessor.Full);
     }
 
     [Benchmark]
-    public int PartialTokenAbbreviationRatioClassic()
+    public double PartialTokenAbbreviationRatioClassic()
     {
         return Classic.Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", Classic.PreProcess.PreprocessMode.Full);
     }

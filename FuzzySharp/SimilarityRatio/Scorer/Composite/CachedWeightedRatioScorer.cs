@@ -25,7 +25,7 @@ public sealed class CachedWeightedRatioScorer : ICachedRatioScorer
         _tokenSetScorer = new CachedTokenSetScorer(_input1);
     }
 
-    public int Score(string input2)
+    public double Score(string input2)
     {
         int len1 = _input1.Length;
         int len2 = input2.Length;
@@ -39,7 +39,7 @@ public sealed class CachedWeightedRatioScorer : ICachedRatioScorer
         double unbaseScale = UNBASE_SCALE;
         double partialScale = PARTIAL_SCALE;
 
-        int baseRatio = _baseRatioScorer.Score(input2);
+        double baseRatio = _baseRatioScorer.Score(input2);
         double lenRatio = (double)Math.Max(len1, len2) / Math.Min(len1, len2);
 
         // if strings are similar length don't use partials
@@ -54,12 +54,12 @@ public sealed class CachedWeightedRatioScorer : ICachedRatioScorer
             double partialSor = _tokenSortScorer.Score(input2) * unbaseScale * partialScale;
             double partialSet = _tokenSetScorer.Score(input2) * unbaseScale * partialScale;
 
-            return (int)Math.Round(Math.Max(baseRatio, Math.Max(partial, Math.Max(partialSor, partialSet))));
+            return Math.Max(baseRatio, Math.Max(partial, Math.Max(partialSor, partialSet)));
         }
 
         double tokenSort = _tokenSortScorer.Score(input2) * unbaseScale;
         double tokenSet = _tokenSetScorer.Score(input2) * unbaseScale;
-        return (int)Math.Round(Math.Max(baseRatio, Math.Max(tokenSort, tokenSet)));
+        return Math.Max(baseRatio, Math.Max(tokenSort, tokenSet));
     }
 
     public void Dispose()

@@ -21,7 +21,7 @@ public sealed class CachedTokenSortScorer : ICachedRatioScorer
         _isStrategyOwner = isStrategyOwner;
     }
 
-    public int Score(string input2)
+    public double Score(string input2)
     {
         var sorted2 = input2.NormalizeSpacesAndSort();
         return _strategy.Calculate(sorted2);

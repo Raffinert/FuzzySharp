@@ -15,14 +15,14 @@ namespace Raffinert.FuzzySharp.Utils;
 internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
 {
     private readonly ArrayPool<ulong> _pool;
-    private readonly DictionarySlimPooled<char, int> _indexMap; // non-ASCII only (1-based)
+    private DictionarySlimPooled<char, int> _indexMap; // non-ASCII only (1-based), allocated lazily
 
     private readonly ulong[] _fixedData; // Single rental: [asciiMasks (256*blocks) | asciiPresence (4) | zeroMask (blocks)]
     private readonly int _asciiMasksOffset;
     private readonly int _asciiPresenceOffset;
     private readonly int _zeroMaskOffset;
 
-    private ulong[] _buffer;     // capacity * blocks for non-ASCII (separate rental, can grow)
+    private ulong[] _buffer;     // capacity * blocks for non-ASCII (rented lazily, can grow)
 
     private readonly int _blocks;
     private int _capacity;
@@ -55,39 +55,74 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
         // Clear all fixed data
         Array.Clear(_fixedData, 0, totalFixedSize);
 
-        // Non-ASCII buffer (separate rental, can grow)
+        // Non-ASCII state is allocated on first use so ASCII-only patterns avoid
+        // an extra object allocation and three pool operations.
         _capacity = Math.Max(2, estimatedNonAsciiCharCount);
-        _buffer = _pool.Rent(_capacity * _blocks);
-        // Intentionally not clearing entire _buffer. Each new key slice is cleared once.
-
-        _indexMap = new DictionarySlimPooled<char, int>(estimatedNonAsciiCharCount);
         _next = 0;
     }
 
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddBit(char key, int position)
+    public void Populate(ReadOnlySpan<char> source)
     {
         if (_disposed) throw new ObjectDisposedException(nameof(PatternMatchVectorChar));
 
-        int block = position >> 6;
-        int offset = position & 63;
-
-        // Fast path: ASCII / extended ASCII
-        if ((uint)key <= 255u)
+        if (_blocks == 1)
         {
-            _fixedData[_asciiMasksOffset + (key * _blocks) + block] |= 1UL << offset;
-            
-            // Update presence bitmap
-            int presenceIndex = key >> 6;
-            int presenceOffset = key & 63;
-            _fixedData[_asciiPresenceOffset + presenceIndex] |= 1UL << presenceOffset;
-            
+            PopulateSingleBlock(source);
             return;
         }
 
-        // Non-ASCII: dictionary -> index -> buffer slice
-        ref int index = ref _indexMap.GetOrAddValueRef(key);
+        for (var block = 0; block < _blocks; block++)
+        {
+            var blockStart = block << 6;
+            var blockLength = Math.Min(64, source.Length - blockStart);
+
+            for (var offset = 0; offset < blockLength; offset++)
+            {
+                var key = source[blockStart + offset];
+                var bit = 1UL << offset;
+
+                if (key <= 255u)
+                {
+                    _fixedData[_asciiMasksOffset + (key * _blocks) + block] |= bit;
+                    _fixedData[_asciiPresenceOffset + (key >> 6)] |= 1UL << (key & 63);
+                }
+                else
+                {
+                    AddNonAsciiBit(key, block, bit);
+                }
+            }
+        }
+    }
+
+    private void PopulateSingleBlock(ReadOnlySpan<char> source)
+    {
+        for (var position = 0; position < source.Length; position++)
+        {
+            var key = source[position];
+            var bit = 1UL << position;
+
+            if (key <= 255u)
+            {
+                _fixedData[_asciiMasksOffset + key] |= bit;
+                _fixedData[_asciiPresenceOffset + (key >> 6)] |= 1UL << (key & 63);
+            }
+            else
+            {
+                AddNonAsciiBit(key, 0, bit);
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void AddNonAsciiBit(char key, int block, ulong bit)
+    {
+        if (_indexMap == null)
+        {
+            InitializeNonAsciiStorage();
+        }
+
+        ref int index = ref _indexMap!.GetOrAddValueRef(key);
 
         if (index == 0)
         {
@@ -100,7 +135,14 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
             Array.Clear(_buffer, (index - 1) * _blocks, _blocks);
         }
 
-        _buffer[(index - 1) * _blocks + block] |= 1UL << offset;
+        _buffer[(index - 1) * _blocks + block] |= bit;
+    }
+
+    private void InitializeNonAsciiStorage()
+    {
+        _buffer = _pool.Rent(_capacity * _blocks);
+        // Intentionally do not clear the entire buffer. Each new key slice is cleared once.
+        _indexMap = new DictionarySlimPooled<char, int>(_capacity);
     }
 
 
@@ -109,7 +151,7 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
     {
         if (_disposed) throw new ObjectDisposedException(nameof(PatternMatchVectorChar));
 
-        if ((uint)key <= 255u)
+        if (key <= 255u)
         {
             // Check presence bitmap instead of scanning the mask
             int presenceIndex = key >> 6;
@@ -125,7 +167,7 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
             return false;
         }
 
-        if (_indexMap.TryGetValue(key, out int index))
+        if (_indexMap != null && _indexMap.TryGetValue(key, out int index))
         {
             mask = new ReadOnlySpan<ulong>(_buffer, (index - 1) * _blocks, _blocks);
             return true;
@@ -138,7 +180,21 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ReadOnlySpan<ulong> GetOrZero(char key)
     {
-        return TryGetMask(key, out var mask) ? mask : new ReadOnlySpan<ulong>(_fixedData, _zeroMaskOffset, _blocks);
+        if (_disposed) throw new ObjectDisposedException(nameof(PatternMatchVectorChar));
+
+        // Dense ASCII masks are already zero for absent characters, so the
+        // presence-bitmap lookup performed by TryGetMask is unnecessary here.
+        if (key <= 255u)
+        {
+            return new ReadOnlySpan<ulong>(_fixedData, _asciiMasksOffset + (key * _blocks), _blocks);
+        }
+
+        if (_indexMap != null && _indexMap.TryGetValue(key, out int index))
+        {
+            return new ReadOnlySpan<ulong>(_buffer, (index - 1) * _blocks, _blocks);
+        }
+
+        return new ReadOnlySpan<ulong>(_fixedData, _zeroMaskOffset, _blocks);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -156,14 +212,14 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
     {
         if (_disposed) throw new ObjectDisposedException(nameof(PatternMatchVectorChar));
 
-        if ((uint)key <= 255u)
+        if (key <= 255u)
         {
             int presenceIndex = key >> 6;
             int presenceOffset = key & 63;
             return (_fixedData[_asciiPresenceOffset + presenceIndex] & (1UL << presenceOffset)) != 0;
         }
 
-        return _indexMap.ContainsKey(key);
+        return _indexMap != null && _indexMap.ContainsKey(key);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -185,10 +241,13 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
     {
         if (_disposed) return;
 
-        _indexMap.Dispose();
-
         _pool.Return(_fixedData);
-        _pool.Return(_buffer);
+
+        if (_indexMap != null)
+        {
+            _indexMap.Dispose();
+            _pool.Return(_buffer);
+        }
 
         _disposed = true;
     }

@@ -8,37 +8,37 @@ namespace Raffinert.FuzzySharp.Benchmarks;
 public class TokenInitialismRatioBenchmarks
 {
     [Benchmark]
-    public int TokenInitialismRatio1()
+    public double TokenInitialismRatio1()
     {
         return Fuzz.TokenInitialismRatio("NASA", "National Aeronautics and Space Administration");
     }
 
     [Benchmark]
-    public int TokenInitialismRatio1Classic()
+    public double TokenInitialismRatio1Classic()
     {
         return Classic.Fuzz.TokenInitialismRatio("NASA", "National Aeronautics and Space Administration");
     }
 
     [Benchmark]
-    public int TokenInitialismRatio2()
+    public double TokenInitialismRatio2()
     {
         return Fuzz.TokenInitialismRatio("NASA", "National Aeronautics Space Administration");
     }
 
     [Benchmark]
-    public int TokenInitialismRatio2Classic()
+    public double TokenInitialismRatio2Classic()
     {
         return Classic.Fuzz.TokenInitialismRatio("NASA", "National Aeronautics Space Administration");
     }
 
     [Benchmark]
-    public int TokenInitialismRatio3()
+    public double TokenInitialismRatio3()
     {
         return Fuzz.TokenInitialismRatio("NASA", "National Aeronautics Space Administration, Kennedy Space Center, Cape Canaveral, Florida 32899");
     }
 
     [Benchmark]
-    public int TokenInitialismRatio3Classic()
+    public double TokenInitialismRatio3Classic()
     {
         return Classic.Fuzz.TokenInitialismRatio("NASA", "National Aeronautics Space Administration, Kennedy Space Center, Cape Canaveral, Florida 32899");
     }

@@ -32,13 +32,13 @@ public class PartialRatioLongBenchmarks
     }
 
     [Benchmark]
-    public int PartialRatio()
+    public double PartialRatio()
     {
         return Fuzz.PartialRatio(_s1, _s2);
     }
 
     [Benchmark]
-    public int PartialRatioClassic()
+    public double PartialRatioClassic()
     {
         return Classic.Fuzz.PartialRatio(_s1, _s2);
     }

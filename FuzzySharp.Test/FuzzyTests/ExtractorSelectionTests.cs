@@ -44,6 +44,21 @@ public class ExtractorSelectionTests
     }
 
     [Fact]
+    public void ExtractOne_PreservesFractionalScoresAndCutoff()
+    {
+        var scorer = new MapScorer(("below", 80.24), ("winner", 80.26));
+
+        var result = Process.ExtractOne(
+            "query",
+            ["below", "winner"],
+            IdentityProcessor,
+            scorer,
+            cutoff: 80.25);
+
+        AssertResult(result, "winner", 80.26, 1);
+    }
+
+    [Fact]
     public void ExtractOne_GenericValueChoices_WithStringQuery_UsesExtractor()
     {
         var choices = new[] { new Choice("below"), new Choice("winner"), new Choice("lower") };
@@ -286,7 +301,7 @@ public class ExtractorSelectionTests
         }
     }
 
-    private static void AssertResult(ExtractedResult<string> result, string value, int score, int index)
+    private static void AssertResult(ExtractedResult<string> result, string value, double score, int index)
     {
         Assert.Equal(value, result.Value);
         Assert.Equal(score, result.Score);
@@ -305,7 +320,7 @@ public class ExtractorSelectionTests
 
     public sealed class MapScorer : IRatioScorer
     {
-        private readonly Dictionary<string, int> _scores;
+        private readonly Dictionary<string, double> _scores;
         private int _scoreCalls;
 
         public MapScorer()
@@ -313,20 +328,20 @@ public class ExtractorSelectionTests
         {
         }
 
-        public MapScorer(params (string Value, int Score)[] scores)
+        public MapScorer(params (string Value, double Score)[] scores)
         {
             _scores = scores.ToDictionary(score => score.Value, score => score.Score);
         }
 
         public int ScoreCalls => _scoreCalls;
 
-        public int Score(string input1, string input2)
+        public double Score(string input1, string input2)
         {
             Interlocked.Increment(ref _scoreCalls);
             return _scores.TryGetValue(input2, out var score) ? score : 0;
         }
 
-        public int Score(string input1, string input2, Func<string, string> preprocessor)
+        public double Score(string input1, string input2, Func<string, string> preprocessor)
         {
             return Score(preprocessor(input1), preprocessor(input2));
         }
@@ -334,14 +349,14 @@ public class ExtractorSelectionTests
 
     private sealed class CachedMapScorer : ICachedRatioScorer
     {
-        private readonly Dictionary<string, int> _scores;
+        private readonly Dictionary<string, double> _scores;
 
-        public CachedMapScorer(params (string Value, int Score)[] scores)
+        public CachedMapScorer(params (string Value, double Score)[] scores)
         {
             _scores = scores.ToDictionary(score => score.Value, score => score.Score);
         }
 
-        public int Score(string input2)
+        public double Score(string input2)
         {
             return _scores.TryGetValue(input2, out var score) ? score : 0;
         }

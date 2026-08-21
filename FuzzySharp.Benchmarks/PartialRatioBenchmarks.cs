@@ -8,13 +8,13 @@ namespace Raffinert.FuzzySharp.Benchmarks;
 public class PartialRatioBenchmarks
 {
     [Benchmark]
-    public int PartialRatio()
+    public double PartialRatio()
     {
         return Fuzz.PartialRatio("similar", "somewhresimlrbetweenthisstring");
     }
 
     [Benchmark]
-    public int PartialRatioClassic()
+    public double PartialRatioClassic()
     {
         return Classic.Fuzz.PartialRatio("similar", "somewhresimlrbetweenthisstring");
     }

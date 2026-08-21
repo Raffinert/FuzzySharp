@@ -84,13 +84,15 @@ Compare two strings directly:
 
 ```csharp
 Fuzz.Ratio("mysmilarstring", "mysimilarstring");
-// 97
+// 96.551724137931
 
 Fuzz.WeightedRatio(
     "The quick brown fox jimps ofver the small lazy dog",
     "the quick brown fox jumps over the small lazy dog");
-// 95
+// 94.9494949494949
 ```
+
+Similarity scores are `double` values in the range 0–100. Some extraction output examples below are rounded for readability.
 
 By default, `Fuzz` methods compare strings as-is. `Process` extraction methods use `StringPreprocessor.Full` by default, which normalizes whitespace, lowercases, and strips non-alphanumeric characters.
 
@@ -389,7 +391,7 @@ var weighted           = ScorerCache.Get<WeightedRatioScorer>();
 Pre-initialize with a query string for repeated comparisons. These implement `IDisposable`:
 ```csharp
 using var scorer = new CachedWeightedRatioScorer("search query");
-int score = scorer.Score("candidate string");
+double score = scorer.Score("candidate string");
 ```
 
 Available cached scorers:
@@ -522,6 +524,66 @@ The package name is `Raffinert.FuzzySharp`, and the default namespace is `Raffin
 - `PreprocessMode`-based APIs were replaced with `Func<string, string>` preprocessors.
 - Use `StringPreprocessor.Full`, `StringPreprocessor.None`, or a custom delegate instead of `PreprocessMode.Full` or `PreprocessMode.None`.
 - Generic extraction methods that use extractor delegates are now named `Extract*By`, such as `ExtractOneBy` and `ExtractTopBy`.
+
+### From Raffinert.FuzzySharp v5 to v6
+
+Similarity scoring now uses `double` throughout the library so fractional scores are preserved instead of being rounded to integers:
+
+```csharp
+double score = Fuzz.Ratio("new york mets", "new york mets!");
+
+ExtractedResult<string> match = Process.ExtractOne(
+    "goolge",
+    new[] { "google", "bing", "facebook" });
+
+double matchScore = match.Score;
+```
+
+The following APIs changed from `int` to `double`:
+
+- `Fuzz` similarity methods
+- `Scorer` and `CachedScorer` delegates
+- `IRatioScorer`, `ICachedRatioScorer`, and their generic variants
+- scoring strategies, including `ICachedStrategy`
+- `ExtractedResult<T>.Score`
+- extraction `cutoff` parameters across standard, cached, parallel, and pipeline APIs
+
+Extraction cutoffs can therefore retain fractional thresholds:
+
+```csharp
+var matches = Process.ExtractAll(
+    "goolge",
+    new[] { "google", "bing", "facebook" },
+    cutoff: 87.5);
+```
+
+Custom scorers and method-group targets must update their return types accordingly:
+
+```csharp
+public sealed class CustomScorer : IRatioScorer
+{
+    public double Score(string input1, string input2) => /* calculate score */ 0.0;
+
+    public double Score(
+        string input1,
+        string input2,
+        Func<string, string> preprocessor) =>
+        Score(preprocessor(input1), preprocessor(input2));
+}
+```
+
+The optional `scoreCutoff` argument was removed from Indel, Levenshtein, and longest-common-subsequence distance and similarity APIs. Compute the result first and apply any threshold explicitly:
+
+```csharp
+// v5
+int limitedDistance = Levenshtein.Distance("kitten", "sitting", scoreCutoff: 2);
+
+// v6
+int distance = Levenshtein.Distance("kitten", "sitting");
+bool isWithinCutoff = distance <= 2;
+```
+
+This does not remove extraction filtering: `Process` and `ResultExtractor` still accept `cutoff`, now as a `double`. Raw edit distances and unnormalized similarity counts remain `int`; normalized distance and similarity values remain `double` in the range 0–1.
 
 ## Credits
 

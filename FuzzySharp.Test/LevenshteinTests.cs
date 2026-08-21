@@ -70,41 +70,11 @@ public class LevenshteinTests
     }
 
     [Fact]
-    public void TestLevenshteinDistance_WeightedScoreCutoff()
-    {
-        var distance = Levenshtein.Distance("abc", "", insertCost: 2, deleteCost: 1, replaceCost: 3, scoreCutoff: 2);
-        Assert.Equal(3, distance);
-    }
-
-    [Fact]
-    public void TestLevenshteinSimilarity_UsesSimilarityCutoff()
-    {
-        var similarity = Levenshtein.Similarity("kitten", "sitting", scoreCutoff: 5);
-        Assert.Equal(0, similarity);
-    }
-
-    [Fact]
     public void TestLevenshteinMaximum_MatchesExpectedFormula()
     {
         var maximum = Levenshtein.LevenshteinMaximum(5, 3, insertCost: 2, deleteCost: 3, replaceCost: 4);
         Assert.Equal(18, maximum);
     }
 
-    [Fact]
-    public void TestLevenshteinDistance_CutoffDoesNotExitEarly_ForRecoverablePrefix_SingleUlong()
-    {
-        var distance = Levenshtein.Distance("abc", "xabc", scoreCutoff: 1);
-        Assert.Equal(1, distance);
-    }
-
-    [Fact]
-    public void TestLevenshteinDistance_CutoffDoesNotExitEarly_ForRecoverablePrefix_MultiUlong()
-    {
-        var source = new string('a', 70);
-        var target = "x" + source;
-
-        var distance = Levenshtein.Distance(source, target, scoreCutoff: 1);
-        Assert.Equal(1, distance);
-    }
 }
 

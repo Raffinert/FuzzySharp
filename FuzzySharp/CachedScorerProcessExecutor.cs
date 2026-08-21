@@ -18,7 +18,7 @@ internal static class CachedScorerProcessExecutor
         Func<T, string> extractor,
         Func<string, string> processor,
         ICachedRatioScorer scorer,
-        int cutoff,
+        double cutoff,
         bool useParallel,
         ParallelOptions parallelOptions)
     {
@@ -35,7 +35,7 @@ internal static class CachedScorerProcessExecutor
         IEnumerable<string> choices,
         Func<string, string> processor,
         ICachedRatioScorer scorer,
-        int cutoff,
+        double cutoff,
         bool useParallel,
         ParallelOptions parallelOptions)
     {
@@ -53,7 +53,7 @@ internal static class CachedScorerProcessExecutor
         Func<string, string> processor,
         ICachedRatioScorer scorer,
         int limit,
-        int cutoff,
+        double cutoff,
         bool useParallel,
         ParallelOptions parallelOptions)
     {
@@ -71,7 +71,7 @@ internal static class CachedScorerProcessExecutor
         Func<string, string> processor,
         ICachedRatioScorer scorer,
         int limit,
-        int cutoff,
+        double cutoff,
         bool useParallel,
         ParallelOptions parallelOptions)
     {
@@ -89,7 +89,7 @@ internal static class CachedScorerProcessExecutor
         Func<T, string> extractor,
         Func<string, string> processor,
         ICachedRatioScorer scorer,
-        int cutoff,
+        double cutoff,
         bool useParallel,
         ParallelOptions parallelOptions)
     {
@@ -106,7 +106,7 @@ internal static class CachedScorerProcessExecutor
             IEnumerable<string> choices,
             Func<string, string> processor,
             ICachedRatioScorer scorer,
-            int cutoff,
+            double cutoff,
             bool useParallel,
             ParallelOptions parallelOptions)
     {
@@ -123,7 +123,7 @@ internal static class CachedScorerProcessExecutor
         Func<T, string> extractor,
         Func<string, string> processor,
         ICachedRatioScorer scorer,
-        int cutoff,
+        double cutoff,
         bool useParallel,
         ParallelOptions parallelOptions)
     {
@@ -140,7 +140,7 @@ internal static class CachedScorerProcessExecutor
         IEnumerable<string> choices,
         Func<string, string> processor,
         ICachedRatioScorer scorer,
-        int cutoff,
+        double cutoff,
         bool useParallel,
         ParallelOptions parallelOptions)
     {

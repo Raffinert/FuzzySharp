@@ -2,11 +2,11 @@ using System.Collections.Generic;
 
 namespace Raffinert.FuzzySharp.Extractor;
 
-internal readonly struct ScoredCandidate<T>(T value, int score, int index)
+internal readonly struct ScoredCandidate<T>(T value, double score, int index)
 {
     public T Value { get; } = value;
 
-    public int Score { get; } = score;
+    public double Score { get; } = score;
 
     public int Index { get; } = index;
 }
@@ -27,7 +27,7 @@ internal struct BestCandidate<T>
 
     public bool HasValue { get; private set; }
 
-    public void Consider(T value, int score, int index, int cutoff)
+    public void Consider(T value, double score, int index, double cutoff)
     {
         if (score < cutoff)
         {
@@ -45,7 +45,7 @@ internal struct BestCandidate<T>
     {
         if (other.HasValue)
         {
-            Consider(other.Candidate.Value, other.Candidate.Score, other.Candidate.Index, int.MinValue);
+            Consider(other.Candidate.Value, other.Candidate.Score, other.Candidate.Index, double.NegativeInfinity);
         }
     }
 }

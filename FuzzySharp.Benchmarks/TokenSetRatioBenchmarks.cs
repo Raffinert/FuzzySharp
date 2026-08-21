@@ -18,25 +18,25 @@ public class TokenSetRatioBenchmarks
     }
 
     [Benchmark]
-    public int TokenSetRatio()
+    public double TokenSetRatio()
     {
         return Fuzz.TokenSetRatio("fuzzy was a bear", "fuzzy fuzzy fuzzy bear");
     }
 
     [Benchmark]
-    public int TokenSetRatioClassic()
+    public double TokenSetRatioClassic()
     {
         return Classic.Fuzz.TokenSetRatio("fuzzy was a bear", "fuzzy fuzzy fuzzy bear");
     }
 
     [Benchmark]
-    public int TokenSetRatioCached()
+    public double TokenSetRatioCached()
     {
         return new CachedTokenSetScorer("fuzzy was a bear").Score("fuzzy fuzzy fuzzy bear");
     }
 
     [Benchmark]
-    public int TokenSetRatioAcrossRunsCached()
+    public double TokenSetRatioAcrossRunsCached()
     {
         return _cachedTokenSetScorer.Score("fuzzy fuzzy fuzzy bear");
     }

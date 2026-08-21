@@ -8,13 +8,13 @@ namespace Raffinert.FuzzySharp.Benchmarks;
 public class PartialTokenSortRatioBenchmarks
 {
     [Benchmark]
-    public int PartialTokenSortRatio()
+    public double PartialTokenSortRatio()
     {
         return Fuzz.PartialTokenSortRatio("order words out of", "  words out of order");
     }
 
     [Benchmark]
-    public int PartialTokenSortRatioClassic()
+    public double PartialTokenSortRatioClassic()
     {
         return Classic.Fuzz.PartialTokenSortRatio("order words out of", "  words out of order");
     }

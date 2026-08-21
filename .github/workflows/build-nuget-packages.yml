@@ -1,0 +1,44 @@
+name: Build, Test, and Package
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build, test, and pack
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore FuzzySharp.slnx
+
+      - name: Build
+        run: dotnet build FuzzySharp.slnx --configuration Release --no-restore -p:GeneratePackageOnBuild=false
+
+      - name: Test
+        run: dotnet test FuzzySharp.Test/FuzzySharp.Test.csproj --configuration Release --no-restore --no-build
+
+      - name: Pack
+        run: dotnet pack FuzzySharp/FuzzySharp.csproj --configuration Release --no-restore --no-build --output artifacts -p:GeneratePackageOnBuild=false -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg
+
+      - name: Upload NuGet packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
+          if-no-files-found: error

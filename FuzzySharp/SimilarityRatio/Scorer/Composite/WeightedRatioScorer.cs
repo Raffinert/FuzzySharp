@@ -8,7 +8,7 @@ public class WeightedRatioScorer : ScorerBase
     private static readonly double PARTIAL_SCALE = .90;
     private static readonly bool TRY_PARTIALS = true;
 
-    public override int Score(string input1, string input2)
+    public override double Score(string input1, string input2)
     {
         int len1 = input1.Length;
         int len2 = input2.Length;
@@ -22,7 +22,7 @@ public class WeightedRatioScorer : ScorerBase
         double unbaseScale = UNBASE_SCALE;
         double partialScale = PARTIAL_SCALE;
 
-        int baseRatio = Fuzz.Ratio(input1, input2);
+        double baseRatio = Fuzz.Ratio(input1, input2);
         double lenRatio = (double)Math.Max(len1, len2) / Math.Min(len1, len2);
 
         // if strings are similar length don't use partials
@@ -37,11 +37,11 @@ public class WeightedRatioScorer : ScorerBase
             double partialSor = Fuzz.TokenSortRatio(input1, input2) * unbaseScale * partialScale;
             double partialSet = Fuzz.TokenSetRatio(input1, input2) * unbaseScale * partialScale;
 
-            return (int)Math.Round(Math.Max(baseRatio, Math.Max(partial, Math.Max(partialSor, partialSet))));
+            return Math.Max(baseRatio, Math.Max(partial, Math.Max(partialSor, partialSet)));
         }
 
         double tokenSort = Fuzz.TokenSortRatio(input1, input2) * unbaseScale;
         double tokenSet = Fuzz.TokenSetRatio(input1, input2) * unbaseScale;
-        return (int)Math.Round(Math.Max(baseRatio, Math.Max(tokenSort, tokenSet)));
+        return Math.Max(baseRatio, Math.Max(tokenSort, tokenSet));
     }
 }

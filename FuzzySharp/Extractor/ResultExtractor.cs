@@ -10,12 +10,12 @@ public static partial class ResultExtractor
 {
     private static ExtractedResult<T> ExtractOneCore<T>(
         IEnumerable<T> choices,
-        Func<T, int> scoreSelector,
-        int cutoff)
+        Func<T, double> scoreSelector,
+        double cutoff)
     {
         var index = 0;
         var bestIndex = 0;
-        var bestScore = 0;
+        var bestScore = 0.0;
         T bestValue = default;
         var hasBest = false;
 
@@ -43,9 +43,9 @@ public static partial class ResultExtractor
 
     private static IEnumerable<ExtractedResult<T>> ExtractTopCore<T>(
         IEnumerable<T> choices,
-        Func<T, int> scoreSelector,
+        Func<T, double> scoreSelector,
         int limit,
-        int cutoff)
+        double cutoff)
     {
         var comparer = ScoredCandidateComparer<T>.Instance;
         var heap = new MinHeap<ScoredCandidate<T>>(comparer);
@@ -98,7 +98,7 @@ public static partial class ResultExtractor
         return results;
     }
 
-    public static IEnumerable<ExtractedResult<T>> ExtractWithoutOrder<T>(string query, IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, IRatioScorer scorer, int cutoff = 0)
+    public static IEnumerable<ExtractedResult<T>> ExtractWithoutOrder<T>(string query, IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, IRatioScorer scorer, double cutoff = 0)
     {
         int index = 0;
         processor ??= Process.DefaultStringProcessor;
@@ -106,7 +106,7 @@ public static partial class ResultExtractor
 
         foreach (var choice in choices)
         {
-            int score = scorer.Score(processedQuery, processor(extractor(choice)));
+            double score = scorer.Score(processedQuery, processor(extractor(choice)));
             if (score >= cutoff)
             {
                 yield return new ExtractedResult<T>(choice, score, index);
@@ -115,7 +115,7 @@ public static partial class ResultExtractor
         }
     }
 
-    public static IEnumerable<ExtractedResult<string>> ExtractWithoutOrder(string query, IEnumerable<string> choices, Func<string, string> processor, IRatioScorer scorer, int cutoff = 0)
+    public static IEnumerable<ExtractedResult<string>> ExtractWithoutOrder(string query, IEnumerable<string> choices, Func<string, string> processor, IRatioScorer scorer, double cutoff = 0)
     {
         int index = 0;
         processor ??= Process.DefaultStringProcessor;
@@ -123,7 +123,7 @@ public static partial class ResultExtractor
 
         foreach (var choice in choices)
         {
-            int score = scorer.Score(processedQuery, processor(choice));
+            double score = scorer.Score(processedQuery, processor(choice));
             if (score >= cutoff)
             {
                 yield return new ExtractedResult<string>(choice, score, index);
@@ -132,55 +132,55 @@ public static partial class ResultExtractor
         }
     }
 
-    public static IEnumerable<ExtractedResult<T>> ExtractWithoutOrder<T>(T query, IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, IRatioScorer scorer, int cutoff = 0)
+    public static IEnumerable<ExtractedResult<T>> ExtractWithoutOrder<T>(T query, IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, IRatioScorer scorer, double cutoff = 0)
     {
         var extracted = extractor(query);
         return ExtractWithoutOrder(extracted, choices, extractor, processor, scorer, cutoff);
     }
 
-    public static ExtractedResult<T> ExtractOne<T>(T query, IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, IRatioScorer scorer, int cutoff = 0)
+    public static ExtractedResult<T> ExtractOne<T>(T query, IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, IRatioScorer scorer, double cutoff = 0)
     {
         processor ??= Process.DefaultStringProcessor;
         var processedQuery = processor(extractor(query));
         return ExtractOneCore(choices, choice => scorer.Score(processedQuery, processor(extractor(choice))), cutoff);
     }
 
-    public static ExtractedResult<string> ExtractOne(string query, IEnumerable<string> choices, Func<string, string> processor, IRatioScorer scorer, int cutoff = 0)
+    public static ExtractedResult<string> ExtractOne(string query, IEnumerable<string> choices, Func<string, string> processor, IRatioScorer scorer, double cutoff = 0)
     {
         processor ??= Process.DefaultStringProcessor;
         var processedQuery = processor(query);
         return ExtractOneCore(choices, choice => scorer.Score(processedQuery, processor(choice)), cutoff);
     }
 
-    public static ExtractedResult<T> ExtractOne<T>(string query, IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, IRatioScorer scorer, int cutoff = 0)
+    public static ExtractedResult<T> ExtractOne<T>(string query, IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, IRatioScorer scorer, double cutoff = 0)
     {
         processor ??= Process.DefaultStringProcessor;
         var processedQuery = processor(query);
         return ExtractOneCore(choices, choice => scorer.Score(processedQuery, processor(extractor(choice))), cutoff);
     }
 
-    public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(T query, IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, IRatioScorer scorer, int cutoff = 0)
+    public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(T query, IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, IRatioScorer scorer, double cutoff = 0)
     {
         return ExtractWithoutOrder(query, choices, extractor, processor, scorer, cutoff).OrderByDescending(r => r.Score);
     }
 
-    public static IEnumerable<ExtractedResult<string>> ExtractSorted(string query, IEnumerable<string> choices, Func<string, string> processor, IRatioScorer scorer, int cutoff = 0)
+    public static IEnumerable<ExtractedResult<string>> ExtractSorted(string query, IEnumerable<string> choices, Func<string, string> processor, IRatioScorer scorer, double cutoff = 0)
     {
         return ExtractWithoutOrder(query, choices, processor, scorer, cutoff).OrderByDescending(r => r.Score);
     }
 
-    public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(string query, IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, IRatioScorer scorer, int cutoff = 0)
+    public static IEnumerable<ExtractedResult<T>> ExtractSorted<T>(string query, IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, IRatioScorer scorer, double cutoff = 0)
     {
         return ExtractWithoutOrder(query, choices, extractor, processor, scorer, cutoff).OrderByDescending(r => r.Score);
     }
 
-    public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(T query, IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, IRatioScorer scorer, int limit, int cutoff = 0)
+    public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(T query, IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, IRatioScorer scorer, int limit, double cutoff = 0)
     {
         var extracted = extractor(query);
         return ExtractTop(extracted, choices, extractor, processor, scorer, limit, cutoff);
     }
 
-    public static IEnumerable<ExtractedResult<string>> ExtractTop(string query, IEnumerable<string> choices, Func<string, string> processor, IRatioScorer scorer, int limit, int cutoff = 0)
+    public static IEnumerable<ExtractedResult<string>> ExtractTop(string query, IEnumerable<string> choices, Func<string, string> processor, IRatioScorer scorer, int limit, double cutoff = 0)
     {
         processor ??= Process.DefaultStringProcessor;
         return ExtractTopIterator();
@@ -195,7 +195,7 @@ public static partial class ResultExtractor
         }
     }
 
-    public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(string query, IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, IRatioScorer scorer, int limit, int cutoff = 0)
+    public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(string query, IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, IRatioScorer scorer, int limit, double cutoff = 0)
     {
         processor ??= Process.DefaultStringProcessor;
         return ExtractTopIterator();

@@ -6,6 +6,39 @@ namespace Raffinert.FuzzySharp.Utils;
 
 internal static class SequenceUtils
 {
+    /// <summary>
+    /// Removes the shared prefix and suffix from two character spans.
+    /// This is deliberately non-generic: it is on the string scoring hot path,
+    /// and direct character comparisons avoid the generic equality comparer.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static (int PrefixLength, int SuffixLength) TrimCommonAffix(
+        ref ReadOnlySpan<char> source,
+        ref ReadOnlySpan<char> target)
+    {
+        var startIndex = 0;
+        var sourceEnd = source.Length;
+        var targetEnd = target.Length;
+
+        while (startIndex < sourceEnd && startIndex < targetEnd && source[startIndex] == target[startIndex])
+        {
+            startIndex++;
+        }
+
+        while (startIndex < sourceEnd && startIndex < targetEnd &&
+               source[sourceEnd - 1] == target[targetEnd - 1])
+        {
+            sourceEnd--;
+            targetEnd--;
+        }
+
+        var suffixLength = source.Length - sourceEnd;
+        source = source[startIndex..sourceEnd];
+        target = target[startIndex..targetEnd];
+
+        return (startIndex, suffixLength);
+    }
+
     public static int CommonPrefix<T>(ReadOnlySpan<T> s1, ReadOnlySpan<T> s2) where T : IEquatable<T>
     {
         int prefixLength = 0;
@@ -71,10 +104,11 @@ internal static class SequenceUtils
         var sourceLength = sourceEnd - startIndex;
         var targetLength = targetEnd - startIndex;
 
+        var suffixLength = source.Length - sourceEnd;
         source = source.Slice(startIndex, sourceLength);
         target = target.Slice(startIndex, targetLength);
 
-        return (startIndex, source.Length - sourceEnd);
+        return (startIndex, suffixLength);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

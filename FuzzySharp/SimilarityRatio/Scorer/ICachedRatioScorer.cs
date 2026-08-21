@@ -4,5 +4,5 @@ namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer;
 
 public interface ICachedRatioScorer: IDisposable
 {
-    int Score(string input2);
+    double Score(string input2);
 }

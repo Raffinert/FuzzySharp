@@ -30,7 +30,7 @@ public readonly struct ProcessPipeline
         string query,
         IEnumerable<string> choices,
         Func<string, string> processor = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         return ProcessExecutor.ExtractAll(query, choices, processor ?? Process.DefaultStringProcessor, cutoff, _options);
     }
@@ -44,7 +44,7 @@ public readonly struct ProcessPipeline
         IEnumerable<T> choices,
         Func<T, string> extractor,
         Func<string, string> processor = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         return ProcessExecutor.ExtractAll(query, choices, extractor, processor ?? Process.DefaultStringProcessor, cutoff, _options);
     }
@@ -58,7 +58,7 @@ public readonly struct ProcessPipeline
         IEnumerable<T> choices,
         Func<T, string> extractor,
         Func<string, string> processor = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         return ProcessExecutor.ExtractAll(query, choices, extractor, processor ?? Process.DefaultStringProcessor, cutoff, _options);
     }
@@ -76,7 +76,7 @@ public readonly struct ProcessPipeline
         IEnumerable<string> choices,
         Func<string, string> processor = null,
         int limit = 5,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         return ProcessExecutor.ExtractTop(query, choices, processor ?? Process.DefaultStringProcessor, limit, cutoff, _options);
     }
@@ -91,7 +91,7 @@ public readonly struct ProcessPipeline
         Func<T, string> extractor,
         Func<string, string> processor = null,
         int limit = 5,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         return ProcessExecutor.ExtractTop(query, choices, extractor, processor ?? Process.DefaultStringProcessor, limit, cutoff, _options);
     }
@@ -106,7 +106,7 @@ public readonly struct ProcessPipeline
         Func<T, string> extractor,
         Func<string, string> processor = null,
         int limit = 5,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         return ProcessExecutor.ExtractTop(query, choices, extractor, processor ?? Process.DefaultStringProcessor, limit, cutoff, _options);
     }
@@ -122,7 +122,7 @@ public readonly struct ProcessPipeline
         string query,
         IEnumerable<string> choices,
         Func<string, string> processor = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         return ProcessExecutor.ExtractSorted(query, choices, processor ?? Process.DefaultStringProcessor, cutoff, _options);
     }
@@ -135,7 +135,7 @@ public readonly struct ProcessPipeline
         IEnumerable<T> choices,
         Func<T, string> extractor,
         Func<string, string> processor = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         return ProcessExecutor.ExtractSorted(query, choices, extractor, processor ?? Process.DefaultStringProcessor, cutoff, _options);
     }
@@ -148,7 +148,7 @@ public readonly struct ProcessPipeline
         IEnumerable<T> choices,
         Func<T, string> extractor,
         Func<string, string> processor = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         return ProcessExecutor.ExtractSorted(query, choices, extractor, processor ?? Process.DefaultStringProcessor, cutoff, _options);
     }
@@ -164,7 +164,7 @@ public readonly struct ProcessPipeline
         string query,
         IEnumerable<string> choices,
         Func<string, string> processor = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         return ProcessExecutor.ExtractOne(query, choices, processor ?? Process.DefaultStringProcessor, cutoff, _options);
     }
@@ -177,7 +177,7 @@ public readonly struct ProcessPipeline
         IEnumerable<T> choices,
         Func<T, string> extractor,
         Func<string, string> processor = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         return ProcessExecutor.ExtractOne(query, choices, extractor, processor ?? Process.DefaultStringProcessor, cutoff, _options);
     }
@@ -190,7 +190,7 @@ public readonly struct ProcessPipeline
         IEnumerable<T> choices,
         Func<T, string> extractor,
         Func<string, string> processor = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         return ProcessExecutor.ExtractOne(query, choices, extractor, processor ?? Process.DefaultStringProcessor, cutoff, _options);
     }
@@ -229,7 +229,7 @@ public readonly struct CachedScorerProcessPipeline
     public IEnumerable<ExtractedResult<string>> ExtractAll(
         IEnumerable<string> choices,
         Func<string, string> processor = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         return CachedScorerProcessExecutor.ExtractAll(
             choices, processor ?? Process.DefaultStringProcessor, _options.CachedScorer, cutoff,
@@ -244,7 +244,7 @@ public readonly struct CachedScorerProcessPipeline
         IEnumerable<T> choices,
         Func<T, string> extractor,
         Func<string, string> processor = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         if (extractor == null) throw new ArgumentNullException(nameof(extractor));
 
@@ -265,7 +265,7 @@ public readonly struct CachedScorerProcessPipeline
         IEnumerable<string> choices,
         Func<string, string> processor = null,
         int limit = 5,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         return CachedScorerProcessExecutor.ExtractTop(
             choices, processor ?? Process.DefaultStringProcessor, _options.CachedScorer, limit, cutoff,
@@ -281,7 +281,7 @@ public readonly struct CachedScorerProcessPipeline
         Func<T, string> extractor,
         Func<string, string> processor = null,
         int limit = 5,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         if (extractor == null) throw new ArgumentNullException(nameof(extractor));
         processor ??= Process.DefaultStringProcessor;
@@ -300,7 +300,7 @@ public readonly struct CachedScorerProcessPipeline
     public IEnumerable<ExtractedResult<string>> ExtractSorted(
         IEnumerable<string> choices,
         Func<string, string> processor = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         return CachedScorerProcessExecutor.ExtractSorted(
             choices, processor ?? Process.DefaultStringProcessor, _options.CachedScorer, cutoff,
@@ -314,7 +314,7 @@ public readonly struct CachedScorerProcessPipeline
         IEnumerable<T> choices,
         Func<T, string> extractor,
         Func<string, string> processor = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         if (extractor == null) throw new ArgumentNullException(nameof(extractor));
         processor ??= Process.DefaultStringProcessor;
@@ -333,7 +333,7 @@ public readonly struct CachedScorerProcessPipeline
     public ExtractedResult<string> ExtractOne(
         IEnumerable<string> choices,
         Func<string, string> processor = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         return CachedScorerProcessExecutor.ExtractOne(
             choices, processor ?? Process.DefaultStringProcessor, _options.CachedScorer, cutoff,
@@ -347,7 +347,7 @@ public readonly struct CachedScorerProcessPipeline
         IEnumerable<T> choices,
         Func<T, string> extractor,
         Func<string, string> processor = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         if (extractor == null) throw new ArgumentNullException(nameof(extractor));
         processor ??= Process.DefaultStringProcessor;
