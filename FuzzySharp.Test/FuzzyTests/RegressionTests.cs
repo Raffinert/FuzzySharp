@@ -28,8 +28,7 @@ public class RegressionTests
             return [];
         }).ToList();
         var scorerTypes = types.Where(t => scorerType.IsAssignableFrom(t) && !t.IsAbstract && t.IsClass).ToList();
-            
-        string nullString = null;  //Null doesn't seem to be handled by any scorer
+
         string emptyString = "";
         string whitespaceString = " ";
 
@@ -42,21 +41,21 @@ public class RegressionTests
             MethodInfo m = getScorerCacheMethodInfo.MakeGenericMethod(t);
             IRatioScorer scorer = m.Invoke(this, []) as IRatioScorer;
 
-            foreach(string s in nullOrWhitespaceStrings)
+            foreach(var s in nullOrWhitespaceStrings)
             {
                 System.Diagnostics.Debug.WriteLine($"Testing string '{s}'");
                 try
                 {
                     scorer.Score(s, "TEST");
                 }
-                catch (InvalidOperationException e)
+                catch (InvalidOperationException)
                 {
                     Assert.Fail($"{t.Name}.score failed with empty string as first parameter");
                 }
                 try
                 {
                     scorer.Score("TEST", s);
-                } catch (InvalidOperationException e)
+                } catch (InvalidOperationException)
                 {
                     Assert.Fail($"{t.Name}.score failed with empty string as second parameter");
                 }

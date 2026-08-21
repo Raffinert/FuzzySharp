@@ -24,9 +24,7 @@ internal static class Polyfill
     {
 #if NETCOREAPP2_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         Array.Fill(array, value, startIndex, count);
-        return;
-#endif
-
+#else
         if (array == null)
             throw new ArgumentNullException(nameof(array));
 
@@ -40,5 +38,6 @@ internal static class Polyfill
         {
             array[i] = value;
         }
+#endif
     }
 }
