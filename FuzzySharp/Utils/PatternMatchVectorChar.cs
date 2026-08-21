@@ -122,7 +122,7 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
             InitializeNonAsciiStorage();
         }
 
-        ref int index = ref _indexMap.GetOrAddValueRef(key);
+        ref int index = ref _indexMap!.GetOrAddValueRef(key);
 
         if (index == 0)
         {
@@ -184,7 +184,7 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
 
         // Dense ASCII masks are already zero for absent characters, so the
         // presence-bitmap lookup performed by TryGetMask is unnecessary here.
-        if ((uint)key <= 255u)
+        if (key <= 255u)
         {
             return new ReadOnlySpan<ulong>(_fixedData, _asciiMasksOffset + (key * _blocks), _blocks);
         }
