@@ -32,7 +32,7 @@ public class LevenshteinNormal
     }
 
     [Benchmark]
-    public void FuzzySharpClassic()
+    public void FuzzySharp()
     {
         for (var i = 0; i < _words.Length; i++)
         {
@@ -68,8 +68,8 @@ public class LevenshteinNormal
         }
     }
 
-    [Benchmark]
-    public void FuzzySharp()
+    [Benchmark(Description = "Raffinert.FuzzySharp")]
+    public void ThisLibrary()
     {
         for (var i = 0; i < _words.Length; i++)
         {

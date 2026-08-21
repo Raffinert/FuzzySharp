@@ -13,9 +13,9 @@ public interface IPatternMatchVector<in TKey> : IDisposable where TKey : notnull
     bool ContainsKey(TKey key);
 }
 
-internal interface IPatternMatchVectorImpl<in TKey> : IPatternMatchVector<TKey> where TKey : IEquatable<TKey>
+internal interface IPatternMatchVectorImpl<TKey> : IPatternMatchVector<TKey> where TKey : IEquatable<TKey>
 {
-    void AddBit(TKey key, int position);
+    void Populate(ReadOnlySpan<TKey> source);
 }
 
 public sealed class PatternMatchVector
@@ -28,12 +28,7 @@ public sealed class PatternMatchVector
             ? (IPatternMatchVectorImpl<T>)(object)new PatternMatchVectorChar(source.Length, estimatedNonAsciiCharCount: 8, blocks: blocks)
             : new PatternMatchVector<T>(source.Length, 64, blocks);
 
-        var i = 0;
-
-        foreach (var item in source)
-        {
-            pmv.AddBit(item, i++);
-        }
+        pmv.Populate(source);
 
         return pmv;
     }
@@ -65,11 +60,19 @@ internal sealed class PatternMatchVector<T> : IPatternMatchVectorImpl<T> where T
     public int Length { get; }
     public int Blocks { get; }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddBit(T key, int position)
+    public void Populate(ReadOnlySpan<T> source)
     {
         if (_disposed) throw new ObjectDisposedException(nameof(PatternMatchVector<T>));
 
+        for (var position = 0; position < source.Length; position++)
+        {
+            AddBit(source[position], position);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void AddBit(T key, int position)
+    {
         ref var index = ref _indexMap.GetOrAddValueRef(key);
 
         if (index == 0)
