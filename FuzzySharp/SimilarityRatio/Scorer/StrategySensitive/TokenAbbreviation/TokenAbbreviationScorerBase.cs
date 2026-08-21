@@ -6,7 +6,7 @@ namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 
 public abstract class TokenAbbreviationScorerBase : StrategySensitiveScorerBase
 {
-    public override int Score(string shorter, string longer)
+    public override double Score(string shorter, string longer)
     {
         SequenceUtils.SwapIfSourceIsLonger(ref shorter, ref longer);
 
@@ -29,7 +29,7 @@ public abstract class TokenAbbreviationScorerBase : StrategySensitiveScorerBase
 
         var allPermutations = tokensLonger.PermutationsOfSize(tokensShorter.Count);
 
-        int maxScore = 0;
+        double maxScore = 0;
 
         foreach (var permutation in allPermutations)
         {
@@ -44,7 +44,7 @@ public abstract class TokenAbbreviationScorerBase : StrategySensitiveScorerBase
                     sum += score;
                 }
             }
-            var avgScore = (int)(sum / tokensShorter.Count);
+            var avgScore = sum / tokensShorter.Count;
             if (avgScore > maxScore)
             {
                 maxScore = avgScore;

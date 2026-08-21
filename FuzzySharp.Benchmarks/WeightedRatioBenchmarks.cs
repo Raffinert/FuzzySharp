@@ -18,25 +18,25 @@ public class WeightedRatioBenchmarks
     }
 
     [Benchmark]
-    public int WeightedRatio()
+    public double WeightedRatio()
     {
         return Fuzz.WeightedRatio("The quick brown fox jimps ofver the small lazy dog", "the quick brown fox jumps over the small lazy dog");
     }
 
     [Benchmark]
-    public int WeightedRatioClassic()
+    public double WeightedRatioClassic()
     {
         return Classic.Fuzz.WeightedRatio("The quick brown fox jimps ofver the small lazy dog", "the quick brown fox jumps over the small lazy dog");
     }
 
     [Benchmark]
-    public int WeightedRatioCached()
+    public double WeightedRatioCached()
     {
         return new CachedWeightedRatioScorer("The quick brown fox jimps ofver the small lazy dog").Score("the quick brown fox jumps over the small lazy dog");
     }
 
     [Benchmark]
-    public int WeightedRatioAcrossRunsCached()
+    public double WeightedRatioAcrossRunsCached()
     {
         return _cachedWeightedScorer.Score("the quick brown fox jumps over the small lazy dog");
     }

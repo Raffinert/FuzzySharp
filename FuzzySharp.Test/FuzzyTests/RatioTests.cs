@@ -81,7 +81,7 @@ public class RatioTests
 
         //var al =  Fuzz1.PartialRatioAlignment("a certain string".AsSpan(), "cetain".AsSpan());
             
-        Assert.Equal(Fuzz.PartialTokenSortRatio(_s10, _s10A), 67);
+        Assert.Equal(66.66666666666667, Fuzz.PartialTokenSortRatio(_s10, _s10A), 10);
         Assert.Equal(Fuzz.PartialTokenSortRatio(_s10, _s10A, StringPreprocessor.Full), 0);
     }
 
@@ -99,7 +99,7 @@ public class RatioTests
     public void TestTokenAbbreviationRatio()
     {
         Assert.Equal(Fuzz.TokenAbbreviationRatio("bl 420", "Baseline section 420", StringPreprocessor.Full), 40);
-        Assert.Equal(Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", StringPreprocessor.Full), 67);
+        Assert.Equal(66.66666666666667, Fuzz.PartialTokenAbbreviationRatio("bl 420", "Baseline section 420", StringPreprocessor.Full), 10);
     }
 
     [Fact]
@@ -176,7 +176,7 @@ public class RatioTests
     public void MorePartialRatio()
     {
         Assert.Equal(100, Fuzz.PartialRatio("geeks for geeks", "geeks for geeks!"));
-        Assert.Equal(71, Fuzz.PartialRatio("geeks for geeks", "geeks geeks"));
+        Assert.Equal(70.58823529411765, Fuzz.PartialRatio("geeks for geeks", "geeks geeks"), 10);
         Assert.Equal(100, Fuzz.TokenSortRatio("geeks for geeks", "for geeks geeks"));
     }
 
@@ -202,7 +202,7 @@ public class RatioTests
     {
         var ratio = Fuzz.PartialTokenSortRatio("new york mets", "atlanta braves vs new york mets");
 
-        Assert.True(ratio == 77);
+        Assert.Equal(76.92307692307692, ratio, 10);
     }
 
     [Fact]

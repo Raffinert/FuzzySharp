@@ -18,25 +18,25 @@ public class TokenSortRatioBenchmarks
     }
 
     [Benchmark]
-    public int TokenSortRatio()
+    public double TokenSortRatio()
     {
         return Fuzz.TokenSortRatio("order words out of", "  words out of order");
     }
 
     [Benchmark]
-    public int TokenSortRatioClassic()
+    public double TokenSortRatioClassic()
     {
         return Classic.Fuzz.TokenSortRatio("order words out of", "  words out of order");
     }
 
     [Benchmark]
-    public int TokenSortRatioCached()
+    public double TokenSortRatioCached()
     {
         return new CachedTokenSortScorer("order words out of").Score("  words out of order");
     }
 
     [Benchmark]
-    public int TokenSortRatioAcrossRunsCached()
+    public double TokenSortRatioAcrossRunsCached()
     {
         return _cachedTokenSortScorer.Score("  words out of order");
     }

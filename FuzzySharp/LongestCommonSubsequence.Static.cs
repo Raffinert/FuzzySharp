@@ -21,13 +21,11 @@ public sealed partial class LongestCommonSubsequence
     /// <param name="s1">First sequence.</param>
     /// <param name="s2">Second sequence.</param>
     /// <param name="processor">Optional preprocessor for normalization.</param>
-    /// <param name="scoreCutoff">Optional maximum distance threshold.</param>
     /// <returns>The LCS distance (max(len1, len2) - LCS length).</returns>
     public static int Distance<T>(
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
-        Processor<T> processor = null,
-        int? scoreCutoff = null) where T : IEquatable<T>
+        Processor<T> processor = null) where T : IEquatable<T>
     {
         if (processor != null)
         {
@@ -37,22 +35,17 @@ public sealed partial class LongestCommonSubsequence
 
         using var patternMatchVector = PatternMatchVector.Create(s1);
 
-        return DistanceImpl(patternMatchVector, s2, scoreCutoff);
+        return DistanceImpl(patternMatchVector, s2);
     }
 
     private static int DistanceImpl<T>(IPatternMatchVector<T> s1Vector,
-        ReadOnlySpan<T> s2,
-        int? scoreCutoff = null) where T : IEquatable<T>
+        ReadOnlySpan<T> s2) where T : IEquatable<T>
     {
         int maximum = Math.Max(s1Vector.Length, s2.Length);
         int sim = SimilarityImpl(s1Vector, s2);
         int dist = maximum - sim;
 
-        var result = scoreCutoff == null || dist <= scoreCutoff.Value
-            ? dist
-            : scoreCutoff.Value + 1;
-
-        return result;
+        return dist;
     }
 
     /// <summary>
@@ -209,13 +202,11 @@ public sealed partial class LongestCommonSubsequence
     /// <param name="s1">First sequence.</param>
     /// <param name="s2">Second sequence.</param>
     /// <param name="processor">Optional preprocessor for normalization.</param>
-    /// <param name="scoreCutoff">Optional maximum normalized distance threshold.</param>
     /// <returns>Normalized distance (0 = identical, 1 = completely different).</returns>
     public static double NormalizedDistance<T>(
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
-        Processor<T> processor = null,
-        int? scoreCutoff = null) where T : IEquatable<T>
+        Processor<T> processor = null) where T : IEquatable<T>
     {
         if ((s1.IsEmpty && !s2.IsEmpty) || (!s1.IsEmpty && s2.IsEmpty))
         {
@@ -234,11 +225,7 @@ public sealed partial class LongestCommonSubsequence
         int maximum = Math.Max(s1.Length, s2.Length);
         double normDist = Distance(s1, s2) / (double)maximum;
 
-        var result = !scoreCutoff.HasValue || normDist <= scoreCutoff.Value
-            ? normDist
-            : 1.0;
-
-        return result;
+        return normDist;
     }
 
     /// <summary>
@@ -248,13 +235,11 @@ public sealed partial class LongestCommonSubsequence
     /// <param name="s1">First sequence.</param>
     /// <param name="s2">Second sequence.</param>
     /// <param name="processor">Optional preprocessor for normalization.</param>
-    /// <param name="scoreCutoff">Optional minimum normalized similarity threshold.</param>
     /// <returns>Normalized similarity (1 = identical, 0 = completely different).</returns>
     public static double NormalizedSimilarity<T>(
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
-        Processor<T> processor = null,
-        int? scoreCutoff = null) where T : IEquatable<T>
+        Processor<T> processor = null) where T : IEquatable<T>
     {
 
         if (s1.IsEmpty || s2.IsEmpty)
@@ -270,11 +255,7 @@ public sealed partial class LongestCommonSubsequence
 
         double normSim = 1.0 - NormalizedDistance(s1, s2);
 
-        var result = !scoreCutoff.HasValue || normSim >= scoreCutoff.Value
-            ? normSim
-            : 0.0;
-
-        return result;
+        return normSim;
     }
 
     /// <summary>
@@ -302,13 +283,11 @@ public sealed partial class LongestCommonSubsequence
     /// <param name="s1">First sequence.</param>
     /// <param name="s2">Second sequence.</param>
     /// <param name="processor">Optional preprocessor for normalization.</param>
-    /// <param name="scoreCutoff">Optional minimum similarity threshold.</param>
-    /// <returns>The length of the LCS, or 0 if below cutoff.</returns>
+    /// <returns>The length of the LCS.</returns>
     public static int Similarity<T>(
         ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
-        Processor<T> processor = null,
-        int? scoreCutoff = null) where T : IEquatable<T>
+        Processor<T> processor = null) where T : IEquatable<T>
     {
         if (processor != null)
         {
@@ -318,22 +297,17 @@ public sealed partial class LongestCommonSubsequence
 
         using var patternMatchVector = PatternMatchVector.Create(s1);
 
-        return SimilarityImpl(patternMatchVector, s2, scoreCutoff);
+        return SimilarityImpl(patternMatchVector, s2);
     }
 
     internal static int SimilarityImpl<T>(IPatternMatchVector<T> s1Vector,
-        ReadOnlySpan<T> s2,
-        int? scoreCutoff = null) where T : IEquatable<T>
+        ReadOnlySpan<T> s2) where T : IEquatable<T>
     {
         var sim = s1Vector.Length > 64
             ? BlockSimilarityMultipleULongs(s1Vector, s2)
             : BlockSimilaritySingleULong(s1Vector, s2);
 
-        var result = scoreCutoff == null || sim >= scoreCutoff.Value
-            ? sim
-            : 0;
-
-        return result;
+        return sim;
     }
 
     /// <summary>
@@ -342,23 +316,20 @@ public sealed partial class LongestCommonSubsequence
     /// <typeparam name="T">Element type, must implement IEquatable&lt;T&gt;.</typeparam>
     /// <param name="s1Vector">Precomputed per-symbol bitmasks for s1.</param>
     /// <param name="s2">Second sequence (text).</param>
-    /// <param name="scoreCutoff">Optional minimum similarity threshold.</param>
-    /// <returns>The length of the longest common subsequence, or 0 if below cutoff.</returns>
+    /// <returns>The length of the longest common subsequence.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int BlockSimilarity<T>(IPatternMatchVector<T> s1Vector,
-        ReadOnlySpan<T> s2,
-        int? scoreCutoff = null) where T : IEquatable<T>
+        ReadOnlySpan<T> s2) where T : IEquatable<T>
     {
         return s1Vector.Length <= 64
-            ? BlockSimilaritySingleULong(s1Vector, s2, scoreCutoff)
-            : BlockSimilarityMultipleULongs(s1Vector, s2, scoreCutoff);
+            ? BlockSimilaritySingleULong(s1Vector, s2)
+            : BlockSimilarityMultipleULongs(s1Vector, s2);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int BlockSimilaritySingleULong<T>(
         IPatternMatchVector<T> s1Vector,
-        ReadOnlySpan<T> s2,
-        int? scoreCutoff = null
+        ReadOnlySpan<T> s2
     ) where T : IEquatable<T>
     {
         if (s1Vector.Length == 0)
@@ -379,16 +350,12 @@ public sealed partial class LongestCommonSubsequence
             }
         }
 
-        int lcs = CountZeroBits(S, len1);
-        return scoreCutoff == null || lcs >= scoreCutoff.Value
-            ? lcs
-            : 0;
+        return CountZeroBits(S, len1);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int BlockSimilarityMultipleULongs<T>(IPatternMatchVector<T> s1Vector,
-        ReadOnlySpan<T> s2,
-        int? scoreCutoff = null) where T : IEquatable<T>
+        ReadOnlySpan<T> s2) where T : IEquatable<T>
     {
         if (s1Vector.Length == 0)
             return 0;
@@ -439,10 +406,7 @@ public sealed partial class LongestCommonSubsequence
             }
 
             // --- 4) count zero bits in the lower len1 positions of S ---
-            int lcs = CountZeroBits(S, len1);
-            return scoreCutoff == null || lcs >= scoreCutoff.Value
-                ? lcs
-                : 0;
+            return CountZeroBits(S, len1);
         }
         finally
         {

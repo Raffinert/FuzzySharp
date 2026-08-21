@@ -15,23 +15,32 @@ namespace Raffinert.FuzzySharp;
 public sealed partial class Levenshtein
 {
     /// <summary>
-    /// Computes the Levenshtein distance between two strings with custom operation costs and optional cutoff.
+    /// Computes the Levenshtein distance between two strings with custom operation costs.
     /// </summary>
     /// <param name="source">Source string.</param>
     /// <param name="target">Target string.</param>
     /// <param name="insertCost">Cost of an insertion.</param>
     /// <param name="deleteCost">Cost of a deletion.</param>
     /// <param name="replaceCost">Cost of a replacement.</param>
-    /// <param name="scoreCutoff">Optional maximum distance threshold.</param>
     /// <returns>The Levenshtein distance.</returns>
     public static int Distance(
         string source, string target,
-        int insertCost = 1, int deleteCost = 1, int replaceCost = 1,
-        int? scoreCutoff = null)
-        => Distance(source.AsSpan(), target.AsSpan(), insertCost, deleteCost, replaceCost, scoreCutoff);
+        int insertCost = 1, int deleteCost = 1, int replaceCost = 1)
+    {
+        var sourceSpan = source.AsSpan();
+        var targetSpan = target.AsSpan();
+        SequenceUtils.TrimCommonAffix(ref sourceSpan, ref targetSpan);
+
+        if (insertCost == deleteCost)
+        {
+            SequenceUtils.SwapIfSourceIsLonger(ref sourceSpan, ref targetSpan);
+        }
+
+        return DistanceTrimmed(sourceSpan, targetSpan, insertCost, deleteCost, replaceCost);
+    }
 
     /// <summary>
-    /// Computes the Levenshtein distance between two sequences with custom operation costs and optional cutoff.
+    /// Computes the Levenshtein distance between two sequences with custom operation costs.
     /// </summary>
     /// <typeparam name="T">Element type, must implement IEquatable&lt;T&gt;.</typeparam>
     /// <param name="source">Source sequence.</param>
@@ -39,13 +48,11 @@ public sealed partial class Levenshtein
     /// <param name="insertCost">Cost of an insertion.</param>
     /// <param name="deleteCost">Cost of a deletion.</param>
     /// <param name="replaceCost">Cost of a replacement.</param>
-    /// <param name="scoreCutoff">Optional maximum distance threshold.</param>
     /// <returns>The Levenshtein distance.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Distance<T>(
         ReadOnlySpan<T> source, ReadOnlySpan<T> target,
-        int insertCost = 1, int deleteCost = 1, int replaceCost = 1,
-        int? scoreCutoff = null) where T : IEquatable<T>
+        int insertCost = 1, int deleteCost = 1, int replaceCost = 1) where T : IEquatable<T>
     {
         SequenceUtils.TrimCommonAffix(ref source, ref target);
 
@@ -54,33 +61,27 @@ public sealed partial class Levenshtein
             SequenceUtils.SwapIfSourceIsLonger(ref source, ref target);
         }
 
+        return DistanceTrimmed(source, target, insertCost, deleteCost, replaceCost);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int DistanceTrimmed<T>(
+        ReadOnlySpan<T> source, ReadOnlySpan<T> target,
+        int insertCost, int deleteCost, int replaceCost) where T : IEquatable<T>
+    {
         if (insertCost != 1 || deleteCost != 1 || (replaceCost != 1 && replaceCost != 2))
         {
-            return GenericDistance(source, target, insertCost, deleteCost, replaceCost, scoreCutoff);
+            return GenericDistance(source, target, insertCost, deleteCost, replaceCost);
         }
 
         using var patternMatchVector = PatternMatchVector.Create(source);
 
         if (replaceCost == 1)
         {
-            return scoreCutoff.HasValue
-                ? Distance(patternMatchVector, target, scoreCutoff.Value)
-                : Distance(patternMatchVector, target);
+            return Distance(patternMatchVector, target);
         }
 
-        return Indel.DistanceImpl(patternMatchVector, target, scoreCutoff);
-    }
-
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int Distance<T>(IPatternMatchVector<T> sourceVector, ReadOnlySpan<T> target, int scoreCutoff) where T : IEquatable<T>
-    {
-        if (sourceVector.Length <= 64)
-        {
-            return DistanceSingleULong(sourceVector, target, scoreCutoff);
-        }
-
-        return DistanceMultipleULongs(sourceVector, target, scoreCutoff);
+        return Indel.DistanceImpl(patternMatchVector, target);
     }
 
 
@@ -92,7 +93,7 @@ public sealed partial class Levenshtein
             return DistanceSingleULong(sourceVector, target);
         }
 
-        return DistanceMultipleULongs(sourceVector, target, null);
+        return DistanceMultipleULongs(sourceVector, target);
     }
 
     /// <summary>
@@ -457,21 +458,19 @@ public sealed partial class Levenshtein
     /// <param name="insertCost">Cost of an insertion.</param>
     /// <param name="deleteCost">Cost of a deletion.</param>
     /// <param name="replaceCost">Cost of a replacement.</param>
-    /// <param name="scoreCutoff">Optional maximum normalized distance threshold.</param>
     /// <returns>Normalized distance (0 = identical, 1 = completely different).</returns>
     public static double NormalizedDistance(
         ReadOnlySpan<char> source, ReadOnlySpan<char> target,
-        int insertCost = 1, int deleteCost = 1, int replaceCost = 1,
-        double? scoreCutoff = null)
+        int insertCost = 1, int deleteCost = 1, int replaceCost = 1)
     {
         int len1 = source.Length, len2 = target.Length;
         if (len1 == 0 && len2 == 0) return 0.0;
         var maximum = LevenshteinMaximum(len1, len2, insertCost, deleteCost, replaceCost);
         if (maximum == 0) return 0.0;
 
-        var dist = Distance(source, target, insertCost, deleteCost, replaceCost, scoreCutoff.HasValue ? (int?)Math.Floor(scoreCutoff.Value * maximum) : null);
+        var dist = Distance(source, target, insertCost, deleteCost, replaceCost);
         var nd = dist / (double)maximum;
-        return nd > scoreCutoff ? 1.0 : nd;
+        return nd;
     }
 
     /// <summary>
@@ -482,13 +481,11 @@ public sealed partial class Levenshtein
     /// <param name="insertCost">Cost of an insertion.</param>
     /// <param name="deleteCost">Cost of a deletion.</param>
     /// <param name="replaceCost">Cost of a replacement.</param>
-    /// <param name="scoreCutoff">Optional maximum normalized distance threshold.</param>
     /// <returns>Normalized distance (0 = identical, 1 = completely different).</returns>
     public static double NormalizedDistance(
         string source, string target,
-        int insertCost = 1, int deleteCost = 1, int replaceCost = 1,
-        double? scoreCutoff = null)
-        => NormalizedDistance(source.AsSpan(), target.AsSpan(), insertCost, deleteCost, replaceCost, scoreCutoff);
+        int insertCost = 1, int deleteCost = 1, int replaceCost = 1)
+        => NormalizedDistance(source.AsSpan(), target.AsSpan(), insertCost, deleteCost, replaceCost);
 
     /// <summary>
     /// Computes the normalized Levenshtein similarity in [0, 1] (1 - normalized distance).
@@ -498,18 +495,13 @@ public sealed partial class Levenshtein
     /// <param name="insertCost">Cost of an insertion.</param>
     /// <param name="deleteCost">Cost of a deletion.</param>
     /// <param name="replaceCost">Cost of a replacement.</param>
-    /// <param name="scoreCutoff">Optional minimum normalized similarity threshold.</param>
     /// <returns>Normalized similarity (1 = identical, 0 = completely different).</returns>
     public static double NormalizedSimilarity(
         ReadOnlySpan<char> source, ReadOnlySpan<char> target,
-        int insertCost = 1, int deleteCost = 1, int replaceCost = 1,
-        double? scoreCutoff = null)
+        int insertCost = 1, int deleteCost = 1, int replaceCost = 1)
     {
-        double? distanceCutoff = 1.0 - scoreCutoff;
-        var nd = NormalizedDistance(source, target, insertCost, deleteCost, replaceCost, distanceCutoff);
-        var ns = 1.0 - nd;
-
-        return ns < scoreCutoff ? 0.0 : ns;
+        var nd = NormalizedDistance(source, target, insertCost, deleteCost, replaceCost);
+        return 1.0 - nd;
     }
 
     /// <summary>
@@ -520,13 +512,11 @@ public sealed partial class Levenshtein
     /// <param name="insertCost">Cost of an insertion.</param>
     /// <param name="deleteCost">Cost of a deletion.</param>
     /// <param name="replaceCost">Cost of a replacement.</param>
-    /// <param name="scoreCutoff">Optional minimum normalized similarity threshold.</param>
     /// <returns>Normalized similarity (1 = identical, 0 = completely different).</returns>
     public static double NormalizedSimilarity(
         string source, string target,
-        int insertCost = 1, int deleteCost = 1, int replaceCost = 1,
-        double? scoreCutoff = null)
-        => NormalizedSimilarity(source.AsSpan(), target.AsSpan(), insertCost, deleteCost, replaceCost, scoreCutoff);
+        int insertCost = 1, int deleteCost = 1, int replaceCost = 1)
+        => NormalizedSimilarity(source.AsSpan(), target.AsSpan(), insertCost, deleteCost, replaceCost);
 
     /// <summary>
     /// Computes the Levenshtein similarity (maximum possible distance minus actual distance).
@@ -536,21 +526,15 @@ public sealed partial class Levenshtein
     /// <param name="insertCost">Cost of an insertion.</param>
     /// <param name="deleteCost">Cost of a deletion.</param>
     /// <param name="replaceCost">Cost of a replacement.</param>
-    /// <param name="scoreCutoff">Optional minimum similarity threshold.</param>
     /// <returns>The Levenshtein similarity score.</returns>
     public static int Similarity(
         ReadOnlySpan<char> source, ReadOnlySpan<char> target,
-        int insertCost = 1, int deleteCost = 1, int replaceCost = 1,
-        int? scoreCutoff = null)
+        int insertCost = 1, int deleteCost = 1, int replaceCost = 1)
     {
         int len1 = source.Length, len2 = target.Length;
         var maximum = LevenshteinMaximum(len1, len2, insertCost, deleteCost, replaceCost);
-        int? distanceCutoff = scoreCutoff.HasValue
-            ? Math.Max(0, maximum - scoreCutoff.Value)
-            : null;
-        var dist = Distance(source, target, insertCost, deleteCost, replaceCost, distanceCutoff);
-        var sim = maximum - dist;
-        return sim < scoreCutoff ? 0 : sim;
+        var dist = Distance(source, target, insertCost, deleteCost, replaceCost);
+        return maximum - dist;
     }
 
     /// <summary>
@@ -561,13 +545,11 @@ public sealed partial class Levenshtein
     /// <param name="insertCost">Cost of an insertion.</param>
     /// <param name="deleteCost">Cost of a deletion.</param>
     /// <param name="replaceCost">Cost of a replacement.</param>
-    /// <param name="scoreCutoff">Optional minimum similarity threshold.</param>
     /// <returns>The Levenshtein similarity score.</returns>
     public static int Similarity(
         string source, string s2,
-        int insertCost = 1, int deleteCost = 1, int replaceCost = 1,
-        int? scoreCutoff = null)
-        => Similarity(source.AsSpan(), s2.AsSpan(), insertCost, deleteCost, replaceCost, scoreCutoff);
+        int insertCost = 1, int deleteCost = 1, int replaceCost = 1)
+        => Similarity(source.AsSpan(), s2.AsSpan(), insertCost, deleteCost, replaceCost);
 
     /// <summary>
     /// Computes the Levenshtein distance between two sequences with custom operation costs using a dynamic programming approach.
@@ -578,12 +560,10 @@ public sealed partial class Levenshtein
     /// <param name="insertCost">Cost of an insertion.</param>
     /// <param name="deleteCost">Cost of a deletion.</param>
     /// <param name="replaceCost">Cost of a replacement.</param>
-    /// <param name="scoreCutoff">Optional maximum distance threshold.</param>
     /// <returns>The Levenshtein distance.</returns>
     private static int GenericDistance<T>(
         ReadOnlySpan<T> source, ReadOnlySpan<T> target,
-        int insertCost, int deleteCost, int replaceCost,
-        int? scoreCutoff) where T : IEquatable<T>
+        int insertCost, int deleteCost, int replaceCost) where T : IEquatable<T>
     {
         var len1 = source.Length;
         // allocate a single row of len1+1
@@ -616,8 +596,6 @@ public sealed partial class Levenshtein
                 row[i + 1] = cost;
             }
 
-            if (scoreCutoff.HasValue && row[len1] > scoreCutoff.Value)
-                return scoreCutoff.Value + 1;
         }
 
         return row[len1];
@@ -638,21 +616,17 @@ public sealed partial class Levenshtein
     }
 
     /// <summary>
-    /// Computes the Levenshtein distance (Myers’s bit‐parallel over >64 bits), with an optional cutoff.
+    /// Computes the Levenshtein distance (Myers’s bit‐parallel over >64 bits).
     /// Uses a dictionary to store per‐character bitmasks rented from ArrayPool, and uses stackalloc if
     /// 6*blocks ≤ STACKALLOC_THRESHOLD_ULONGS; otherwise allocates a new ulong[] on the heap for the six lanes.
     /// </summary>
     private static int DistanceMultipleULongs<T>(IPatternMatchVector<T> sourceVector,
-        ReadOnlySpan<T> target,
-        int? scoreCutoff) where T : IEquatable<T>
+        ReadOnlySpan<T> target) where T : IEquatable<T>
     {
         var m = sourceVector.Length;
         if (m == 0)
         {
-            var d = target.Length;
-            return d > scoreCutoff
-                ? scoreCutoff.Value + 1
-                : d;
+            return target.Length;
         }
 
         // Number of 64‐bit blocks needed to cover pattern length m
@@ -661,7 +635,7 @@ public sealed partial class Levenshtein
         var scratchArray = ArrayPool<ulong>.Shared.Rent(totalScratch);
         try
         {
-            var result = DistanceMultipleULongsImpl(sourceVector, target, scoreCutoff, m, blocks, scratchArray);
+            var result = DistanceMultipleULongsImpl(sourceVector, target, m, blocks, scratchArray);
             return result;
         }
         finally
@@ -679,7 +653,6 @@ public sealed partial class Levenshtein
     // ─────────────────────────────────────────────────────────────────────────────
     private static int DistanceMultipleULongsImpl<T>(IPatternMatchVector<T> sourceVector, 
         ReadOnlySpan<T> target,
-        int? scoreCutoff,
         int m,
         int blocks,
         Span<ulong> scratch) where T : IEquatable<T>
@@ -755,55 +728,6 @@ public sealed partial class Levenshtein
                 carryHN = hnHigh;
             }
 
-            if (scoreCutoff.HasValue)
-            {
-                var remaining = target.Length - (i + 1);
-                if (dist > scoreCutoff.Value + remaining)
-                {
-                    return scoreCutoff.Value + 1;
-                }
-            }
-        }
-
-        return dist;
-    }
-
-    private static int DistanceSingleULong<T>(IPatternMatchVector<T> sourceVector, 
-        ReadOnlySpan<T> target,
-        int scoreCutoff) where T : IEquatable<T>
-    {
-        var m = sourceVector.Length;
-        if (m == 0) return target.Length;
-
-        // initial bitmask: lower m bits set
-        var VP = m < 64 ? (1UL << m) - 1 : ulong.MaxValue;
-        ulong VN = 0;
-        var highestBit = 1UL << (m - 1);
-        var dist = m;
-
-        for (var i = 0; i < target.Length; i++)
-        {
-            var PM = sourceVector.GetOrZero(target[i])[0];
-
-            // Myers bit-parallel update
-            var X = PM | VN;
-            var D0 = (((X & VP) + VP) ^ VP) | X;
-            D0 |= VN;
-            var HP = VN | ~(D0 | VP);
-            var HN = D0 & VP;
-
-            if ((HP & highestBit) != 0) dist++;
-            if ((HN & highestBit) != 0) dist--;
-
-            var remaining = target.Length - (i + 1);
-            if (dist > scoreCutoff + remaining)
-                return scoreCutoff + 1;
-
-            // shift in
-            HP = (HP << 1) | 1;
-            HN <<= 1;
-            VP = HN | ~(D0 | HP);
-            VN = HP & D0;
         }
 
         return dist;

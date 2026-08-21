@@ -84,13 +84,15 @@ Compare two strings directly:
 
 ```csharp
 Fuzz.Ratio("mysmilarstring", "mysimilarstring");
-// 97
+// 96.551724137931
 
 Fuzz.WeightedRatio(
     "The quick brown fox jimps ofver the small lazy dog",
     "the quick brown fox jumps over the small lazy dog");
-// 95
+// 94.9494949494949
 ```
+
+Similarity scores are `double` values in the range 0–100. Some extraction output examples below are rounded for readability.
 
 By default, `Fuzz` methods compare strings as-is. `Process` extraction methods use `StringPreprocessor.Full` by default, which normalizes whitespace, lowercases, and strips non-alphanumeric characters.
 
@@ -389,7 +391,7 @@ var weighted           = ScorerCache.Get<WeightedRatioScorer>();
 Pre-initialize with a query string for repeated comparisons. These implement `IDisposable`:
 ```csharp
 using var scorer = new CachedWeightedRatioScorer("search query");
-int score = scorer.Score("candidate string");
+double score = scorer.Score("candidate string");
 ```
 
 Available cached scorers:

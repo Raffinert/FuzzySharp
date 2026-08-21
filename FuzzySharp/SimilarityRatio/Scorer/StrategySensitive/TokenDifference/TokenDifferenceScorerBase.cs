@@ -7,12 +7,12 @@ namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 
 public abstract class TokenDifferenceScorerBase : StrategySensitiveScorerBase<string>, IRatioScorer
 {
-    public override int Score(string[] input1, string[] input2)
+    public override double Score(string[] input1, string[] input2)
     {
         return Scorer(input1, input2);
     }
 
-    public int Score(string input1, string input2)
+    public double Score(string input1, string input2)
     {
         var tokens1 = input1.GetSortedWords();
         var tokens2 = input2.GetSortedWords();
@@ -21,7 +21,7 @@ public abstract class TokenDifferenceScorerBase : StrategySensitiveScorerBase<st
     }
 
 
-    public int Score(string input1, string input2, Func<string, string> preprocessor)
+    public double Score(string input1, string input2, Func<string, string> preprocessor)
     {
         preprocessor ??= StringPreprocessor.Full;
         input1 = preprocessor(input1);

@@ -18,7 +18,7 @@ public sealed class CachedTokenDifferenceScorer : ICachedRatioScorer
         _scorer = new CachedDefaultRatioStrategy<string>(tokens1);
     }
 
-    public int Score(string input2)
+    public double Score(string input2)
     {
         input2 = _preprocessor(input2);
         var tokens2 = input2.GetSortedWords();

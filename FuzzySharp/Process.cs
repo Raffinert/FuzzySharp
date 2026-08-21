@@ -36,7 +36,7 @@ public static class Process
         IEnumerable<string> choices, 
         Func<string, string> processor = null, 
         IRatioScorer scorer = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;
@@ -61,7 +61,7 @@ public static class Process
         Func<T, string> extractor,
         Func<string, string> processor = null,
         IRatioScorer scorer = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;
@@ -85,7 +85,7 @@ public static class Process
         Func<T, string> extractor,
         Func<string, string> processor = null,
         IRatioScorer scorer = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         processor ??= DefaultStringProcessor;  
         scorer ??= DefaultScorer;
@@ -112,7 +112,7 @@ public static class Process
         Func<string, string> processor = null,
         IRatioScorer scorer = null,
         int limit = 5,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;
@@ -138,7 +138,7 @@ public static class Process
         Func<string, string> processor = null,
         IRatioScorer scorer = null,
         int limit = 5,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;
@@ -164,7 +164,7 @@ public static class Process
         Func<string, string> processor = null,
         IRatioScorer scorer = null,
         int limit = 5,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;
@@ -189,7 +189,7 @@ public static class Process
         IEnumerable<string> choices,
         Func<string, string> processor = null,
         IRatioScorer scorer = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;
@@ -212,7 +212,7 @@ public static class Process
         Func<T, string> extractor,
         Func<string, string> processor = null,
         IRatioScorer scorer = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;
@@ -235,7 +235,7 @@ public static class Process
         Func<T, string> extractor,
         Func<string, string> processor = null,
         IRatioScorer scorer = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;
@@ -259,7 +259,7 @@ public static class Process
         IEnumerable<string> choices,
         Func<string, string> processor = null,
         IRatioScorer scorer = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;
@@ -282,7 +282,7 @@ public static class Process
         Func<T, string> extractor,
         Func<string, string> processor = null,
         IRatioScorer scorer = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;
@@ -305,7 +305,7 @@ public static class Process
         Func<T, string> extractor,
         Func<string, string> processor = null,
         IRatioScorer scorer = null,
-        int cutoff = 0)
+        double cutoff = 0)
     {
         processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;

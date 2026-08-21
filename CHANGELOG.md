@@ -1,5 +1,13 @@
 # Changelog
 
+## v6.0.0
+
+*Double-precision scoring and simplified distance APIs*
+
+- **Breaking:** Removed `scoreCutoff` from the Indel, Levenshtein, LCS, and partial-ratio APIs.
+- **Breaking:** Scorers, scoring strategies, `Fuzz` methods, and extracted-result scores now use `double` and preserve fractional similarity values.
+- Extraction `cutoff` parameters now accept `double` values.
+
 ## v5.0.3
 
 *Extractor selection performance and allocation improvements*

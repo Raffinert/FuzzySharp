@@ -10,14 +10,14 @@ public class RatioIssuesTests
     [Fact]
     public void Issue76()
     {
-        Assert.Equal(82, Fuzz.PartialRatio("physics 2 vid", "study physics physics 2"));
+        Assert.Equal(81.81818181818181, Fuzz.PartialRatio("physics 2 vid", "study physics physics 2"), 10);
         Assert.Equal(100, Fuzz.PartialRatio("physics 2 vid", "study physics physics 2 video"));
     }
 
     [Fact]
     public void Issue90()
     {
-        Assert.Equal(86, Fuzz.PartialRatio("ax b", "a b a c b"));
+        Assert.Equal(85.71428571428571, Fuzz.PartialRatio("ax b", "a b a c b"), 10);
     }
 
     [Fact]
@@ -25,7 +25,7 @@ public class RatioIssuesTests
     {
         var str1 = new string('a', 65);
         var str2 = "a" + (char)256 + new string('a', 63);
-        Assert.Equal(99, Fuzz.PartialRatio(str1, str2));
+        Assert.Equal(99.22480620155039, Fuzz.PartialRatio(str1, str2), 10);
     }
 
     [Fact]
@@ -51,13 +51,12 @@ public class RatioIssuesTests
 
         Assert.Equal(0, PartialRatioStrategy<char>.PartialRatioAlignment(null, "test".AsSpan()).Score);
         Assert.Equal(0, PartialRatioStrategy<char>.PartialRatioAlignment("test".AsSpan(), null).Score);
-        Assert.Equal(0, PartialRatioStrategy<char>.PartialRatioAlignment("test".AsSpan(), "tesx".AsSpan(), scoreCutoff: 90).Score);
     }
 
     [Fact]
     public void Issue196()
     {
-        Assert.Equal(82, Fuzz.WeightedRatio("South Korea", "North Korea"));
+        Assert.Equal(81.81818181818181, Fuzz.WeightedRatio("South Korea", "North Korea"), 10);
     }
 
     [Fact]

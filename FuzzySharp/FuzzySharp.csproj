@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <FileVersion>5.0.3.0</FileVersion>
-    <Version>5.0.3</Version>
-    <PackageVersion>5.0.3</PackageVersion>
-    <AssemblyVersion>5.0.3.0</AssemblyVersion>
-    <FileVersion>5.0.3.0</FileVersion>
-    <Version>5.0.3</Version>
-    <PackageVersion>5.0.3</PackageVersion>
+    <FileVersion>6.0.0.0</FileVersion>
+    <Version>6.0.0</Version>
+    <PackageVersion>6.0.0</PackageVersion>
+    <AssemblyVersion>6.0.0.0</AssemblyVersion>
+    <FileVersion>6.0.0.0</FileVersion>
+    <Version>6.0.0</Version>
+    <PackageVersion>6.0.0</PackageVersion>
     <Authors>Yevhen Cherkes;Jacob Bayer</Authors>
     <Company />
     <Description>

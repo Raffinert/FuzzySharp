@@ -18,26 +18,26 @@ public class RatioBenchmarks
     }
 
     [Benchmark]
-    public int Ratio()
+    public double Ratio()
     {
         return Fuzz.Ratio("mysmilarstring", "myawfullysimilarstirng");
     }
 
     [Benchmark]
-    public int RatioClassic()
+    public double RatioClassic()
     {
         return Classic.Fuzz.Ratio("mysmilarstring", "myawfullysimilarstirng");
     }
 
     [Benchmark]
-    public int RatioCached()
+    public double RatioCached()
     {
         using var scorer = new CachedDefaultRatioScorer("mysmilarstring");
         return scorer.Score("myawfullysimilarstirng");
     }
 
     [Benchmark]
-    public int RatioAcrossRunsCached()
+    public double RatioAcrossRunsCached()
     {
         return _cachedRatioScorer.Score("myawfullysimilarstirng");
     }

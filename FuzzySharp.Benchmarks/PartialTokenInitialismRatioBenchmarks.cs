@@ -8,13 +8,13 @@ namespace Raffinert.FuzzySharp.Benchmarks;
 public class PartialTokenInitialismRatioBenchmarks
 {
     [Benchmark]
-    public int PartialTokenInitialismRatio()
+    public double PartialTokenInitialismRatio()
     {
         return Fuzz.PartialTokenInitialismRatio("NASA", "National Aeronautics Space Administration, Kennedy Space Center, Cape Canaveral, Florida 32899");
     }
 
     [Benchmark]
-    public int PartialTokenInitialismRatioClassic()
+    public double PartialTokenInitialismRatioClassic()
     {
         return Classic.Fuzz.PartialTokenInitialismRatio("NASA", "National Aeronautics Space Administration, Kennedy Space Center, Cape Canaveral, Florida 32899");
     }

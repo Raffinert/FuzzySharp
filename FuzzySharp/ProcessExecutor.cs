@@ -20,7 +20,7 @@ internal static class ProcessExecutor
         string query,
         IEnumerable<string> choices,
         Func<string, string> processor,
-        int cutoff,
+        double cutoff,
         ProcessOptions options)
     {
         if (processor == null) throw new ArgumentNullException(nameof(processor));
@@ -46,7 +46,7 @@ internal static class ProcessExecutor
         IEnumerable<T> choices,
         Func<T, string> extractor,
         Func<string, string> processor,
-        int cutoff,
+        double cutoff,
         ProcessOptions options)
     {
         if (extractor == null) throw new ArgumentNullException(nameof(extractor));
@@ -73,7 +73,7 @@ internal static class ProcessExecutor
         IEnumerable<T> choices,
         Func<T, string> extractor,
         Func<string, string> processor,
-        int cutoff,
+        double cutoff,
         ProcessOptions options)
     {
         if (extractor == null) throw new ArgumentNullException(nameof(extractor)); 
@@ -100,7 +100,7 @@ internal static class ProcessExecutor
         IEnumerable<T> choices,
         Func<T, string> extractor,
         Func<string, string> processor,
-        int cutoff,
+        double cutoff,
         ProcessOptions options)
     {
         using var scorer = new CachedWeightedRatioScorer(processor(query));
@@ -118,7 +118,7 @@ internal static class ProcessExecutor
         string query,
         IEnumerable<string> choices,
         Func<string, string> processor,
-        int cutoff,
+        double cutoff,
         ProcessOptions options)
     {
         using var scorer = new CachedWeightedRatioScorer(processor(query));
@@ -141,7 +141,7 @@ internal static class ProcessExecutor
         IEnumerable<string> choices,
         Func<string, string> processor,
         int limit,
-        int cutoff,
+        double cutoff,
         ProcessOptions options)
     {
         if (processor == null) throw new ArgumentNullException(nameof(processor));
@@ -168,7 +168,7 @@ internal static class ProcessExecutor
         Func<T, string> extractor,
         Func<string, string> processor,
         int limit,
-        int cutoff,
+        double cutoff,
         ProcessOptions options)
     {
         if (extractor == null) throw new ArgumentNullException(nameof(extractor));
@@ -198,7 +198,7 @@ internal static class ProcessExecutor
         Func<T, string> extractor,
         Func<string, string> processor,
         int limit,
-        int cutoff,
+        double cutoff,
         ProcessOptions options)
     {
         if (extractor == null) throw new ArgumentNullException(nameof(extractor));
@@ -226,7 +226,7 @@ internal static class ProcessExecutor
         Func<T, string> extractor,
         Func<string, string> processor,
         int limit,
-        int cutoff,
+        double cutoff,
         ProcessOptions options)
     {
         using var scorer = new CachedWeightedRatioScorer(processor(query));
@@ -245,7 +245,7 @@ internal static class ProcessExecutor
         IEnumerable<string> choices,
         Func<string, string> processor,
         int limit,
-        int cutoff,
+        double cutoff,
         ProcessOptions options)
     {
         using var scorer = new CachedWeightedRatioScorer(processor(query));
@@ -267,7 +267,7 @@ internal static class ProcessExecutor
         string query,
         IEnumerable<string> choices,
         Func<string, string> processor,
-        int cutoff,
+        double cutoff,
         ProcessOptions options)
     {
         if (processor == null) throw new ArgumentNullException(nameof(processor));
@@ -293,7 +293,7 @@ internal static class ProcessExecutor
         IEnumerable<T> choices,
         Func<T, string> extractor,
         Func<string, string> processor,
-        int cutoff,
+        double cutoff,
         ProcessOptions options)
     {
         if (extractor == null) throw new ArgumentNullException(nameof(extractor));
@@ -320,7 +320,7 @@ internal static class ProcessExecutor
         IEnumerable<T> choices,
         Func<T, string> extractor,
         Func<string, string> processor,
-        int cutoff,
+        double cutoff,
         ProcessOptions options)
     {
         if (extractor == null) throw new ArgumentNullException(nameof(extractor));
@@ -347,7 +347,7 @@ internal static class ProcessExecutor
         IEnumerable<T> choices,
         Func<T, string> extractor,
         Func<string, string> processor,
-        int cutoff,
+        double cutoff,
         ProcessOptions options)
     {
         using var scorer = new CachedWeightedRatioScorer(processor(query));
@@ -365,7 +365,7 @@ internal static class ProcessExecutor
         string query,
         IEnumerable<string> choices,
         Func<string, string> processor,
-        int cutoff,
+        double cutoff,
         ProcessOptions options)
     {
         using var scorer = new CachedWeightedRatioScorer(processor(query));
@@ -387,7 +387,7 @@ internal static class ProcessExecutor
         string query,
         IEnumerable<string> choices,
         Func<string, string> processor,
-        int cutoff,
+        double cutoff,
         ProcessOptions options)
     {
         if (processor == null) throw new ArgumentNullException(nameof(processor));
@@ -416,7 +416,7 @@ internal static class ProcessExecutor
         IEnumerable<T> choices,
         Func<T, string> extractor,
         Func<string, string> processor,
-        int cutoff,
+        double cutoff,
         ProcessOptions options)
     {
         if (extractor == null) throw new ArgumentNullException(nameof(extractor));
@@ -447,7 +447,7 @@ internal static class ProcessExecutor
         IEnumerable<T> choices,
         Func<T, string> extractor,
         Func<string, string> processor,
-        int cutoff,
+        double cutoff,
         ProcessOptions options)
     {
         if (extractor == null) throw new ArgumentNullException(nameof(extractor));
