@@ -1,5 +1,6 @@
 using Xunit;
 using Raffinert.FuzzySharp.PreProcess;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 
 namespace Raffinert.FuzzySharp.Test.FuzzyTests;
 
@@ -105,6 +106,12 @@ public class RatioTests
     }
 
     [Fact]
+    public void TestWeightedRatioPreservesLegacyPartialTokenBranch()
+    {
+        Assert.Equal(79.16666666666667, Fuzz.WeightedRatio("alpha beta gamma", "gamma alpha betx zzz"), precision: 10);
+    }
+
+    [Fact]
     public void TestWeightedRatioMisorderedMatch()
     {
         Assert.Equal(95, Fuzz.WeightedRatio(S4, S5));
@@ -116,7 +123,35 @@ public class RatioTests
         Assert.Equal(0, Fuzz.Ratio("test_string", ""));
         Assert.Equal(0, Fuzz.PartialRatio("test_string", ""));
         Assert.Equal(0, Fuzz.Ratio("", ""));
-        Assert.Equal(0, Fuzz.PartialRatio("", ""));
+        Assert.Equal(100, Fuzz.PartialRatio("", ""));
+        Assert.Equal(0, Fuzz.PartialRatio("", "x"));
+
+        var scorer = new PartialRatioScorer();
+        Assert.Equal(100, scorer.Score("", ""));
+        Assert.Equal(0, scorer.Score("", "x"));
+    }
+
+    [Fact]
+    public void PartialRatio_PreservesNearPerfectNonExactScores()
+    {
+        var almost = new string('a', 199) + "b";
+        var exact = new string('a', 200);
+
+        Assert.Equal(99.5, Fuzz.PartialRatio(almost, exact), precision: 10);
+        Assert.Equal(99.5, Fuzz.PartialRatio("b" + new string('a', 199), exact), precision: 10);
+        Assert.Equal(100, Fuzz.PartialRatio(exact, exact));
+
+        var prefixQuery = new string('a', 199) + "b";
+        var prefixCandidate = new string('a', 198) + "bzx";
+        Assert.Equal(99.74937343358396, Fuzz.PartialRatio(prefixQuery, prefixCandidate), precision: 10);
+    }
+
+    [Fact]
+    public void PartialRatio_ProcessedEmptyInputsFollowEmptyContract()
+    {
+        Assert.Equal(100, Fuzz.PartialRatio("!!!", "???", StringPreprocessor.Full));
+        Assert.Equal(0, Fuzz.PartialRatio("!!!", "x", StringPreprocessor.Full));
+        Assert.Equal(0, Fuzz.PartialRatio("x", "!!!", StringPreprocessor.Full));
     }
 
     [Fact]

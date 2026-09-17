@@ -61,11 +61,19 @@ public static partial class ResultExtractor
 
         public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, ICachedRatioScorer scorer, int limit, double cutoff = 0)
         {
+            ValidateLimit(limit);
+            if (limit == 0)
+                return Enumerable.Empty<ExtractedResult<T>>();
+
             return ExtractTopCore(choices, choice => scorer.Score(processor(extractor(choice))), limit, cutoff);
         }
 
         public static IEnumerable<ExtractedResult<string>> ExtractTop(IEnumerable<string> choices, Func<string, string> processor, ICachedRatioScorer scorer, int limit, double cutoff = 0)
         {
+            ValidateLimit(limit);
+            if (limit == 0)
+                return Enumerable.Empty<ExtractedResult<string>>();
+
             return ExtractTopCore(choices, choice => scorer.Score(processor(choice)), limit, cutoff);
         }
     }

@@ -38,7 +38,8 @@ public static class Fuzz
     /// <summary>
     /// Inconsistent substrings lead to problems in matching. This ratio
     /// uses a heuristic called "best partial" for when two strings
-    /// are of noticeably different lengths.
+    /// are of noticeably different lengths. Two empty inputs score 100;
+    /// exactly one empty input scores 0.
     /// </summary>
     /// <param name="input1"></param>
     /// <param name="input2"></param>
@@ -51,7 +52,8 @@ public static class Fuzz
     /// <summary>
     /// Inconsistent substrings lead to problems in matching. This ratio
     /// uses a heuristic called "best partial" for when two strings
-    /// are of noticeably different lengths.
+    /// are of noticeably different lengths. Two empty inputs score 100;
+    /// exactly one empty input scores 0.
     /// </summary>
     /// <param name="input1"></param>
     /// <param name="input2"></param>

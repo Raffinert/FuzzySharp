@@ -144,6 +144,10 @@ internal static class ProcessExecutor
         double cutoff,
         ProcessOptions options)
     {
+        ResultExtractor.ValidateLimit(limit);
+        if (limit == 0)
+            return Array.Empty<ExtractedResult<string>>();
+
         if (processor == null) throw new ArgumentNullException(nameof(processor));
 
         if (options.UseCaching)
@@ -171,6 +175,10 @@ internal static class ProcessExecutor
         double cutoff,
         ProcessOptions options)
     {
+        ResultExtractor.ValidateLimit(limit);
+        if (limit == 0)
+            return Array.Empty<ExtractedResult<T>>();
+
         if (extractor == null) throw new ArgumentNullException(nameof(extractor));
         if (processor == null) throw new ArgumentNullException(nameof(processor));
 
@@ -201,6 +209,10 @@ internal static class ProcessExecutor
         double cutoff,
         ProcessOptions options)
     {
+        ResultExtractor.ValidateLimit(limit);
+        if (limit == 0)
+            return Array.Empty<ExtractedResult<T>>();
+
         if (extractor == null) throw new ArgumentNullException(nameof(extractor));
         if (processor == null) throw new ArgumentNullException(nameof(processor));
 

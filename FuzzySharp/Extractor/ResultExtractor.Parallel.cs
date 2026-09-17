@@ -55,6 +55,10 @@ public static partial class ResultExtractor
             int limit,
             double cutoff)
         {
+            ValidateLimit(limit);
+            if (limit == 0)
+                yield break;
+
             var heap = new MinHeap<ScoredCandidate<T>>(ScoredCandidateComparer<T>.Instance);
             var comparer = ScoredCandidateComparer<T>.Instance;
 
@@ -165,6 +169,10 @@ public static partial class ResultExtractor
 
         public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(T query, IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, IRatioScorer calculator, int limit, double cutoff = 0, ParallelOptions parallelOptions = null)
         {
+            ValidateLimit(limit);
+            if (limit == 0)
+                return Enumerable.Empty<ExtractedResult<T>>();
+
             var materializedChoices = choices.ToList();
             var processedQuery = processor(extractor(query));
             var scores = ScoreParallel(materializedChoices, choice => calculator.Score(processedQuery, processor(extractor(choice))), parallelOptions);
@@ -173,6 +181,10 @@ public static partial class ResultExtractor
 
         public static IEnumerable<ExtractedResult<string>> ExtractTop(string query, IEnumerable<string> choices, Func<string, string> processor, IRatioScorer calculator, int limit, double cutoff = 0, ParallelOptions parallelOptions = null)
         {
+            ValidateLimit(limit);
+            if (limit == 0)
+                return Enumerable.Empty<ExtractedResult<string>>();
+
             var materializedChoices = choices.ToList();
             var processedQuery = processor(query);
             var scores = ScoreParallel(materializedChoices, choice => calculator.Score(processedQuery, processor(choice)), parallelOptions);
@@ -181,6 +193,10 @@ public static partial class ResultExtractor
 
         public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(string query, IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, IRatioScorer calculator, int limit, double cutoff = 0, ParallelOptions parallelOptions = null)
         {
+            ValidateLimit(limit);
+            if (limit == 0)
+                return Enumerable.Empty<ExtractedResult<T>>();
+
             var materializedChoices = choices.ToList();
             var processedQuery = processor(query);
             var scores = ScoreParallel(materializedChoices, choice => calculator.Score(processedQuery, processor(extractor(choice))), parallelOptions);

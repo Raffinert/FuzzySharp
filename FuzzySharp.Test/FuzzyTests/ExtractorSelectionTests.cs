@@ -178,16 +178,37 @@ public class ExtractorSelectionTests
     }
 
     [Fact]
-    public void ExtractTop_LimitZeroAndNegative_PreserveLegacyBehavior()
+    public void ExtractTop_LimitZeroReturnsEmptyWithoutEnumeratingAndNegativeIsRejected()
     {
         var scorer = new MapScorer(("accepted", 50));
-        var choices = new[] { "accepted" };
+        var cachedScorer = new CachedMapScorer(("accepted", 50));
 
-        Assert.Throws<InvalidOperationException>(() =>
-            ResultExtractor.ExtractTop("query", choices, IdentityProcessor, scorer, limit: 0).ToList());
-        Assert.Throws<InvalidOperationException>(() =>
-            ResultExtractor.ExtractTop("query", choices, IdentityProcessor, scorer, limit: -1).ToList());
-        Assert.Empty(ResultExtractor.ExtractTop("query", choices, IdentityProcessor, scorer, limit: 0, cutoff: 90));
+        var throwingChoices = new ThrowingEnumerable<string>();
+        Assert.Empty(ResultExtractor.ExtractTop("query", throwingChoices, IdentityProcessor, scorer, limit: 0));
+        Assert.Empty(ResultExtractor.Cached.ExtractTop(throwingChoices, IdentityProcessor, cachedScorer, limit: 0));
+        Assert.Empty(ResultExtractor.Parallel.ExtractTop("query", throwingChoices, IdentityProcessor, scorer, limit: 0, parallelOptions: TestParallelOptions));
+        Assert.Empty(ResultExtractor.Parallel.Cached.ExtractTop(throwingChoices, IdentityProcessor, cachedScorer, limit: 0, parallelOptions: TestParallelOptions));
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => ResultExtractor.ExtractTop("query", [], IdentityProcessor, scorer, limit: -1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ResultExtractor.Cached.ExtractTop([], IdentityProcessor, cachedScorer, limit: -1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ResultExtractor.Parallel.ExtractTop("query", [], IdentityProcessor, scorer, limit: -1, parallelOptions: TestParallelOptions));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ResultExtractor.Parallel.Cached.ExtractTop([], IdentityProcessor, cachedScorer, limit: -1, parallelOptions: TestParallelOptions));
+
+    }
+
+    [Fact]
+    public void ExtractTop_ZeroLimitAppliesToGenericAndProcessRoutes()
+    {
+        var choices = new[] { new Choice("accepted") };
+        var scorer = new MapScorer(("accepted", 50));
+
+        Assert.Empty(ResultExtractor.ExtractTop("query", choices, static choice => choice.Name, IdentityProcessor, scorer, limit: 0));
+        Assert.Empty(Process.ExtractTopBy("query", choices, static choice => choice.Name, IdentityProcessor, scorer, limit: 0));
+        Assert.Empty(Process.Configure().Build().ExtractTopBy("query", choices, static choice => choice.Name, IdentityProcessor, limit: 0));
+        Assert.Empty(Process.Configure().Cached().Parallel().Build().ExtractTopBy("query", choices, static choice => choice.Name, IdentityProcessor, limit: 0));
+
+        using var cachedScorer = new CachedMapScorer(("accepted", 50));
+        Assert.Empty(Process.Configure().Cached(cachedScorer).Build().ExtractTopBy(choices, static choice => choice.Name, IdentityProcessor, limit: 0));
     }
 
     [Fact]
@@ -390,5 +411,12 @@ public class ExtractorSelectionTests
         {
             return GetEnumerator();
         }
+    }
+
+    private sealed class ThrowingEnumerable<T> : IEnumerable<T>
+    {
+        public IEnumerator<T> GetEnumerator() => throw new InvalidOperationException("Choices must not be enumerated for a zero limit.");
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }
