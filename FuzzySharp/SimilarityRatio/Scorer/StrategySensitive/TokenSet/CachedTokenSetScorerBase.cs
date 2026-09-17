@@ -12,6 +12,12 @@ public abstract class CachedTokenSetScorerBase(string input1) : ICachedRatioScor
     public double Score(string input2)
     {
         var tokens2 = new HashSet<string>(input2.SplitByAnySpace());
+
+        if (Tokens1.Count == 0 || tokens2.Count == 0)
+        {
+            return 0;
+        }
+
         var tokens1 = new HashSet<string>(Tokens1);
 
         var intersection = TokenSetScorerHelpers.GetIntersectionAndExcept(tokens1, tokens2);

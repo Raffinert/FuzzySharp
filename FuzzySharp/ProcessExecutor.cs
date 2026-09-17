@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Raffinert.FuzzySharp.Extractor;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
 
@@ -146,7 +147,7 @@ internal static class ProcessExecutor
     {
         ResultExtractor.ValidateLimit(limit);
         if (limit == 0)
-            return Array.Empty<ExtractedResult<string>>();
+            return Enumerable.Empty<ExtractedResult<string>>();
 
         if (processor == null) throw new ArgumentNullException(nameof(processor));
 
@@ -177,7 +178,7 @@ internal static class ProcessExecutor
     {
         ResultExtractor.ValidateLimit(limit);
         if (limit == 0)
-            return Array.Empty<ExtractedResult<T>>();
+            return Enumerable.Empty<ExtractedResult<T>>();
 
         if (extractor == null) throw new ArgumentNullException(nameof(extractor));
         if (processor == null) throw new ArgumentNullException(nameof(processor));
@@ -211,7 +212,7 @@ internal static class ProcessExecutor
     {
         ResultExtractor.ValidateLimit(limit);
         if (limit == 0)
-            return Array.Empty<ExtractedResult<T>>();
+            return Enumerable.Empty<ExtractedResult<T>>();
 
         if (extractor == null) throw new ArgumentNullException(nameof(extractor));
         if (processor == null) throw new ArgumentNullException(nameof(processor));

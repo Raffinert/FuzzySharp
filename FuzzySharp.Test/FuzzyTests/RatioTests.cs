@@ -136,9 +136,12 @@ public class RatioTests
     {
         var almost = new string('a', 199) + "b";
         var exact = new string('a', 200);
+        const double expected = 99.74937343358396;
 
-        Assert.Equal(99.5, Fuzz.PartialRatio(almost, exact), precision: 10);
-        Assert.Equal(99.5, Fuzz.PartialRatio("b" + new string('a', 199), exact), precision: 10);
+        var almostScore = Fuzz.PartialRatio(almost, exact);
+        Assert.Equal(expected, almostScore, precision: 10);
+        Assert.Equal(expected, Fuzz.PartialRatio("b" + new string('a', 199), exact), precision: 10);
+        Assert.True(almostScore < 100);
         Assert.Equal(100, Fuzz.PartialRatio(exact, exact));
 
         var prefixQuery = new string('a', 199) + "b";
@@ -152,6 +155,16 @@ public class RatioTests
         Assert.Equal(100, Fuzz.PartialRatio("!!!", "???", StringPreprocessor.Full));
         Assert.Equal(0, Fuzz.PartialRatio("!!!", "x", StringPreprocessor.Full));
         Assert.Equal(0, Fuzz.PartialRatio("x", "!!!", StringPreprocessor.Full));
+    }
+
+    [Fact]
+    public void PartialTokenSetRatio_EmptyTokenCollectionScoresZero()
+    {
+        Assert.Equal(0, Fuzz.PartialTokenSetRatio("", ""));
+        Assert.Equal(0, Fuzz.PartialTokenSetRatio("", "x"));
+        Assert.Equal(0, Fuzz.PartialTokenSetRatio("x", ""));
+        Assert.Equal(0, Fuzz.PartialTokenSetRatio("!!!", "x", StringPreprocessor.Full));
+        Assert.Equal(0, Fuzz.PartialTokenSetRatio("x", "!!!", StringPreprocessor.Full));
     }
 
     [Fact]

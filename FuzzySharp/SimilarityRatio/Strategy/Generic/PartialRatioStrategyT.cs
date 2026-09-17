@@ -121,20 +121,6 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
         if (len1 == 0 || len2 == 0)
             return res;
 
-        // Equal-length inputs have a full-width candidate before any edge
-        // slices. Preserve that score when it is already near-perfect so a
-        // shorter slice cannot change its denominator.
-        if (len1 == len2)
-        {
-            var fullWidthSimilarity = Indel.BlockNormalizedSimilarity(s1Vector, s2);
-            res.Score = fullWidthSimilarity;
-            if (fullWidthSimilarity >= .995)
-            {
-                res.Score *= 100.0;
-                return res;
-            }
-        }
-
         if (len2 > len1)
         {
             int maximum = len1 + len1;

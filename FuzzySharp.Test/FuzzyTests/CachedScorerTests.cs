@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Raffinert.FuzzySharp.PreProcess;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
+using Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 using Xunit;
 
 namespace Raffinert.FuzzySharp.Test.FuzzyTests;
@@ -46,5 +47,16 @@ public class CachedScorerTests
             Assert.Equal(normal[i].Score, cached[i].Score, precision: 10);
             Assert.Equal(normal[i].Index, cached[i].Index);
         }
+    }
+
+    [Fact]
+    public void CachedPartialTokenSet_EmptyTokenCollectionScoresZero()
+    {
+        using var emptyQuery = new CachedPartialTokenSetScorer("");
+        Assert.Equal(0, emptyQuery.Score(""));
+        Assert.Equal(0, emptyQuery.Score("x"));
+
+        using var nonEmptyQuery = new CachedPartialTokenSetScorer("x");
+        Assert.Equal(0, nonEmptyQuery.Score(""));
     }
 }
