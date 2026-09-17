@@ -14,10 +14,8 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
     /// </summary>
     public static double Calculate(ReadOnlySpan<T> input1, ReadOnlySpan<T> input2)
     {
-        if (input1.Length == 0 || input2.Length == 0)
-        {
-            return 0;
-        }
+        if (input1.IsEmpty || input2.IsEmpty)
+            return input1.IsEmpty && input2.IsEmpty ? 100.0 : 0.0;
 
         var alignment = PartialRatioAlignment(input1, input2);
 
@@ -228,7 +226,7 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
                 cutoff = sim;
                 res.DestStart = 0;
                 res.DestEnd = i;
-                if (sim >= .995) { res.Score = 100.0; return res; }
+                if (sim == 1.0) { res.Score = 100.0; return res; }
             }
         }
 
@@ -244,7 +242,8 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
                 cutoff = sim;
                 res.DestStart = i;
                 res.DestEnd = len2;
-                if (sim >= .995) { res.Score = 100.0; return res; }
+                if (sim == 1.0) { res.Score = 100.0; return res; }
+
             }
         }
 

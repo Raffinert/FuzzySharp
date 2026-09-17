@@ -19,7 +19,7 @@ public static class StringPreprocessor
         for (var i = 0; i < input.Length; i++)
         {
             var c = input[i];
-            result[i] = char.IsLetterOrDigit(c) ? char.ToLower(c) : ' ';
+            result[i] = char.IsLetterOrDigit(c) ? char.ToLowerInvariant(c) : ' ';
         }
 
         return result.Trim().ToString();

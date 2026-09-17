@@ -34,6 +34,7 @@ public class WeightedRatioScorer : ScorerBase
         if (tryPartials)
         {
             double partial = Fuzz.PartialRatio(input1, input2) * partialScale;
+            // Keep the legacy full TokenSort/TokenSet partial branch for compatibility.
             double partialSor = Fuzz.TokenSortRatio(input1, input2) * unbaseScale * partialScale;
             double partialSet = Fuzz.TokenSetRatio(input1, input2) * unbaseScale * partialScale;
 

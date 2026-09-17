@@ -114,6 +114,7 @@ public static class Process
         int limit = 5,
         double cutoff = 0)
     {
+        ResultExtractor.ValidateLimit(limit);
         processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;
         return ResultExtractor.ExtractTop(query, choices, processor, scorer, limit, cutoff);
@@ -140,6 +141,7 @@ public static class Process
         int limit = 5,
         double cutoff = 0)
     {
+        ResultExtractor.ValidateLimit(limit);
         processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;
         return ResultExtractor.ExtractTop(query, choices, extractor, processor, scorer, limit, cutoff);
@@ -166,6 +168,7 @@ public static class Process
         int limit = 5,
         double cutoff = 0)
     {
+        ResultExtractor.ValidateLimit(limit);
         processor ??= DefaultStringProcessor;
         scorer ??= DefaultScorer;
         return ResultExtractor.ExtractTop(query, choices, extractor, processor, scorer, limit, cutoff);

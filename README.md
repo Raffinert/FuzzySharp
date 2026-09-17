@@ -183,6 +183,8 @@ Fuzz.WeightedRatio("The quick brown fox jimps ofver the small lazy dog", "the qu
 // 94.94949494949495
 ```
 
+`WeightedRatio` intentionally retains its legacy full `TokenSortRatio`/`TokenSetRatio` partial branch for compatibility.
+
 ## Process Extraction
 
 Find the best match(es) from a collection of choices.
@@ -496,7 +498,7 @@ Fuzz.Ratio("new york mets", "NEW YORK METS", StringPreprocessor.Full);
 // 100 (case insensitive after preprocessing)
 ```
 
-`Process` extraction methods use `StringPreprocessor.Full` by default. Pass `StringPreprocessor.None` (or a custom `processor` function) to override this behavior.
+`Process` extraction methods use `StringPreprocessor.Full` by default. The default processor lowercases with invariant Unicode casing, so its results are deterministic across request cultures. Pass `StringPreprocessor.None` (or a custom `processor` function) to override this behavior or provide locale-specific matching.
 
 ## Performance
 

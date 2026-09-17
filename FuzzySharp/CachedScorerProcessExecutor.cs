@@ -57,6 +57,7 @@ internal static class CachedScorerProcessExecutor
         bool useParallel,
         ParallelOptions parallelOptions)
     {
+        ResultExtractor.ValidateLimit(limit);
         if (useParallel)
         {
             return ResultExtractor.Parallel.Cached.ExtractTop(
@@ -75,6 +76,7 @@ internal static class CachedScorerProcessExecutor
         bool useParallel,
         ParallelOptions parallelOptions)
     {
+        ResultExtractor.ValidateLimit(limit);
         if (useParallel)
         {
             return ResultExtractor.Parallel.Cached.ExtractTop(

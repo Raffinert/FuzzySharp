@@ -11,6 +11,11 @@ public abstract class TokenSetScorerBase : StrategySensitiveScorerBase
         var tokens1 = new HashSet<string>(input1.SplitByAnySpace());
         var tokens2 = new HashSet<string>(input2.SplitByAnySpace());
 
+        if (tokens1.Count == 0 || tokens2.Count == 0)
+        {
+            return 0;
+        }
+
         var intersection = GetIntersectionAndExcept(tokens1, tokens2);
 
         intersection.Sort();

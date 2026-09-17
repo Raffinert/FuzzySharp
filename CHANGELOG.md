@@ -1,5 +1,13 @@
 # Changelog
 
+## v6.0.1
+
+- Fixed `PartialRatio` false exact matches for near-perfect long strings.
+- Clarified `PartialRatio` empty-input semantics: two empty inputs score 100; one empty input scores 0.
+- Corrected cached `WeightedRatio` token-sort scoring to match uncached results and dispose its owned strategy.
+- Added validation for `ExtractTop` limits; zero performs no work and negative limits throw `ArgumentOutOfRangeException`.
+- Made the default string preprocessor's casing culture-invariant.
+
 ## v6.0.0
 
 *Double-precision scoring and simplified distance APIs*

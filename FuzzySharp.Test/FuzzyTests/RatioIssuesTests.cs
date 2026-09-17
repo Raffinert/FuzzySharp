@@ -56,6 +56,9 @@ public class RatioIssuesTests
     [Fact]
     public void Issue196()
     {
+        // WeightedRatio intentionally keeps its legacy full TokenSort/TokenSet
+        // partial branch for compatibility; do not replace these with partial
+        // token scorers as part of a RapidFuzz parity change.
         Assert.Equal(81.81818181818181, Fuzz.WeightedRatio("South Korea", "North Korea"), 10);
     }
 

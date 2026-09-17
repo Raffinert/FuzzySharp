@@ -15,13 +15,14 @@ public sealed class CachedWeightedRatioScorer : ICachedRatioScorer
     private readonly string _input1;
     private readonly CachedTokenSortScorer _tokenSortScorer;
     private readonly CachedTokenSetScorer _tokenSetScorer;
+    private bool _disposed;
 
     public CachedWeightedRatioScorer(string input1)
     {
         _input1 = input1;
         _strategy = new CachedDefaultRatioStrategy(input1);
         _baseRatioScorer = new CachedDefaultRatioScorer(_strategy);
-        _tokenSortScorer = new CachedTokenSortScorer(_strategy);
+        _tokenSortScorer = new CachedTokenSortScorer(_input1);
         _tokenSetScorer = new CachedTokenSetScorer(_input1);
     }
 
@@ -64,6 +65,13 @@ public sealed class CachedWeightedRatioScorer : ICachedRatioScorer
 
     public void Dispose()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
         _strategy.Dispose();
+        _tokenSortScorer.Dispose();
     }
 }

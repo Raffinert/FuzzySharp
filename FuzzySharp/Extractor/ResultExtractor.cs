@@ -8,6 +8,12 @@ namespace Raffinert.FuzzySharp.Extractor;
 
 public static partial class ResultExtractor
 {
+    internal static void ValidateLimit(int limit)
+    {
+        if (limit < 0)
+            throw new ArgumentOutOfRangeException(nameof(limit), limit, "The limit must be non-negative.");
+    }
+
     private static ExtractedResult<T> ExtractOneCore<T>(
         IEnumerable<T> choices,
         Func<T, double> scoreSelector,
@@ -47,6 +53,10 @@ public static partial class ResultExtractor
         int limit,
         double cutoff)
     {
+        ValidateLimit(limit);
+        if (limit == 0)
+            yield break;
+
         var comparer = ScoredCandidateComparer<T>.Instance;
         var heap = new MinHeap<ScoredCandidate<T>>(comparer);
         var index = 0;
@@ -176,12 +186,20 @@ public static partial class ResultExtractor
 
     public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(T query, IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, IRatioScorer scorer, int limit, double cutoff = 0)
     {
+        ValidateLimit(limit);
+        if (limit == 0)
+            return Enumerable.Empty<ExtractedResult<T>>();
+
         var extracted = extractor(query);
         return ExtractTop(extracted, choices, extractor, processor, scorer, limit, cutoff);
     }
 
     public static IEnumerable<ExtractedResult<string>> ExtractTop(string query, IEnumerable<string> choices, Func<string, string> processor, IRatioScorer scorer, int limit, double cutoff = 0)
     {
+        ValidateLimit(limit);
+        if (limit == 0)
+            return Enumerable.Empty<ExtractedResult<string>>();
+
         processor ??= Process.DefaultStringProcessor;
         return ExtractTopIterator();
 
@@ -197,6 +215,10 @@ public static partial class ResultExtractor
 
     public static IEnumerable<ExtractedResult<T>> ExtractTop<T>(string query, IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, IRatioScorer scorer, int limit, double cutoff = 0)
     {
+        ValidateLimit(limit);
+        if (limit == 0)
+            return Enumerable.Empty<ExtractedResult<T>>();
+
         processor ??= Process.DefaultStringProcessor;
         return ExtractTopIterator();
 
