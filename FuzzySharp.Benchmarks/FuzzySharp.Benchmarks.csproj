@@ -23,4 +23,8 @@
   <ItemGroup>
     <Folder Include="BenchmarkDotNet.Artifacts\results\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="10.0.113" />
+  </ItemGroup>
 </Project>
