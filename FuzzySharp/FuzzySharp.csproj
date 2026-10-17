@@ -54,8 +54,4 @@
         <InternalsVisibleTo Include="Raffinert.FuzzySharp.Test" />
     </ItemGroup>
 
-    <ItemGroup>
-      <PackageReference Update="Microsoft.SourceLink.GitHub" Version="10.0.113" />
-    </ItemGroup>
-
 </Project>
