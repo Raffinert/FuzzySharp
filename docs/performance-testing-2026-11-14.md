@@ -59,6 +59,8 @@ These before/after runs were separate in-process runs on the same host. The high
 
 On the existing lower-similarity weighted benchmark, stateless scoring measured 2.022 µs after the change versus 1.951 µs before; that difference is smaller than the run-to-run spread. Reused cached scoring measured 1.269 µs and 2.22 KB after versus 1.336 µs and 2.58 KB before. The cached allocation reduction is consistent with the token-set change.
 
-Validation: 5,145 tests passed on both .NET 8 and .NET 10, including additional repeated-cache, tie-order, and one-shot enumerable cases. The library built across all configured target frameworks. The existing netcoreapp3.1 dependency support warning remained.
+Validation: 5,147 tests passed on both .NET 8 and .NET 10, including additional repeated-cache, tie-order, one-shot enumerable, and post-return mutation cases. The library built across all configured target frameworks. The existing netcoreapp3.1 dependency support warning remained.
+
+PR review follow-up: parallel top-N now retains each selected value before returning its result iterator. Replacing an array element or clearing a list after the call no longer changes the scored results. A repeat in-process benchmark measured 553.7 µs and 3.95 KB at cutoff 0, and 404.1 µs and 3.96 KB at cutoff 95. The first cutoff-0 run after this fix was noisy, so these timings should be treated as indicative rather than a precise before/after comparison.
 
 The pooled top-N path reduces garbage collection pressure but still uses a buffer proportional to the number of choices. More work on tokenization and score-buffer size should be driven by broader input distributions and runtime measurements.

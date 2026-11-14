@@ -68,7 +68,7 @@ public static partial class ResultExtractor
                 return Enumerable.Empty<ExtractedResult<T>>();
 
             var scores = ArrayPool<double>.Shared.Rent(choices.Count);
-            var comparer = ScoredCandidateComparer<int>.Instance;
+            var comparer = ScoredCandidateComparer<T>.Instance;
             try
             {
                 System.Threading.Tasks.Parallel.For(0, choices.Count, parallelOptions ?? DefaultParallelOptions, index =>
@@ -76,19 +76,19 @@ public static partial class ResultExtractor
                     scores[index] = scoreSelector(choices[index]);
                 });
 
-                var heap = new MinHeap<ScoredCandidate<int>>(comparer);
+                var heap = new MinHeap<ScoredCandidate<T>>(comparer);
                 for (var index = 0; index < choices.Count; index++)
                 {
                     var score = scores[index];
                     if (score >= cutoff)
-                        AddTopCandidate(heap, comparer, new ScoredCandidate<int>(index, score, index), limit);
+                        AddTopCandidate(heap, comparer, new ScoredCandidate<T>(choices[index], score, index), limit);
                 }
 
-                var selected = new ScoredCandidate<int>[heap.Count];
+                var selected = new ScoredCandidate<T>[heap.Count];
                 for (var i = selected.Length - 1; i >= 0; i--)
                     selected[i] = heap.ExtractDominating();
 
-                return CreateParallelTopResults(choices, selected);
+                return CreateParallelTopResults(selected);
             }
             finally
             {
@@ -97,12 +97,11 @@ public static partial class ResultExtractor
         }
 
         private static IEnumerable<ExtractedResult<T>> CreateParallelTopResults<T>(
-            IList<T> choices,
-            ScoredCandidate<int>[] selected)
+            ScoredCandidate<T>[] selected)
         {
             foreach (var candidate in selected)
             {
-                yield return new ExtractedResult<T>(choices[candidate.Index], candidate.Score, candidate.Index);
+                yield return new ExtractedResult<T>(candidate.Value, candidate.Score, candidate.Index);
             }
         }
 

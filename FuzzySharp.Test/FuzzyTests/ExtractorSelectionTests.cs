@@ -199,6 +199,29 @@ public class ExtractorSelectionTests
         }
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ExtractTop_ParallelCapturesSelectedValuesBeforeEnumeration(bool cached)
+    {
+        var scorer = new MapScorer(("low", 10), ("winner", 90), ("other", 20));
+        using var cachedScorer = new CachedMapScorer(("low", 10), ("winner", 90), ("other", 20));
+
+        var array = new[] { "low", "winner", "other" };
+        var arrayResults = cached
+            ? ResultExtractor.Parallel.Cached.ExtractTop(array, IdentityProcessor, cachedScorer, limit: 1, parallelOptions: TestParallelOptions)
+            : ResultExtractor.Parallel.ExtractTop("query", array, IdentityProcessor, scorer, limit: 1, parallelOptions: TestParallelOptions);
+        array[1] = "replacement";
+        AssertResult(Assert.Single(arrayResults), "winner", 90, 1);
+
+        var list = new List<string> { "low", "winner", "other" };
+        var listResults = cached
+            ? ResultExtractor.Parallel.Cached.ExtractTop(list, IdentityProcessor, cachedScorer, limit: 1, parallelOptions: TestParallelOptions)
+            : ResultExtractor.Parallel.ExtractTop("query", list, IdentityProcessor, scorer, limit: 1, parallelOptions: TestParallelOptions);
+        list.Clear();
+        AssertResult(Assert.Single(listResults), "winner", 90, 1);
+    }
+
     [Fact]
     public void ParallelExtraction_MaterializesOneShotChoicesOnce()
     {
