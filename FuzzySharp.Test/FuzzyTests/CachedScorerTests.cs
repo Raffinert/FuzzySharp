@@ -16,6 +16,8 @@ public class CachedScorerTests
         { "Acme 123", "123 Acme Ltd" },
         { "red red blue", "blue red red" },
         { "Acme,   123", "123 Acme" },
+        { "an exact weighted ratio match", "an exact weighted ratio match" },
+        { "an almost exact weighted ratio match", "an almost exact weighted ratio matci" },
     };
 
     [Theory]
@@ -58,5 +60,19 @@ public class CachedScorerTests
 
         using var nonEmptyQuery = new CachedPartialTokenSetScorer("x");
         Assert.Equal(0, nonEmptyQuery.Score(""));
+    }
+
+    [Fact]
+    public void CachedTokenSetMatchesStatelessAcrossRepeatedCalls()
+    {
+        const string query = "red red blue\tgreen";
+        string[] candidates = ["blue red", "red blue green", "green sky", "  ", "blue\nred red"];
+        using var cached = new CachedTokenSetScorer(query);
+
+        for (var repeat = 0; repeat < 2; repeat++)
+        {
+            foreach (var candidate in candidates)
+                Assert.Equal(Fuzz.TokenSetRatio(query, candidate), cached.Score(candidate), precision: 10);
+        }
     }
 }

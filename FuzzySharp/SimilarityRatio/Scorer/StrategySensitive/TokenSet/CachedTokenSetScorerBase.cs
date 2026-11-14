@@ -6,26 +6,32 @@ namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 
 public abstract class CachedTokenSetScorerBase(string input1) : ICachedRatioScorer
 {
-    private HashSet<string> Tokens1 { get; set; } = new HashSet<string>(input1.SplitByAnySpace());
+    private readonly HashSet<string> _tokens1 = new HashSet<string>(input1.SplitByAnySpace());
     protected abstract FuzzySharp.Scorer Scorer { get; }
 
     public double Score(string input2)
     {
         var tokens2 = new HashSet<string>(input2.SplitByAnySpace());
 
-        if (Tokens1.Count == 0 || tokens2.Count == 0)
+        if (_tokens1.Count == 0 || tokens2.Count == 0)
         {
             return 0;
         }
 
-        var tokens1 = new HashSet<string>(Tokens1);
-
-        var intersection = TokenSetScorerHelpers.GetIntersectionAndExcept(tokens1, tokens2);
+        var intersection = new List<string>(Math.Min(_tokens1.Count, tokens2.Count));
+        var difference1 = new List<string>();
+        foreach (var token in _tokens1)
+        {
+            if (tokens2.Remove(token))
+                intersection.Add(token);
+            else
+                difference1.Add(token);
+        }
 
         intersection.Sort();
 
         var sortedIntersection = string.Join(" ", intersection);
-        var sortedDiff1To2 = TokenSetScorerHelpers.JoinIntersectionAndDifference(sortedIntersection, tokens1);
+        var sortedDiff1To2 = TokenSetScorerHelpers.JoinIntersectionAndDifference(sortedIntersection, difference1);
         var sortedDiff2To1 = TokenSetScorerHelpers.JoinIntersectionAndDifference(sortedIntersection, tokens2);
 
         var score1 = Scorer(sortedIntersection, sortedDiff1To2);

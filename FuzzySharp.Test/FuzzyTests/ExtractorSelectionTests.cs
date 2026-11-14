@@ -178,6 +178,43 @@ public class ExtractorSelectionTests
     }
 
     [Fact]
+    public void ExtractTop_ParallelMatchesSequentialForManyTiesAndLimits()
+    {
+        for (var seed = 0; seed < 20; seed++)
+        {
+            var random = new Random(seed);
+            var scores = Enumerable.Range(0, 40)
+                .Select(index => ($"choice-{index}", (double)random.Next(6)))
+                .ToArray();
+            var choices = scores.Select(item => item.Item1).ToArray();
+            var scorer = new MapScorer(scores);
+            var cachedScorer = new CachedMapScorer(scores);
+
+            foreach (var limit in new[] { 1, 2, 5, 10, 40 })
+            {
+                var expected = ResultExtractor.ExtractTop("query", choices, IdentityProcessor, scorer, limit).ToList();
+                AssertSameResults(expected, ResultExtractor.Parallel.ExtractTop("query", choices, IdentityProcessor, scorer, limit, parallelOptions: TestParallelOptions));
+                AssertSameResults(expected, ResultExtractor.Parallel.Cached.ExtractTop(choices, IdentityProcessor, cachedScorer, limit, parallelOptions: TestParallelOptions));
+            }
+        }
+    }
+
+    [Fact]
+    public void ParallelExtraction_MaterializesOneShotChoicesOnce()
+    {
+        var scorer = new MapScorer(("a", 10), ("winner", 90), ("b", 20));
+        var one = ResultExtractor.Parallel.ExtractOne(
+            "query", new OneShotEnumerable<string>(["a", "winner", "b"]),
+            IdentityProcessor, scorer, parallelOptions: TestParallelOptions);
+        AssertResult(one, "winner", 90, 1);
+
+        var top = ResultExtractor.Parallel.ExtractTop(
+            "query", new OneShotEnumerable<string>(["a", "winner", "b"]),
+            IdentityProcessor, scorer, limit: 2, parallelOptions: TestParallelOptions).ToList();
+        Assert.Equal(new[] { "winner", "b" }, top.Select(result => result.Value));
+    }
+
+    [Fact]
     public void ExtractTop_LimitZeroReturnsEmptyWithoutEnumeratingAndNegativeIsRejected()
     {
         var scorer = new MapScorer(("accepted", 50));

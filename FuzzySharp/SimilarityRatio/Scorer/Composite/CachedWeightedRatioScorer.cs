@@ -41,6 +41,10 @@ public sealed class CachedWeightedRatioScorer : ICachedRatioScorer
         double partialScale = PARTIAL_SCALE;
 
         double baseRatio = _baseRatioScorer.Score(input2);
+        // Every other branch is scaled to at most 95.
+        if (baseRatio >= unbaseScale * 100)
+            return baseRatio;
+
         double lenRatio = (double)Math.Max(len1, len2) / Math.Min(len1, len2);
 
         // if strings are similar length don't use partials
