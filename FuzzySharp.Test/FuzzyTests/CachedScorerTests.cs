@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using Raffinert.FuzzySharp.PreProcess;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;

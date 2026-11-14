@@ -4,7 +4,6 @@ using Raffinert.FuzzySharp.Extensions;
 using Raffinert.FuzzySharp.SimilarityRatio;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer;
 using Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
-using System.Threading.Tasks;
 
 namespace Raffinert.FuzzySharp.Benchmarks;
 
