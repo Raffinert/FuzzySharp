@@ -325,6 +325,8 @@ var pipeline = Process.Configure()
 var result = pipeline.ExtractOne("cowboys", new[] { "Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys" });
 ```
 
+Caching pays off when the query is compared with many candidates or reused across calls. For a single score, call `Fuzz.Ratio` or `Fuzz.WeightedRatio` directly; constructing a cached scorer for one comparison adds work and allocations.
+
 ### Cached + Parallel
 
 Combine caching and parallelism. Builder methods are **order independent** -- `.Cached().Parallel()` and `.Parallel().Cached()` produce identical results:

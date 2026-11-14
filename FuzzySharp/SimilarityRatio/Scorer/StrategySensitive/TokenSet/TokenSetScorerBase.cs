@@ -66,6 +66,18 @@ internal static class TokenSetScorerHelpers
             : string.Concat(sortedIntersection, " ", sortedDifference);
     }
 
+    internal static string JoinIntersectionAndDifference(string sortedIntersection, List<string> difference)
+    {
+        if (difference.Count == 0)
+            return sortedIntersection;
+
+        difference.Sort();
+        var sortedDifference = string.Join(" ", difference);
+        return sortedIntersection.Length == 0
+            ? sortedDifference
+            : string.Concat(sortedIntersection, " ", sortedDifference);
+    }
+
     private static string JoinSorted(IEnumerable<string> tokens)
     {
         var sortedTokens = new List<string>(tokens);

@@ -178,6 +178,66 @@ public class ExtractorSelectionTests
     }
 
     [Fact]
+    public void ExtractTop_ParallelMatchesSequentialForManyTiesAndLimits()
+    {
+        for (var seed = 0; seed < 20; seed++)
+        {
+            var random = new Random(seed);
+            var scores = Enumerable.Range(0, 40)
+                .Select(index => ($"choice-{index}", (double)random.Next(6)))
+                .ToArray();
+            var choices = scores.Select(item => item.Item1).ToArray();
+            var scorer = new MapScorer(scores);
+            var cachedScorer = new CachedMapScorer(scores);
+
+            foreach (var limit in new[] { 1, 2, 5, 10, 40 })
+            {
+                var expected = ResultExtractor.ExtractTop("query", choices, IdentityProcessor, scorer, limit).ToList();
+                AssertSameResults(expected, ResultExtractor.Parallel.ExtractTop("query", choices, IdentityProcessor, scorer, limit, parallelOptions: TestParallelOptions));
+                AssertSameResults(expected, ResultExtractor.Parallel.Cached.ExtractTop(choices, IdentityProcessor, cachedScorer, limit, parallelOptions: TestParallelOptions));
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ExtractTop_ParallelCapturesSelectedValuesBeforeEnumeration(bool cached)
+    {
+        var scorer = new MapScorer(("low", 10), ("winner", 90), ("other", 20));
+        using var cachedScorer = new CachedMapScorer(("low", 10), ("winner", 90), ("other", 20));
+
+        var array = new[] { "low", "winner", "other" };
+        var arrayResults = cached
+            ? ResultExtractor.Parallel.Cached.ExtractTop(array, IdentityProcessor, cachedScorer, limit: 1, parallelOptions: TestParallelOptions)
+            : ResultExtractor.Parallel.ExtractTop("query", array, IdentityProcessor, scorer, limit: 1, parallelOptions: TestParallelOptions);
+        array[1] = "replacement";
+        AssertResult(Assert.Single(arrayResults), "winner", 90, 1);
+
+        var list = new List<string> { "low", "winner", "other" };
+        var listResults = cached
+            ? ResultExtractor.Parallel.Cached.ExtractTop(list, IdentityProcessor, cachedScorer, limit: 1, parallelOptions: TestParallelOptions)
+            : ResultExtractor.Parallel.ExtractTop("query", list, IdentityProcessor, scorer, limit: 1, parallelOptions: TestParallelOptions);
+        list.Clear();
+        AssertResult(Assert.Single(listResults), "winner", 90, 1);
+    }
+
+    [Fact]
+    public void ParallelExtraction_MaterializesOneShotChoicesOnce()
+    {
+        var scorer = new MapScorer(("a", 10), ("winner", 90), ("b", 20));
+        var one = ResultExtractor.Parallel.ExtractOne(
+            "query", new OneShotEnumerable<string>(["a", "winner", "b"]),
+            IdentityProcessor, scorer, parallelOptions: TestParallelOptions);
+        AssertResult(one, "winner", 90, 1);
+
+        var top = ResultExtractor.Parallel.ExtractTop(
+            "query", new OneShotEnumerable<string>(["a", "winner", "b"]),
+            IdentityProcessor, scorer, limit: 2, parallelOptions: TestParallelOptions).ToList();
+        Assert.Equal(new[] { "winner", "b" }, top.Select(result => result.Value));
+    }
+
+    [Fact]
     public void ExtractTop_LimitZeroReturnsEmptyWithoutEnumeratingAndNegativeIsRejected()
     {
         var scorer = new MapScorer(("accepted", 50));

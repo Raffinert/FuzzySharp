@@ -6,9 +6,9 @@ namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.Composite;
 
 public sealed class CachedWeightedRatioScorer : ICachedRatioScorer
 {
-    private static readonly double UNBASE_SCALE = .95;
-    private static readonly double PARTIAL_SCALE = .90;
-    private static readonly bool TRY_PARTIALS = true;
+    private const double UnbaseScale = .95;
+    private const double PartialScale = .90;
+    private const double MaxScaledScore = UnbaseScale * 100;
 
     private readonly ICachedStrategy _strategy;
     private readonly CachedDefaultRatioScorer _baseRatioScorer;
@@ -36,30 +36,24 @@ public sealed class CachedWeightedRatioScorer : ICachedRatioScorer
             return 0;
         }
 
-        bool tryPartials = TRY_PARTIALS;
-        double unbaseScale = UNBASE_SCALE;
-        double partialScale = PARTIAL_SCALE;
-
         double baseRatio = _baseRatioScorer.Score(input2);
+        if (baseRatio >= MaxScaledScore)
+            return baseRatio;
+
         double lenRatio = (double)Math.Max(len1, len2) / Math.Min(len1, len2);
+        double partialScale = lenRatio > 8 ? .6 : PartialScale;
 
-        // if strings are similar length don't use partials
-        if (lenRatio < 1.5) tryPartials = false;
-
-        // if one string is much shorter than the other
-        if (lenRatio > 8) partialScale = .6;
-
-        if (tryPartials)
+        if (lenRatio >= 1.5)
         {
             double partial = Fuzz.PartialRatio(_input1, input2) * partialScale;
-            double partialSor = _tokenSortScorer.Score(input2) * unbaseScale * partialScale;
-            double partialSet = _tokenSetScorer.Score(input2) * unbaseScale * partialScale;
+            double partialSor = _tokenSortScorer.Score(input2) * UnbaseScale * partialScale;
+            double partialSet = _tokenSetScorer.Score(input2) * UnbaseScale * partialScale;
 
             return Math.Max(baseRatio, Math.Max(partial, Math.Max(partialSor, partialSet)));
         }
 
-        double tokenSort = _tokenSortScorer.Score(input2) * unbaseScale;
-        double tokenSet = _tokenSetScorer.Score(input2) * unbaseScale;
+        double tokenSort = _tokenSortScorer.Score(input2) * UnbaseScale;
+        double tokenSet = _tokenSetScorer.Score(input2) * UnbaseScale;
         return Math.Max(baseRatio, Math.Max(tokenSort, tokenSet));
     }
 

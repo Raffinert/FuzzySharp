@@ -14,7 +14,7 @@ public static partial class ResultExtractor
         {
             public static IEnumerable<ExtractedResult<T>> ExtractWithoutOrder<T>(IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, ICachedRatioScorer scorer, double cutoff = 0, ParallelOptions parallelOptions = null)
             {
-                var materializedChoices = choices.ToList();
+                var materializedChoices = GetIndexedChoices(choices);
                 var result = new ExtractedResult<T>[materializedChoices.Count];
 
                 System.Threading.Tasks.Parallel.ForEach(materializedChoices, parallelOptions ?? DefaultParallelOptions, (choice, _, index) =>
@@ -30,7 +30,7 @@ public static partial class ResultExtractor
 
             public static IEnumerable<ExtractedResult<string>> ExtractWithoutOrder(IEnumerable<string> choices, Func<string, string> processor, ICachedRatioScorer scorer, double cutoff = 0, ParallelOptions parallelOptions = null)
             {
-                var materializedChoices = choices.ToList();
+                var materializedChoices = GetIndexedChoices(choices);
                 var result = new ExtractedResult<string>[materializedChoices.Count];
 
                 System.Threading.Tasks.Parallel.ForEach(materializedChoices, parallelOptions ?? DefaultParallelOptions, (choice, _, index) =>
@@ -46,13 +46,13 @@ public static partial class ResultExtractor
 
             public static ExtractedResult<T> ExtractOne<T>(IEnumerable<T> choices, Func<T, string> extractor, Func<string, string> processor, ICachedRatioScorer calculator, double cutoff = 0, ParallelOptions parallelOptions = null)
             {
-                var materializedChoices = choices.ToList();
+                var materializedChoices = GetIndexedChoices(choices);
                 return ExtractOneParallelCore(materializedChoices, choice => calculator.Score(processor(extractor(choice))), cutoff, parallelOptions);
             }
 
             public static ExtractedResult<string> ExtractOne(IEnumerable<string> choices, Func<string, string> processor, ICachedRatioScorer calculator, double cutoff = 0, ParallelOptions parallelOptions = null)
             {
-                var materializedChoices = choices.ToList();
+                var materializedChoices = GetIndexedChoices(choices);
                 return ExtractOneParallelCore(materializedChoices, choice => calculator.Score(processor(choice)), cutoff, parallelOptions);
             }
 
@@ -72,9 +72,8 @@ public static partial class ResultExtractor
                 if (limit == 0)
                     return Enumerable.Empty<ExtractedResult<T>>();
 
-                var materializedChoices = choices.ToList();
-                var scores = ScoreParallel(materializedChoices, choice => calculator.Score(processor(extractor(choice))), parallelOptions);
-                return ExtractTopParallelCore(materializedChoices, scores, limit, cutoff);
+                var materializedChoices = GetIndexedChoices(choices);
+                return ExtractTopParallelCore(materializedChoices, choice => calculator.Score(processor(extractor(choice))), limit, cutoff, parallelOptions);
             }
 
             public static IEnumerable<ExtractedResult<string>> ExtractTop(IEnumerable<string> choices, Func<string, string> processor, ICachedRatioScorer calculator, int limit, double cutoff = 0, ParallelOptions parallelOptions = null)
@@ -83,9 +82,8 @@ public static partial class ResultExtractor
                 if (limit == 0)
                     return Enumerable.Empty<ExtractedResult<string>>();
 
-                var materializedChoices = choices.ToList();
-                var scores = ScoreParallel(materializedChoices, choice => calculator.Score(processor(choice)), parallelOptions);
-                return ExtractTopParallelCore(materializedChoices, scores, limit, cutoff);
+                var materializedChoices = GetIndexedChoices(choices);
+                return ExtractTopParallelCore(materializedChoices, choice => calculator.Score(processor(choice)), limit, cutoff, parallelOptions);
             }
         }
     }
