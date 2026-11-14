@@ -1,5 +1,12 @@
 # Changelog
 
+## v6.0.2
+
+- Reduced parallel extraction allocations by using indexed choices directly and pooling top-N score buffers.
+- Added an early exit for high-similarity weighted scores when the base score cannot be beaten.
+- Reduced cached token-set scoring allocations by reusing the query token set without cloning it per call.
+- Added performance benchmarks and regression coverage for cached scoring, tie ordering, and one-shot choice sequences.
+
 ## v6.0.1
 
 - Fixed `PartialRatio` false exact matches for near-perfect long strings.
