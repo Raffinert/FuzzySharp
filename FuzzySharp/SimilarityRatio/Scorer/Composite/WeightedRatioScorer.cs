@@ -6,6 +6,7 @@ public class WeightedRatioScorer : ScorerBase
 {
     private const double UnbaseScale = .95;
     private const double PartialScale = .90;
+    private const double MaxScaledScore = UnbaseScale * 100;
 
     public override double Score(string input1, string input2)
     {
@@ -18,8 +19,7 @@ public class WeightedRatioScorer : ScorerBase
         }
 
         double baseRatio = Fuzz.Ratio(input1, input2);
-        // Every other branch is scaled to at most 95.
-        if (baseRatio >= UnbaseScale * 100)
+        if (baseRatio >= MaxScaledScore)
             return baseRatio;
 
         double lenRatio = (double)Math.Max(len1, len2) / Math.Min(len1, len2);
