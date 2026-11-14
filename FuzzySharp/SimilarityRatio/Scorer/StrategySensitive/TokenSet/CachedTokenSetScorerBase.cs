@@ -6,7 +6,7 @@ namespace Raffinert.FuzzySharp.SimilarityRatio.Scorer.StrategySensitive;
 
 public abstract class CachedTokenSetScorerBase(string input1) : ICachedRatioScorer
 {
-    private readonly HashSet<string> _tokens1 = new HashSet<string>(input1.SplitByAnySpace());
+    private readonly HashSet<string> _tokens1 = new(input1.SplitByAnySpace());
     protected abstract FuzzySharp.Scorer Scorer { get; }
 
     public double Score(string input2)

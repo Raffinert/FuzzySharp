@@ -10,7 +10,7 @@ namespace Raffinert.FuzzySharp.Extractor;
 
 public static partial class ResultExtractor
 {
-    private static readonly ParallelOptions DefaultParallelOptions = new ParallelOptions();
+    private static readonly ParallelOptions DefaultParallelOptions = new();
 
     public static partial class Parallel
     {
@@ -61,11 +61,8 @@ public static partial class ResultExtractor
             ParallelOptions parallelOptions)
         {
             ValidateLimit(limit);
-            if (limit == 0)
-                return Enumerable.Empty<ExtractedResult<T>>();
-
-            if (choices.Count == 0)
-                return Enumerable.Empty<ExtractedResult<T>>();
+            if (limit == 0 || choices.Count == 0)
+                return [];
 
             var scores = ArrayPool<double>.Shared.Rent(choices.Count);
             var comparer = ScoredCandidateComparer<T>.Instance;
