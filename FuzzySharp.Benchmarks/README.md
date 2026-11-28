@@ -1,5 +1,8 @@
 # Benchmarks
 
+See [the Lodestar comparison](Lodestar-README.md) for the separately pinned
+Lodestar.Fuzzy source build, score checks, representative workloads and runner.
+
 ## Measured build versus Classic
 
 Measured on **2026-11-28**. **Measured build** is a development build of Raffinert.FuzzySharp including the single mask lookup in multiword partial-ratio edge scans. **Classic** is the original [FuzzySharp](https://github.com/JakeBayer/FuzzySharp) **2.0.2** NuGet package. Every pair uses the same benchmark input. Speedup is `Classic mean / measured mean`.
