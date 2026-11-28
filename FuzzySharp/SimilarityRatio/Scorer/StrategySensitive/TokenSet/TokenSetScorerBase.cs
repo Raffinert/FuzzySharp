@@ -18,6 +18,9 @@ public abstract class TokenSetScorerBase : StrategySensitiveScorerBase
 
         var intersection = GetIntersectionAndExcept(tokens1, tokens2);
 
+        if (intersection.Count != 0 && (tokens1.Count == 0 || tokens2.Count == 0) && CanReturnPerfectScore)
+            return 100;
+
         intersection.Sort();
         var sortedIntersection = string.Join(" ", intersection);
         var sortedDiff1To2 = TokenSetScorerHelpers.JoinIntersectionAndDifference(sortedIntersection, tokens1);
@@ -33,6 +36,8 @@ public abstract class TokenSetScorerBase : StrategySensitiveScorerBase
     // Only the built-in Indel scorer can replace scoring with a length formula.
     // Custom and partial scorers must continue to call their original strategy.
     internal virtual double ScorePrefix(string prefix, string combined) => Scorer(prefix, combined);
+
+    internal virtual bool CanReturnPerfectScore => false;
 
     private static List<string> GetIntersectionAndExcept(HashSet<string> first, HashSet<string> second) =>
         TokenSetScorerHelpers.GetIntersectionAndExcept(first, second);

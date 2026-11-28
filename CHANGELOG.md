@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Accelerated `PartialRatio` prefix and suffix scoring with incremental bit-parallel LCS rows while preserving full-window search and alignment tie ordering.
+- Reused single-word pattern masks for reversed suffix scans, removing the extra pattern-vector allocation for inputs up to 64 elements.
+- Simplified multiword LCS updates by eliminating unnecessary borrow propagation in similarity and matrix calculations.
+- Reduced built-in `TokenSetRatio` and cached scorer work with exact prefix-length scores and an early return for nonempty token subsets; custom scorer behavior is preserved.
+- Added exhaustive dynamic-programming checks for long partial-ratio windows, edge alignments, word boundaries, and short-input allocations.
+
 ## v6.0.2
 
 - Reduced parallel extraction allocations by using indexed choices directly and pooling top-N score buffers.

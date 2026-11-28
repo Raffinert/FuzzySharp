@@ -6,6 +6,15 @@ namespace Raffinert.FuzzySharp.Utils;
 internal static class Polyfill
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static ulong ReverseBits(ulong value)
+    {
+        value = ((value >> 1) & 0x5555555555555555UL) | ((value & 0x5555555555555555UL) << 1);
+        value = ((value >> 2) & 0x3333333333333333UL) | ((value & 0x3333333333333333UL) << 2);
+        value = ((value >> 4) & 0x0F0F0F0F0F0F0F0FUL) | ((value & 0x0F0F0F0F0F0F0F0FUL) << 4);
+        return System.Buffers.Binary.BinaryPrimitives.ReverseEndianness(value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int PopCount(ulong value)
     {
 

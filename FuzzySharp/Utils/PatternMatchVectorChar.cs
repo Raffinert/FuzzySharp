@@ -95,6 +95,51 @@ internal sealed class PatternMatchVectorChar : IPatternMatchVectorImpl<char>
         }
     }
 
+    public void PopulateReversed(ReadOnlySpan<char> source)
+    {
+        if (_disposed) throw new ObjectDisposedException(nameof(PatternMatchVectorChar));
+
+        for (var block = 0; block < _blocks; block++)
+        {
+            var blockStart = block << 6;
+            var blockLength = Math.Min(64, source.Length - blockStart);
+            for (var offset = 0; offset < blockLength; offset++)
+            {
+                var key = source[source.Length - blockStart - offset - 1];
+                var bit = 1UL << offset;
+                if (key <= 255u)
+                {
+                    _fixedData[_asciiMasksOffset + (key * _blocks) + block] |= bit;
+                    _fixedData[_asciiPresenceOffset + (key >> 6)] |= 1UL << (key & 63);
+                }
+                else
+                {
+                    AddNonAsciiBit(key, block, bit);
+                }
+            }
+        }
+    }
+
+    public void ReverseSingleWord()
+    {
+        if (_disposed) throw new ObjectDisposedException(nameof(PatternMatchVectorChar));
+
+        for (int word = 0; word < 4; word++)
+        {
+            ulong presence = _fixedData[_asciiPresenceOffset + word];
+            while (presence != 0)
+            {
+                ulong lowest = presence & unchecked(0UL - presence);
+                int key = (word << 6) + Polyfill.PopCount(lowest - 1);
+                _fixedData[key] = Polyfill.ReverseBits(_fixedData[key]) >> (64 - Length);
+                presence &= presence - 1;
+            }
+        }
+
+        for (int i = 0; i < _next; i++)
+            _buffer[i] = Polyfill.ReverseBits(_buffer[i]) >> (64 - Length);
+    }
+
     private void PopulateSingleBlock(ReadOnlySpan<char> source)
     {
         for (var position = 0; position < source.Length; position++)

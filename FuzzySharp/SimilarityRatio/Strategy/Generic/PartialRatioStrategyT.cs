@@ -8,6 +8,9 @@ namespace Raffinert.FuzzySharp.SimilarityRatio.Strategy.Generic;
 
 internal static class PartialRatioStrategy<T> where T : IEquatable<T>
 {
+    // For tiny patterns, a few direct comparisons cost less than another vector.
+    private const int DirectEdgeScanMaxLength = 8;
+
     /// <summary>
     /// Searches for the optimal alignment of the shorter span in the longer span
     /// and returns the partial fuzz.ratio for that alignment, as a value in [0…100].
@@ -122,6 +125,11 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
         if (len1 == 0 || len2 == 0)
             return res;
 
+        // Equal-width inputs with disjoint alphabets have no matching edge.
+        // Keep this check bounded by the pattern length for long-text searches.
+        if (len1 == len2 && !ContainsAnyMatch(s1Vector, s2))
+            return res;
+
         if (len2 > len1)
         {
             int maximum = len1 + len1;
@@ -215,6 +223,9 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
             }
         }
 
+        if (len1 <= DirectEdgeScanMaxLength)
+            return ScanEdgesDirect(s1Vector, s2, cutoff, res);
+
         // Prefixes share the same LCS row: extend it once per character.
         var prefix = ScanEdge(s1Vector, s2[..(len1 - 1)], reverse: false);
         if (prefix.Score > res.Score && prefix.Score >= cutoff)
@@ -226,10 +237,26 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
 
         // Reversing both sequences preserves LCS. Scan suffixes shortest-first,
         // retaining the longest on ties to preserve the original alignment order.
-        var reversedPattern = s1.ToArray();
-        Array.Reverse(reversedPattern);
-        using var reversedVector = PatternMatchVector.Create<T>(reversedPattern);
-        var suffix = ScanEdge(reversedVector, s2[(len2 - len1)..], reverse: true);
+        var tail = s2[(len2 - len1)..];
+        if (!ContainsAnyMatch(s1Vector, tail))
+        {
+            res.Score *= 100.0;
+            return res;
+        }
+
+        (double Score, int Length) suffix;
+        if (len1 <= 64)
+        {
+            // All forward work is complete. Reuse the owned vector for the
+            // reversed suffix instead of allocating and populating another one.
+            PatternMatchVector.ReverseSingleWord(s1Vector);
+            suffix = ScanEdge(s1Vector, tail, reverse: true);
+        }
+        else
+        {
+            using var reversedVector = PatternMatchVector.CreateReversed(s1);
+            suffix = ScanEdge(reversedVector, tail, reverse: true);
+        }
         if (suffix.Score > res.Score && suffix.Score >= cutoff)
         {
             res.Score = suffix.Score;
@@ -240,6 +267,49 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
         res.Score *= 100.0;
 
         return res;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool ContainsAnyMatch(IPatternMatchVector<T> vector, ReadOnlySpan<T> text)
+    {
+        foreach (var symbol in text)
+            if (vector.ContainsKey(symbol))
+                return true;
+        return false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static ScoreAlignment ScanEdgesDirect(IPatternMatchVector<T> vector,
+        ReadOnlySpan<T> text, double cutoff, ScoreAlignment result)
+    {
+        for (int length = 1; length < vector.Length; length++)
+        {
+            if (!vector.ContainsKey(text[length - 1])) continue;
+            double score = Indel.BlockNormalizedSimilarity(vector, text[..length]);
+            if (score > result.Score && score >= cutoff)
+            {
+                result.Score = cutoff = score;
+                result.DestStart = 0;
+                result.DestEnd = length;
+            }
+        }
+
+        // Longest suffix first, preserving the existing tie order.
+        for (int start = text.Length - vector.Length; start < text.Length; start++)
+        {
+            if (!vector.ContainsKey(text[start])) continue;
+            double score = Indel.BlockNormalizedSimilarity(vector, text[start..]);
+            if (score > result.Score && score >= cutoff)
+            {
+                result.Score = score;
+                result.DestStart = start;
+                result.DestEnd = text.Length;
+                if (score == 1.0) break;
+            }
+        }
+
+        result.Score *= 100.0;
+        return result;
     }
 
     // The state after k symbols also represents the LCS for the next

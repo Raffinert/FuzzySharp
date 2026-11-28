@@ -28,6 +28,9 @@ public abstract class CachedTokenSetScorerBase(string input1) : ICachedRatioScor
                 difference1.Add(token);
         }
 
+        if (intersection.Count != 0 && (difference1.Count == 0 || tokens2.Count == 0) && CanReturnPerfectScore)
+            return 100;
+
         intersection.Sort();
 
         var sortedIntersection = string.Join(" ", intersection);
@@ -44,6 +47,8 @@ public abstract class CachedTokenSetScorerBase(string input1) : ICachedRatioScor
     // Only the built-in Indel scorer can replace scoring with a length formula.
     // Custom and partial scorers must continue to call their original strategy.
     internal virtual double ScorePrefix(string prefix, string combined) => Scorer(prefix, combined);
+
+    internal virtual bool CanReturnPerfectScore => false;
 
     public void Dispose()
     {

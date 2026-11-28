@@ -504,19 +504,30 @@ Fuzz.Ratio("new york mets", "NEW YORK METS", StringPreprocessor.Full);
 
 ## Performance
 
-The distance implementations use bit-parallel algorithms designed to reduce both execution time and allocations. The table below compares naive DP Levenshtein distance calculation (baseline), original FuzzySharp, Fastenshtein, Quickenshtein, and Raffinert.FuzzySharp.
+Measured on **2026-11-28** using a development build of Raffinert.FuzzySharp and the original [FuzzySharp 2.0.2](https://github.com/JakeBayer/FuzzySharp) package. BenchmarkDotNet 0.15.8, Release, .NET 10.0.15 / SDK 11.0.100, Windows 11, Intel Core Ultra 9 275HX; one launch, three warmups, five measured iterations with a 150 ms target.
 
-Random words of 3 to 1024 random chars (`LevenshteinLarge.cs`):
+Selected fixed-input API comparisons (mean time per operation):
 
-| Method                                                          | Mean       | Error      | StdDev    | Ratio | RatioSD | Gen0       | Gen1       | Allocated   | Alloc Ratio |
-|-----------------------------------------------------------------|------------|------------|-----------|-------|---------|------------|------------|-------------|-------------|
-| NaiveDp                                                         | 231.563 ms | 57.5403 ms | 3.1540 ms |  1.00 |    0.02 | 43500.0000 | 34500.0000 | 275312920 B |       1.000 |
-| [FuzzySharp](https://github.com/JakeBayer/FuzzySharp)           | 141.820 ms |  4.0905 ms | 0.2242 ms |  0.61 |    0.01 |          - |          - |   1545732 B |       0.006 |
-| [Fastenshtein](https://github.com/DanHarltey/Fastenshtein)      | 123.356 ms | 13.0959 ms | 0.7178 ms |  0.53 |    0.01 |          - |          - |     34028 B |       0.000 |
-| [Quickenshtein](https://github.com/Turnerj/Quickenshtein)       |  12.918 ms | 12.8046 ms | 0.7019 ms |  0.06 |    0.00 |          - |          - |        12 B |       0.000 |
-| [Raffinert.FuzzySharp](https://github.com/Raffinert/FuzzySharp) |   4.970 ms |  0.3311 ms | 0.0181 ms |  0.02 |    0.00 |          - |          - |      3051 B |       0.000 |
+| Operation | Current | Classic 2.0.2 | Speedup |
+| --- | ---: | ---: | ---: |
+| Ratio | 49.76 ns | 103.04 ns | 2.07× |
+| PartialRatio | 229.90 ns | 463.90 ns | 2.02× |
+| TokenSetRatio | 180.23 ns | 958.07 ns | 5.32× |
+| WeightedRatio | 1,886.00 ns | 5,373.00 ns | 2.85× |
+| ExtractOne | 3.41 μs | 14.28 μs | 4.18× |
+| ExtractAll | 3.10 μs | 10.44 μs | 3.37× |
 
-Benchmark sources are in [FuzzySharp.Benchmarks](FuzzySharp.Benchmarks).
+The large Levenshtein workload generates 20 seeded words with lengths in `[3, 1024)` and computes 400 ordered pairs per operation. Fastenshtein and Raffinert.FuzzySharp reuse an instance per source word. The `FuzzySharp` row below is Classic 2.0.2; ratios are relative to naive DP. Times and allocations are per batch:
+
+| Method               | Mean       | Error     | StdDev    | Ratio | Gen0       | Gen1       | Allocated   | Alloc Ratio |
+|--------------------- |-----------:|----------:|----------:|------:|-----------:|-----------:|------------:|------------:|
+| NaiveDp              | 141.729 ms | 3.8903 ms | 1.0103 ms |  1.00 | 14000.0000 | 12000.0000 | 275312720 B |       1.000 |
+| [FuzzySharp](https://github.com/JakeBayer/FuzzySharp) |  97.509 ms | 0.7006 ms | 0.1819 ms |  0.69 |          - |          - |   1545632 B |       0.006 |
+| [Fastenshtein](https://github.com/DanHarltey/Fastenshtein) |  82.023 ms | 6.6170 ms | 1.7184 ms |  0.58 |          - |          - |     33928 B |       0.000 |
+| [Quickenshtein](https://github.com/Turnerj/Quickenshtein) |   6.707 ms | 0.8855 ms | 0.2300 ms |  0.05 |          - |          - |           - |       0.000 |
+| [Raffinert.FuzzySharp](https://github.com/Raffinert/FuzzySharp) |   1.888 ms | 0.0225 ms | 0.0035 ms |  0.01 |          - |          - |      2080 B |       0.000 |
+
+See [benchmark results and reproduction instructions](https://github.com/Raffinert/FuzzySharp/blob/master/FuzzySharp.Benchmarks/README.md) for cache/parallel variants, allocations and inputs. These microbenchmarks cover specific inputs on one machine; small differences need longer measurements. Partial-ratio algorithms and score rounding differ between the libraries.
 
 ## Migration Notes
 

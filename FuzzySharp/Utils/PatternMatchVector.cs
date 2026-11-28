@@ -16,21 +16,40 @@ public interface IPatternMatchVector<in TKey> : IDisposable where TKey : notnull
 internal interface IPatternMatchVectorImpl<TKey> : IPatternMatchVector<TKey> where TKey : IEquatable<TKey>
 {
     void Populate(ReadOnlySpan<TKey> source);
+    void PopulateReversed(ReadOnlySpan<TKey> source);
+    void ReverseSingleWord();
 }
 
 public sealed class PatternMatchVector
 {
     public static IPatternMatchVector<T> Create<T>(ReadOnlySpan<T> source) where T : notnull, IEquatable<T>
     {
-        var blocks = (source.Length + 63) >> 6;
-
-        var pmv = typeof(T) == typeof(char)
-            ? (IPatternMatchVectorImpl<T>)(object)new PatternMatchVectorChar(source.Length, estimatedNonAsciiCharCount: 8, blocks: blocks)
-            : new PatternMatchVector<T>(source.Length, 64, blocks);
-
+        var pmv = CreateEmpty<T>(source.Length);
         pmv.Populate(source);
-
         return pmv;
+    }
+
+    internal static IPatternMatchVector<T> CreateReversed<T>(ReadOnlySpan<T> source) where T : notnull, IEquatable<T>
+    {
+        var pmv = CreateEmpty<T>(source.Length);
+        pmv.PopulateReversed(source);
+        return pmv;
+    }
+
+    internal static void ReverseSingleWord<T>(IPatternMatchVector<T> vector) where T : notnull, IEquatable<T>
+    {
+        if (vector.Blocks != 1)
+            throw new ArgumentException("Requires a single-word pattern vector", nameof(vector));
+        ((IPatternMatchVectorImpl<T>)vector).ReverseSingleWord();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static IPatternMatchVectorImpl<T> CreateEmpty<T>(int length) where T : notnull, IEquatable<T>
+    {
+        var blocks = (length + 63) >> 6;
+        return typeof(T) == typeof(char)
+            ? (IPatternMatchVectorImpl<T>)(object)new PatternMatchVectorChar(length, estimatedNonAsciiCharCount: 8, blocks: blocks)
+            : new PatternMatchVector<T>(length, 64, blocks);
     }
 }
 
@@ -68,6 +87,22 @@ internal sealed class PatternMatchVector<T> : IPatternMatchVectorImpl<T> where T
         {
             AddBit(source[position], position);
         }
+    }
+
+    public void PopulateReversed(ReadOnlySpan<T> source)
+    {
+        if (_disposed) throw new ObjectDisposedException(nameof(PatternMatchVector<T>));
+
+        for (var position = 0; position < source.Length; position++)
+            AddBit(source[source.Length - position - 1], position);
+    }
+
+    public void ReverseSingleWord()
+    {
+        if (_disposed) throw new ObjectDisposedException(nameof(PatternMatchVector<T>));
+
+        for (int i = 0; i < _next; i++)
+            _buffer[i] = Polyfill.ReverseBits(_buffer[i]) >> (64 - Length);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

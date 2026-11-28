@@ -1,75 +1,88 @@
 # Benchmarks
 
-## Latest library versus Classic
+## Current library versus Classic
 
-Measured on 2026-11-24. **Latest** is the project reference to Raffinert.FuzzySharp **6.0.2** at commit `aab9111`; **Classic** is the `FuzzySharp` **2.0.2** NuGet package referenced by this benchmark project. Each row compares the corresponding methods on the same benchmark input. The speedup column is `Classic mean / latest mean`, so values above 1 mean the latest library was faster in this run.
+Measured on **2026-11-28**. **Latest** is a development build of Raffinert.FuzzySharp. **Classic** is the original [FuzzySharp](https://github.com/JakeBayer/FuzzySharp) **2.0.2** NuGet package. Every pair uses the same benchmark input. Speedup is `Classic mean / latest mean`.
 
-BenchmarkDotNet 0.15.8 ran the `ShortRun` job in isolated processes: one launch, three warmup iterations and three measured iterations, with `MemoryDiagnoser`. Host: Windows 11 (10.0.26300.9974), Intel Core Ultra 9 275HX, 24 logical cores, .NET SDK 10.0.403 and .NET 10.0.14 x64 RyuJIT.
+BenchmarkDotNet 0.15.8 ran the workloads in isolated processes with `MemoryDiagnoser`: one launch, three warmups, five measured iterations, 150 ms target iteration time. Host: Windows 11 (10.0.26300.9974), Intel Core Ultra 9 275HX, 24 physical/logical cores, .NET SDK 11.0.100, .NET 10.0.15 x64 RyuJIT. The partial-token workloads were repeated after single-word mask reuse; each table uses the latest measurement for its workload. Generated reports include confidence intervals and GC measurements.
 
 ### Scoring
 
-Times are mean nanoseconds per operation; allocations are bytes per operation.
+Times are mean nanoseconds per operation. Allocations use the units reported by BenchmarkDotNet.
 
-| Operation | Latest | Classic | Speedup | Allocated: latest | Allocated: Classic |
+| Operation | Latest | Classic 2.0.2 | Speedup | Allocated: latest | Allocated: Classic |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `Ratio` | 55.20 ns | 124.60 ns | 2.26× | 80 B | 320 B |
-| `PartialRatio` | 239.98 ns | 536.44 ns | 2.24× | 256 B | 3,368 B |
-| `PartialRatio` (short pattern in 517-character text) | 1,132.50 ns | 10,083.48 ns | 8.90× | 1,016 B | 59,201 B |
-| `WeightedRatio` | 2,273.55 ns | 6,312.93 ns | 2.78× | 3,776 B | 11,809 B |
-| `TokenSortRatio` | 307.50 ns | 727.27 ns | 2.37× | 648 B | 2,024 B |
-| `TokenSetRatio` | 337.43 ns | 1,143.08 ns | 3.39× | 1,496 B | 4,096 B |
-| `PartialTokenSortRatio` | 562.95 ns | 808.24 ns | 1.44× | 648 B | 2,344 B |
-| `PartialTokenSetRatio` | 592.46 ns | 1,362.45 ns | 2.30× | 1,848 B | 5,584 B |
-| `TokenAbbreviationRatio` | 314.88 ns | 663.63 ns | 2.11× | 1,680 B | 2,984 B |
-| `PartialTokenAbbreviationRatio` | 375.46 ns | 838.65 ns | 2.23× | 1,856 B | 3,896 B |
-| `TokenInitialismRatio1` | 42.68 ns | 314.91 ns | 7.38× | 280 B | 904 B |
-| `TokenInitialismRatio2` | 38.45 ns | 234.78 ns | 6.11× | 272 B | 736 B |
-| `TokenInitialismRatio3` | 60.71 ns | 614.33 ns | 10.12× | 392 B | 1,552 B |
-| `PartialTokenInitialismRatio` | 106.53 ns | 687.16 ns | 6.45× | 568 B | 2,144 B |
+| Ratio | 49.76 ns | 103.04 ns | 2.07× | 80 B | 320 B |
+| PartialRatio | 229.90 ns | 463.90 ns | 2.02× | 256 B | 3368 B |
+| PartialRatio (17-character pattern in 517-character text) | 935.70 ns | 8,811.30 ns | 9.42× | 1016 B | 59201 B |
+| WeightedRatio | 1,886.00 ns | 5,373.00 ns | 2.85× | 3.53 KB | 11.53 KB |
+| TokenSortRatio | 266.20 ns | 630.70 ns | 2.37× | 648 B | 2024 B |
+| TokenSetRatio | 180.23 ns | 958.07 ns | 5.32× | 1048 B | 4096 B |
+| PartialTokenSortRatio | 419.90 ns | 692.40 ns | 1.65× | 648 B | 2312 B |
+| PartialTokenSetRatio | 530.80 ns | 1,143.10 ns | 2.15× | 1.8 KB | 5.45 KB |
+| TokenAbbreviationRatio | 262.70 ns | 584.00 ns | 2.22× | 1.64 KB | 2.91 KB |
+| PartialTokenAbbreviationRatio | 343.30 ns | 743.10 ns | 2.16× | 1.81 KB | 3.8 KB |
+| TokenInitialismRatio1 | 36.15 ns | 257.49 ns | 7.12× | 280 B | 904 B |
+| TokenInitialismRatio2 | 33.97 ns | 215.78 ns | 6.35× | 272 B | 736 B |
+| TokenInitialismRatio3 | 52.09 ns | 514.77 ns | 9.88× | 392 B | 1552 B |
+| PartialTokenInitialismRatio | 99.24 ns | 631.00 ns | 6.36× | 568 B | 2144 B |
 
-#### Cached scoring variants
+### Cached scoring variants
 
-The following current-library methods have cached scorers. `Cached per call` includes creating a scorer for each operation; `reused cache` creates the scorer in benchmark setup, so its construction cost is excluded. All times are mean nanoseconds per operation. These are separate `ShortRun` measurements, so their stateless values may differ slightly from the table above.
+`Cached per call` includes constructing a scorer for each operation. `Reused cache` creates the scorer during setup and excludes construction. All times below are mean nanoseconds per operation; stateless values come from the same measurements as the scoring table. Allocations for every method are in the linked raw reports.
 
 | Operation | Classic | Latest stateless | Cached per call | Reused cache |
 | --- | ---: | ---: | ---: | ---: |
-| `Ratio` | 118.97 ns | 60.65 ns | 73.81 ns | 28.11 ns |
-| `WeightedRatio` | 6,173.40 ns | 2,167.15 ns | 2,678.42 ns | 1,440.17 ns |
-| `PartialTokenSetRatio` | 1,362.45 ns | 592.46 ns | 518.48 ns | 439.90 ns |
-| `TokenSetRatio` | 1,143.08 ns | 337.43 ns | 271.46 ns | 216.66 ns |
-| `TokenSortRatio` | 727.27 ns | 307.50 ns | 496.64 ns | 164.01 ns |
+| Ratio | 103.04 ns | 49.76 ns | 66.33 ns | 23.80 ns |
+| WeightedRatio | 5,373.00 ns | 1,886.00 ns | 2,097.00 ns | 1,104.00 ns |
+| PartialTokenSetRatio | 1,143.10 ns | 530.80 ns | 458.10 ns | 393.30 ns |
+| TokenSetRatio | 958.07 ns | 180.23 ns | 135.45 ns | 84.10 ns |
+| TokenSortRatio | 630.70 ns | 266.20 ns | 432.00 ns | 155.20 ns |
 
-Parallel variants are benchmarked for extraction below; these scoring benchmarks do not include a parallel scoring API. The reproduction commands generate the full BenchmarkDotNet results, including allocations for cached variants.
+### Extraction
 
-### Extraction and distance
-
-The extraction variants use the same three event records and query. The current-library cached and parallel pipelines are created during benchmark setup. `Cached` creates a scorer for each call; `reused cache` reuses a scorer from setup and excludes its construction cost. Parallel variants use at most four workers. Times are mean microseconds per operation.
+Each operation compares the same query against three event records. Current-library pipelines are created in setup. `Cached` creates a scorer per extraction call; `reused cache` reuses a scorer from setup. Parallel variants use at most four workers. Times are mean microseconds per operation. This small input does not establish parallel scaling for larger collections.
 
 | Operation | Classic | Latest | Cached | Parallel | Parallel + cached | Reused cache | Parallel + reused cache |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `ExtractOne` | 12.626 μs | 4.593 μs | 3.169 μs | 3.858 μs | 4.833 μs | 2.437 μs | 3.556 μs |
-| `ExtractAll` | 12.598 μs | 4.360 μs | 3.503 μs | 4.189 μs | 4.682 μs | 2.884 μs | 3.323 μs |
+| ExtractOne | 14.277 μs | 3.413 μs | 2.713 μs | 3.416 μs | 3.692 μs | 2.016 μs | 2.731 μs |
+| ExtractAll | 10.441 μs | 3.101 μs | 2.712 μs | 3.781 μs | 3.929 μs | 1.977 μs | 2.958 μs |
 
-Against Classic, the default latest-library methods measured **2.75×** faster for `ExtractOne` and **2.89×** for `ExtractAll` in this run. Default `ExtractOne` allocated **8.96 KB** versus **26.22 KB** for Classic; `ExtractAll` allocated **9.23 KB** versus **26.31 KB**. The reproduction command generates allocations for every variant. With only three choices, these measurements do not establish how parallel execution scales to larger collections.
+Default ExtractOne measured 4.18× faster than Classic, allocating 8.34 KB versus 25.66 KB. ExtractAll measured 3.37× faster, allocating 8.41 KB versus 26.31 KB.
 
-Levenshtein distance measured **122.60 ns and 80 B** in the latest library versus **367.99 ns and 320 B** in Classic, or **3.00×** faster in this case.
+### Distance APIs
 
-Across the 17 matched latest-versus-Classic cases, the latest library had lower measured time and allocated fewer bytes. The largest measured speedup was `TokenInitialismRatio3` at 10.12×. These are specific inputs, and `ShortRun` has only three measured iterations; several confidence intervals are wide. Small differences should be rerun with a longer job before making a performance claim.
+The fixed-input static Levenshtein distance measured 119.97 ns and 80 B in the current library versus 417.57 ns and 320 B in Classic (3.48×).
 
-The tables use separate runs for the basic scorer pairs, token scorers, cache variants and extraction variants. Repeated means may differ slightly between runs.
+The large-word workload generates 20 words with seed 37 and lengths in `[3, 1024)`. Each operation computes all 400 ordered pairs. Fastenshtein and Raffinert.FuzzySharp reuse one distance instance per source word; the other implementations use static calls. Times and allocations below are for the whole batch. The `FuzzySharp` row is Classic 2.0.2; `Raffinert.FuzzySharp` is the local library. Ratio columns use `NaiveDp` as baseline.
+
+| Method               | Mean       | Error     | StdDev    | Ratio | Gen0       | Gen1       | Allocated   | Alloc Ratio |
+|--------------------- |-----------:|----------:|----------:|------:|-----------:|-----------:|------------:|------------:|
+| NaiveDp              | 141.729 ms | 3.8903 ms | 1.0103 ms |  1.00 | 14000.0000 | 12000.0000 | 275312720 B |       1.000 |
+| FuzzySharp           |  97.509 ms | 0.7006 ms | 0.1819 ms |  0.69 |          - |          - |   1545632 B |       0.006 |
+| Fastenshtein         |  82.023 ms | 6.6170 ms | 1.7184 ms |  0.58 |          - |          - |     33928 B |       0.000 |
+| Quickenshtein        |   6.707 ms | 0.8855 ms | 0.2300 ms |  0.05 |          - |          - |           - |       0.000 |
+| Raffinert.FuzzySharp |   1.888 ms | 0.0225 ms | 0.0035 ms |  0.01 |          - |          - |      2080 B |       0.000 |
+
+The small-word and normal-word workloads cover maximum generated lengths of 64 and 128 respectively (exclusive). Distance implementations: [FuzzySharp](https://github.com/JakeBayer/FuzzySharp), [Fastenshtein](https://github.com/DanHarltey/Fastenshtein), [Quickenshtein](https://github.com/Turnerj/Quickenshtein), and [Raffinert.FuzzySharp](https://github.com/Raffinert/FuzzySharp).
+
+### Scope and reports
+
+17 of the 17 matched current-versus-Classic cases had lower measured time. The largest measured speedup was TokenInitialismRatio3 at 9.88×. These are fixed-input microbenchmarks on one machine; small differences require longer runs. Partial-ratio algorithms and score rounding differ between the libraries, so this compares API workloads rather than asserting identical scores.
+
+The commands below generate CSV, HTML and Markdown reports with confidence intervals in a local `BenchmarkDotNet.Artifacts` directory. Generated reports are ignored by Git; the tables above retain the measured summary. Scenarios and inputs are defined in the benchmark source files in this directory.
 
 ### Reproduce
 
-From the repository root in PowerShell, with packages restored:
+Run from the repository root in PowerShell. Clearing the optional git-baseline property selects the normal Classic comparison build.
 
 ```powershell
-dotnet build FuzzySharp.Benchmarks/FuzzySharp.Benchmarks.csproj -c Release --no-restore
-$env:NuGetAudit = 'false' # The online NuGet audit feed was unavailable for this run.
+$env:FuzzySharpPerformanceBaseline = $null
+dotnet build FuzzySharp.Benchmarks/FuzzySharp.Benchmarks.csproj -c Release -t:Rebuild -p:GeneratePackageOnBuild=false
 $bench = 'FuzzySharp.Benchmarks/bin/Release/net10.0/FuzzySharp.Benchmarks.dll'
-dotnet $bench --filter '*RatioBenchmarks.Ratio' '*RatioBenchmarks.RatioClassic' '*PartialRatioBenchmarks.PartialRatio' '*PartialRatioBenchmarks.PartialRatioClassic' '*WeightedRatioBenchmarks.WeightedRatio' '*WeightedRatioBenchmarks.WeightedRatioClassic' --artifacts 'FuzzySharp.Benchmarks/BenchmarkDotNet.Artifacts/2026-11-24/classic-core' --join
-dotnet $bench --filter '*Token*RatioBenchmarks*' '*PartialRatioLongBenchmarks*' '*ExtractOneBenchmarks.ExtractOneBy' '*ExtractOneBenchmarks.ExtractOneByClassic' '*ExtractAllBenchmarks.ExtractAllBy' '*ExtractAllBenchmarks.ExtractAllByClassic' '*LevenshteinDistanceBenchmarks.FuzzySharpDistance' '*LevenshteinDistanceBenchmarks.FuzzySharpClassicDistance' --artifacts 'FuzzySharp.Benchmarks/BenchmarkDotNet.Artifacts/2026-11-24/classic-comparison' --join
-dotnet $bench --filter '*.RatioBenchmarks.*' '*.WeightedRatioBenchmarks.*' --artifacts 'FuzzySharp.Benchmarks/BenchmarkDotNet.Artifacts/2026-11-24/scoring-cache-variants' --join
-dotnet $bench --filter '*ExtractOneBenchmarks*' '*ExtractAllBenchmarks*' --artifacts 'FuzzySharp.Benchmarks/BenchmarkDotNet.Artifacts/2026-11-24/extraction-variants' --join
+$output = 'FuzzySharp.Benchmarks/BenchmarkDotNet.Artifacts/2026-11-28'
+dotnet $bench --filter '*.RatioBenchmarks.*' '*.PartialRatioBenchmarks.*' '*.PartialRatioLongBenchmarks.*' '*.WeightedRatioBenchmarks.*' '*Token*RatioBenchmarks*' '*.ExtractOneBenchmarks.*' '*.ExtractAllBenchmarks.*' '*.LevenshteinDistanceBenchmarks.*' '*.LevenshteinDistance.LevenshteinLarge.*' --iterationCount 5 --iterationTime 150 --warmupCount 3 --launchCount 1 --artifacts "$output/classic-comparison"
+dotnet $bench --filter '*.LevenshteinDistance.LevenshteinSmall.*' '*.LevenshteinDistance.LevenshteinNormal.*' --iterationCount 5 --iterationTime 150 --warmupCount 3 --launchCount 1 --artifacts "$output/distance-sizes"
 ```
 
-For a stable comparison, run on an otherwise idle machine. BenchmarkDotNet records the environment and the full measurement distribution in its generated reports.
+Use a new output directory for later runs to keep dated reports separate. BenchmarkDotNet records the environment and measurement distribution in every report.
