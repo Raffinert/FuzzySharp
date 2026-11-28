@@ -379,30 +379,7 @@ public sealed partial class LongestCommonSubsequence
             {
                 var U = s1Vector.GetOrZero(s2[chIdx]);
 
-                // big-integer add/subtract using u = S & U
-                ulong carry = 0;
-                ulong borrow = 0;
-                for (int b = 0; b < blockCount; b++)
-                {
-                    ulong s = S[b];
-                    ulong u = s & U[b];
-
-                    // Sum = S + u
-                    ulong t = unchecked(s + u);
-                    ulong c1 = t < s ? 1UL : 0UL;
-                    ulong sum = unchecked(t + carry);
-                    ulong c2 = sum < t ? 1UL : 0UL;
-                    carry = c1 | c2;
-
-                    // Diff = S - u
-                    ulong t1 = unchecked(s - u);
-                    ulong b1 = s < u ? 1UL : 0UL;
-                    ulong diff = unchecked(t1 - borrow);
-                    ulong b2 = t1 < borrow ? 1UL : 0UL;
-                    borrow = b1 | b2;
-                    // update S = Sum | Diff
-                    S[b] = sum | diff;
-                }
+                AdvanceMultiWordRow(S, U);
             }
 
             // --- 4) count zero bits in the lower len1 positions of S ---
@@ -414,14 +391,31 @@ public sealed partial class LongestCommonSubsequence
         }
     }
 
-    private static int CountZeroBits(ulong x, int length)
+    // u is a bit subset of s: s - u is s & ~u and can never borrow.
+    // Only the addition needs carry propagation between words.
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static void AdvanceMultiWordRow(Span<ulong> state, ReadOnlySpan<ulong> matches)
+    {
+        ulong carry = 0;
+        for (int b = 0; b < state.Length; b++)
+        {
+            ulong s = state[b];
+            ulong u = s & matches[b];
+            ulong t = unchecked(s + u);
+            ulong sum = unchecked(t + carry);
+            carry = (t < s || sum < t) ? 1UL : 0UL;
+            state[b] = sum | (s & ~u);
+        }
+    }
+
+    internal static int CountZeroBits(ulong x, int length)
     {
         // invert and mask
         ulong inv = ~x & (length == 64 ? ulong.MaxValue : (1UL << length) - 1UL);
         return Polyfill.PopCount(inv);
     }
 
-    private static int CountZeroBits(ReadOnlySpan<ulong> S, int length)
+    internal static int CountZeroBits(ReadOnlySpan<ulong> S, int length)
     {
         int fullBlocks = length / 64;
         int remBits = length % 64;
@@ -470,31 +464,7 @@ public sealed partial class LongestCommonSubsequence
             // load mask for y
             var U = s1Vector.GetOrZero(y);
 
-            // big-integer add/subtract using u = S & U
-            ulong carry = 0;
-            ulong borrow = 0;
-            for (int b = 0; b < blocks; b++)
-            {
-                // u = S & U
-                ulong s = S[b];
-                ulong u = s & U[b];
-
-                // Sum = S + u
-                ulong t = unchecked(s + u);
-                ulong c1 = t < s ? 1UL : 0UL;
-                ulong sum = unchecked(t + carry);
-                ulong c2 = sum < t ? 1UL : 0UL;
-                carry = c1 | c2;
-
-                // Diff = S - u
-                ulong t1 = unchecked(s - u);
-                ulong b1 = s < u ? 1UL : 0UL;
-                ulong diff = unchecked(t1 - borrow);
-                ulong b2 = t1 < borrow ? 1UL : 0UL;
-                borrow = b1 | b2;
-                // update S = Sum | Diff
-                S[b] = sum | diff;
-            }
+            AdvanceMultiWordRow(S, U);
 
             // snapshot row
             matrix.Add((ulong[])S.Clone());
