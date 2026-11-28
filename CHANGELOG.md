@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v6.0.3
 
 - Accelerated `PartialRatio` prefix and suffix scoring with incremental bit-parallel LCS rows while preserving full-window search and alignment tie ordering.
 - Reused single-word pattern masks for reversed suffix scans, removing the extra pattern-vector allocation for inputs up to 64 elements.
