@@ -34,12 +34,16 @@ public abstract class CachedTokenSetScorerBase(string input1) : ICachedRatioScor
         var sortedDiff1To2 = TokenSetScorerHelpers.JoinIntersectionAndDifference(sortedIntersection, difference1);
         var sortedDiff2To1 = TokenSetScorerHelpers.JoinIntersectionAndDifference(sortedIntersection, tokens2);
 
-        var score1 = Scorer(sortedIntersection, sortedDiff1To2);
-        var score2 = Scorer(sortedIntersection, sortedDiff2To1);
+        var score1 = ScorePrefix(sortedIntersection, sortedDiff1To2);
+        var score2 = ScorePrefix(sortedIntersection, sortedDiff2To1);
         var score3 = Scorer(sortedDiff1To2, sortedDiff2To1);
 
         return Math.Max(score1, Math.Max(score2, score3));
     }
+
+    // Only the built-in Indel scorer can replace scoring with a length formula.
+    // Custom and partial scorers must continue to call their original strategy.
+    internal virtual double ScorePrefix(string prefix, string combined) => Scorer(prefix, combined);
 
     public void Dispose()
     {
