@@ -504,19 +504,32 @@ Fuzz.Ratio("new york mets", "NEW YORK METS", StringPreprocessor.Full);
 
 ## Performance
 
-The distance implementations use bit-parallel algorithms designed to reduce both execution time and allocations. The table below compares naive DP Levenshtein distance calculation (baseline), original FuzzySharp, Fastenshtein, Quickenshtein, and Raffinert.FuzzySharp.
+Measured on **2026-11-28** using a development build of Raffinert.FuzzySharp and the original [FuzzySharp 2.0.2](https://github.com/JakeBayer/FuzzySharp) package. BenchmarkDotNet 0.15.8, Release, .NET 10.0.15 / SDK 11.0.100, Windows 11, Intel Core Ultra 9 275HX; sequential workloads pinned to P-core 10, tiered compilation and dynamic PGO disabled, two launches, six warmups and ten measured iterations per launch with a 300 ms target. No outliers were removed. Times below are means; `±` is the 99.9% confidence-interval half-width. Absolute times from earlier runs with different JIT or affinity settings are not a regression baseline.
 
-Random words of 3 to 1024 random chars (`LevenshteinLarge.cs`):
+Selected fixed-input API comparisons (mean time per operation):
 
-| Method                                                          | Mean       | Error      | StdDev    | Ratio | RatioSD | Gen0       | Gen1       | Allocated   | Alloc Ratio |
-|-----------------------------------------------------------------|------------|------------|-----------|-------|---------|------------|------------|-------------|-------------|
-| NaiveDp                                                         | 231.563 ms | 57.5403 ms | 3.1540 ms |  1.00 |    0.02 | 43500.0000 | 34500.0000 | 275312920 B |       1.000 |
-| [FuzzySharp](https://github.com/JakeBayer/FuzzySharp)           | 141.820 ms |  4.0905 ms | 0.2242 ms |  0.61 |    0.01 |          - |          - |   1545732 B |       0.006 |
-| [Fastenshtein](https://github.com/DanHarltey/Fastenshtein)      | 123.356 ms | 13.0959 ms | 0.7178 ms |  0.53 |    0.01 |          - |          - |     34028 B |       0.000 |
-| [Quickenshtein](https://github.com/Turnerj/Quickenshtein)       |  12.918 ms | 12.8046 ms | 0.7019 ms |  0.06 |    0.00 |          - |          - |        12 B |       0.000 |
-| [Raffinert.FuzzySharp](https://github.com/Raffinert/FuzzySharp) |   4.970 ms |  0.3311 ms | 0.0181 ms |  0.02 |    0.00 |          - |          - |      3051 B |       0.000 |
+| Operation | Measured build | Classic 2.0.2 | Speedup |
+| --- | ---: | ---: | ---: |
+| Ratio | 55.47 ± 0.54 ns | 174.65 ± 1.79 ns | 3.15× |
+| PartialRatio | 246.00 ± 2.14 ns | 613.00 ± 8.36 ns | 2.49× |
+| TokenSetRatio | 325.20 ± 3.70 ns | 2,017.90 ± 6.99 ns | 6.21× |
+| WeightedRatio | 3,125.00 ± 47.00 ns | 8,984.00 ± 25.30 ns | 2.87× |
+| PartialRatio (17-character pattern in 517-character text) | 1,051.00 ± 6.40 ns | 10,976.00 ± 48.70 ns | 10.44× |
+| PartialRatio (257-character Cyrillic strings) | 13.220 ± 0.075 μs | 5,436.591 ± 37.149 μs | 411.24× |
+| ExtractOne | 5.449 ± 0.019 μs | 19.320 ± 0.253 μs | 3.55× |
+| ExtractAll | 5.633 ± 0.016 μs | 19.372 ± 0.176 μs | 3.44× |
 
-Benchmark sources are in [FuzzySharp.Benchmarks](FuzzySharp.Benchmarks).
+The large Levenshtein workload generates 20 seeded words with lengths in `[3, 1024)` and computes 400 ordered pairs per operation. Fastenshtein and Raffinert.FuzzySharp reuse an instance per source word. The `FuzzySharp` row below is Classic 2.0.2; ratios are relative to naive DP. Times and allocations are per batch:
+
+| Method               | Mean       | Error     | StdDev    | Ratio | Gen0       | Gen1       | Allocated   | Alloc Ratio |
+|--------------------- |-----------:|----------:|----------:|------:|-----------:|-----------:|------------:|------------:|
+| NaiveDp              | 146.787 ms | 1.2307 ms | 1.4173 ms |  1.00 | 14500.0000 | 12500.0000 | 275312720 B |       1.000 |
+| [FuzzySharp](https://github.com/JakeBayer/FuzzySharp) | 105.555 ms | 0.0896 ms | 0.1032 ms |  0.72 |          - |          - |   1545632 B |       0.006 |
+| [Fastenshtein](https://github.com/DanHarltey/Fastenshtein) |  97.087 ms | 0.4391 ms | 0.5056 ms |  0.66 |          - |          - |     33928 B |       0.000 |
+| [Quickenshtein](https://github.com/Turnerj/Quickenshtein) |   8.226 ms | 0.0315 ms | 0.0363 ms |  0.06 |          - |          - |           - |       0.000 |
+| [Raffinert.FuzzySharp](https://github.com/Raffinert/FuzzySharp) |   2.399 ms | 0.0065 ms | 0.0075 ms |  0.02 |          - |          - |      2080 B |       0.000 |
+
+See [benchmark results and reproduction instructions](https://github.com/Raffinert/FuzzySharp/blob/master/FuzzySharp.Benchmarks/README.md) for cache/parallel variants, multiword cases, allocations and inputs. These microbenchmarks cover specific inputs on one machine; small differences need longer measurements. Partial-ratio algorithms and score rounding differ between the libraries.
 
 ## Migration Notes
 

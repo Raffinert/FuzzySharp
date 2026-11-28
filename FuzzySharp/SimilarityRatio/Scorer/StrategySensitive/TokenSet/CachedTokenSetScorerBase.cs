@@ -28,18 +28,15 @@ public abstract class CachedTokenSetScorerBase(string input1) : ICachedRatioScor
                 difference1.Add(token);
         }
 
-        intersection.Sort();
-
-        var sortedIntersection = string.Join(" ", intersection);
-        var sortedDiff1To2 = TokenSetScorerHelpers.JoinIntersectionAndDifference(sortedIntersection, difference1);
-        var sortedDiff2To1 = TokenSetScorerHelpers.JoinIntersectionAndDifference(sortedIntersection, tokens2);
-
-        var score1 = Scorer(sortedIntersection, sortedDiff1To2);
-        var score2 = Scorer(sortedIntersection, sortedDiff2To1);
-        var score3 = Scorer(sortedDiff1To2, sortedDiff2To1);
-
-        return Math.Max(score1, Math.Max(score2, score3));
+        return TokenSetScorerHelpers.Score(Scorer, UsesBuiltInIndelRatio, intersection, difference1, tokens2);
     }
+
+    /// <summary>
+    /// True only when the scorer strategy is the built-in Indel ratio,
+    /// which lets token-set scoring use exact length-based shortcuts.
+    /// Custom and partial scorers keep calling their own strategy.
+    /// </summary>
+    internal virtual bool UsesBuiltInIndelRatio => false;
 
     public void Dispose()
     {
