@@ -99,7 +99,7 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
             throw new ArgumentException("Requires s1.Length <= s2.Length");
 
         using var patternMatchVector = PatternMatchVector.Create(s1);
-        return PartialRatioImpl(patternMatchVector, s2, cutoff);
+        return PartialRatioImpl(patternMatchVector, s1, s2, cutoff);
     }
 
     /// <summary>
@@ -108,6 +108,7 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static ScoreAlignment PartialRatioImpl(IPatternMatchVector<T> s1Vector,
+        ReadOnlySpan<T> s1,
         ReadOnlySpan<T> s2,
         double cutoff = 0.0)
     {
@@ -214,42 +215,100 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
             }
         }
 
-        // 1) Prefixes shorter than len1
-        for (int i = 1; i < len1; i++)
+        // Prefixes share the same LCS row: extend it once per character.
+        var prefix = ScanEdge(s1Vector, s2[..(len1 - 1)], reverse: false);
+        if (prefix.Score > res.Score && prefix.Score >= cutoff)
         {
-            if (!s1Vector.ContainsKey(s2[i - 1])) continue;
-            var slice = s2[..i];
-            double sim = Indel.BlockNormalizedSimilarity(s1Vector, slice);
-            if (sim > res.Score && sim >= cutoff)
-            {
-                res.Score = sim;
-                cutoff = sim;
-                res.DestStart = 0;
-                res.DestEnd = i;
-                if (sim == 1.0) { res.Score = 100.0; return res; }
-            }
+            res.Score = cutoff = prefix.Score;
+            res.DestStart = 0;
+            res.DestEnd = prefix.Length;
         }
 
-        // 2) Suffixes up to len1 (includes the last full-width window)
-        for (int i = len2 - len1; i < len2; i++)
+        // Reversing both sequences preserves LCS. Scan suffixes shortest-first,
+        // retaining the longest on ties to preserve the original alignment order.
+        var reversedPattern = s1.ToArray();
+        Array.Reverse(reversedPattern);
+        using var reversedVector = PatternMatchVector.Create<T>(reversedPattern);
+        var suffix = ScanEdge(reversedVector, s2[(len2 - len1)..], reverse: true);
+        if (suffix.Score > res.Score && suffix.Score >= cutoff)
         {
-            if (!s1Vector.ContainsKey(s2[i])) continue;
-            var tail = s2[i..];
-            double sim = Indel.BlockNormalizedSimilarity(s1Vector, tail);
-            if (sim > res.Score && sim >= cutoff)
-            {
-                res.Score = sim;
-                cutoff = sim;
-                res.DestStart = i;
-                res.DestEnd = len2;
-                if (sim == 1.0) { res.Score = 100.0; return res; }
-
-            }
+            res.Score = suffix.Score;
+            res.DestStart = len2 - suffix.Length;
+            res.DestEnd = len2;
         }
 
         res.Score *= 100.0;
 
         return res;
+    }
+
+    // The state after k symbols also represents the LCS for the next
+    // prefix after one additional bit-parallel update.
+    private static (double Score, int Length) ScanEdge(
+        IPatternMatchVector<T> vector, ReadOnlySpan<T> text, bool reverse)
+    {
+        int m = vector.Length;
+        double best = 0;
+        int bestLength = 0;
+        if (m <= 64)
+        {
+            ulong state = m == 64 ? ulong.MaxValue : (1UL << m) - 1;
+            for (int i = 0; i < text.Length; i++)
+            {
+                T symbol = text[reverse ? text.Length - i - 1 : i];
+                ulong matches = vector.GetOrZero(symbol)[0];
+                if (matches == 0)
+                    continue; // An unmatched extension cannot improve the ratio.
+
+                ulong u = state & matches;
+                state = unchecked((state + u) | (state - u));
+                OfferEdge(LongestCommonSubsequence.CountZeroBits(state, m), m, i + 1,
+                    reverse, ref best, ref bestLength);
+            }
+            return (best, bestLength);
+        }
+
+        int blocks = vector.Blocks;
+        ulong[] rented = blocks > 16 ? ArrayPool<ulong>.Shared.Rent(blocks) : null;
+        Span<ulong> row = rented == null ? stackalloc ulong[blocks] : rented.AsSpan(0, blocks);
+        try
+        {
+            row.Fill(ulong.MaxValue);
+            int tail = m & 63;
+            if (tail != 0)
+                row[blocks - 1] = (1UL << tail) - 1;
+
+            for (int i = 0; i < text.Length; i++)
+            {
+                T symbol = text[reverse ? text.Length - i - 1 : i];
+                if (!vector.ContainsKey(symbol))
+                    continue;
+
+                LongestCommonSubsequence.AdvanceMultiWordRow(row, vector.GetOrZero(symbol));
+                OfferEdge(LongestCommonSubsequence.CountZeroBits(row, m), m, i + 1,
+                    reverse, ref best, ref bestLength);
+            }
+            return (best, bestLength);
+        }
+        finally
+        {
+            if (rented != null)
+                ArrayPool<ulong>.Shared.Return(rented);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void OfferEdge(int lcs, int patternLength, int length, bool preferLongest,
+        ref double best, ref int bestLength)
+    {
+        int maximum = patternLength + length;
+        // Same floating-point expression as BlockNormalizedSimilarity.
+        double score = 1.0 - (maximum - 2 * lcs) / (double)maximum;
+        if (score > best || (preferLongest && score == best && score > 0))
+        {
+            best = score;
+            bestLength = length;
+        }
     }
 
     internal record struct ScoreAlignment(double Score, int SrcStart, int SrcEnd, int DestStart, int DestEnd);
