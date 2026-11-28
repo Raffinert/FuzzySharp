@@ -504,30 +504,32 @@ Fuzz.Ratio("new york mets", "NEW YORK METS", StringPreprocessor.Full);
 
 ## Performance
 
-Measured on **2026-11-28** using a development build of Raffinert.FuzzySharp and the original [FuzzySharp 2.0.2](https://github.com/JakeBayer/FuzzySharp) package. BenchmarkDotNet 0.15.8, Release, .NET 10.0.15 / SDK 11.0.100, Windows 11, Intel Core Ultra 9 275HX; one launch, three warmups, five measured iterations with a 150 ms target.
+Measured on **2026-11-28** using a development build of Raffinert.FuzzySharp and the original [FuzzySharp 2.0.2](https://github.com/JakeBayer/FuzzySharp) package. BenchmarkDotNet 0.15.8, Release, .NET 10.0.15 / SDK 11.0.100, Windows 11, Intel Core Ultra 9 275HX; one launch, five warmups, seven measured iterations with a 250 ms target. Runtime tiering and CPU affinity use their defaults.
 
 Selected fixed-input API comparisons (mean time per operation):
 
 | Operation | Current | Classic 2.0.2 | Speedup |
 | --- | ---: | ---: | ---: |
-| Ratio | 49.76 ns | 103.04 ns | 2.07× |
-| PartialRatio | 229.90 ns | 463.90 ns | 2.02× |
-| TokenSetRatio | 180.23 ns | 958.07 ns | 5.32× |
-| WeightedRatio | 1,886.00 ns | 5,373.00 ns | 2.85× |
-| ExtractOne | 3.41 μs | 14.28 μs | 4.18× |
-| ExtractAll | 3.10 μs | 10.44 μs | 3.37× |
+| Ratio | 86.14 ns | 131.20 ns | 1.52× |
+| PartialRatio | 286.20 ns | 630.50 ns | 2.20× |
+| TokenSetRatio | 209.40 ns | 1,166.00 ns | 5.57× |
+| WeightedRatio | 2,809.00 ns | 6,072.00 ns | 2.16× |
+| PartialRatio (17-character pattern in 517-character text) | 1,437.00 ns | 13,244.00 ns | 9.22× |
+| PartialRatio (257-character Cyrillic strings) | 15.581 μs | 4,528.323 μs | 290.63× |
+| ExtractOne | 4.842 μs | 12.569 μs | 2.60× |
+| ExtractAll | 4.691 μs | 12.750 μs | 2.72× |
 
 The large Levenshtein workload generates 20 seeded words with lengths in `[3, 1024)` and computes 400 ordered pairs per operation. Fastenshtein and Raffinert.FuzzySharp reuse an instance per source word. The `FuzzySharp` row below is Classic 2.0.2; ratios are relative to naive DP. Times and allocations are per batch:
 
-| Method               | Mean       | Error     | StdDev    | Ratio | Gen0       | Gen1       | Allocated   | Alloc Ratio |
-|--------------------- |-----------:|----------:|----------:|------:|-----------:|-----------:|------------:|------------:|
-| NaiveDp              | 141.729 ms | 3.8903 ms | 1.0103 ms |  1.00 | 14000.0000 | 12000.0000 | 275312720 B |       1.000 |
-| [FuzzySharp](https://github.com/JakeBayer/FuzzySharp) |  97.509 ms | 0.7006 ms | 0.1819 ms |  0.69 |          - |          - |   1545632 B |       0.006 |
-| [Fastenshtein](https://github.com/DanHarltey/Fastenshtein) |  82.023 ms | 6.6170 ms | 1.7184 ms |  0.58 |          - |          - |     33928 B |       0.000 |
-| [Quickenshtein](https://github.com/Turnerj/Quickenshtein) |   6.707 ms | 0.8855 ms | 0.2300 ms |  0.05 |          - |          - |           - |       0.000 |
-| [Raffinert.FuzzySharp](https://github.com/Raffinert/FuzzySharp) |   1.888 ms | 0.0225 ms | 0.0035 ms |  0.01 |          - |          - |      2080 B |       0.000 |
+| Method               | Mean       | Error      | StdDev     | Ratio | RatioSD | Gen0       | Gen1       | Allocated   | Alloc Ratio |
+|--------------------- |-----------:|-----------:|-----------:|------:|--------:|-----------:|-----------:|------------:|------------:|
+| NaiveDp              | 172.717 ms | 22.5081 ms |  9.9937 ms |  1.00 |    0.08 | 14500.0000 | 12500.0000 | 275312732 B |       1.000 |
+| [FuzzySharp](https://github.com/JakeBayer/FuzzySharp) |  96.705 ms |  5.9356 ms |  2.1167 ms |  0.56 |    0.04 |          - |          - |   1545656 B |       0.006 |
+| [Fastenshtein](https://github.com/DanHarltey/Fastenshtein) |  95.141 ms | 25.4851 ms | 11.3156 ms |  0.55 |    0.07 |          - |          - |     33928 B |       0.000 |
+| [Quickenshtein](https://github.com/Turnerj/Quickenshtein) |   8.896 ms |  3.2364 ms |  1.4370 ms |  0.05 |    0.01 |          - |          - |           - |       0.000 |
+| [Raffinert.FuzzySharp](https://github.com/Raffinert/FuzzySharp) |   1.960 ms |  0.1462 ms |  0.0649 ms |  0.01 |    0.00 |          - |          - |      2080 B |       0.000 |
 
-See [benchmark results and reproduction instructions](https://github.com/Raffinert/FuzzySharp/blob/master/FuzzySharp.Benchmarks/README.md) for cache/parallel variants, allocations and inputs. These microbenchmarks cover specific inputs on one machine; small differences need longer measurements. Partial-ratio algorithms and score rounding differ between the libraries.
+See [benchmark results and reproduction instructions](https://github.com/Raffinert/FuzzySharp/blob/master/FuzzySharp.Benchmarks/README.md) for cache/parallel variants, multiword cases, allocations and inputs. These microbenchmarks cover specific inputs on one machine; small differences need longer measurements. Partial-ratio algorithms and score rounding differ between the libraries.
 
 ## Migration Notes
 

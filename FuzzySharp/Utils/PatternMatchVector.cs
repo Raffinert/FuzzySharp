@@ -15,6 +15,7 @@ public interface IPatternMatchVector<in TKey> : IDisposable where TKey : notnull
 
 internal interface IPatternMatchVectorImpl<TKey> : IPatternMatchVector<TKey> where TKey : IEquatable<TKey>
 {
+    bool TryGetMask(TKey key, out ReadOnlySpan<ulong> mask);
     void Populate(ReadOnlySpan<TKey> source);
     void PopulateReversed(ReadOnlySpan<TKey> source);
     void ReverseSingleWord();

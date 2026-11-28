@@ -339,6 +339,7 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
         }
 
         int blocks = vector.Blocks;
+        var maskLookup = (IPatternMatchVectorImpl<T>)vector;
         ulong[] rented = blocks > 16 ? ArrayPool<ulong>.Shared.Rent(blocks) : null;
         Span<ulong> row = rented == null ? stackalloc ulong[blocks] : rented.AsSpan(0, blocks);
         try
@@ -351,10 +352,10 @@ internal static class PartialRatioStrategy<T> where T : IEquatable<T>
             for (int i = 0; i < text.Length; i++)
             {
                 T symbol = text[reverse ? text.Length - i - 1 : i];
-                if (!vector.ContainsKey(symbol))
+                if (!maskLookup.TryGetMask(symbol, out var matches))
                     continue;
 
-                LongestCommonSubsequence.AdvanceMultiWordRow(row, vector.GetOrZero(symbol));
+                LongestCommonSubsequence.AdvanceMultiWordRow(row, matches);
                 OfferEdge(LongestCommonSubsequence.CountZeroBits(row, m), m, i + 1,
                     reverse, ref best, ref bestLength);
             }
