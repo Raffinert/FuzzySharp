@@ -23,12 +23,16 @@ public abstract class TokenSetScorerBase : StrategySensitiveScorerBase
         var sortedDiff1To2 = TokenSetScorerHelpers.JoinIntersectionAndDifference(sortedIntersection, tokens1);
         var sortedDiff2To1 = TokenSetScorerHelpers.JoinIntersectionAndDifference(sortedIntersection, tokens2);
 
-        var score1 = Scorer(sortedIntersection, sortedDiff1To2);
-        var score2 = Scorer(sortedIntersection, sortedDiff2To1);
+        var score1 = ScorePrefix(sortedIntersection, sortedDiff1To2);
+        var score2 = ScorePrefix(sortedIntersection, sortedDiff2To1);
         var score3 = Scorer(sortedDiff1To2, sortedDiff2To1);
 
         return Math.Max(score1, Math.Max(score2, score3));
     }
+
+    // Only the built-in Indel scorer can replace scoring with a length formula.
+    // Custom and partial scorers must continue to call their original strategy.
+    internal virtual double ScorePrefix(string prefix, string combined) => Scorer(prefix, combined);
 
     private static List<string> GetIntersectionAndExcept(HashSet<string> first, HashSet<string> second) =>
         TokenSetScorerHelpers.GetIntersectionAndExcept(first, second);
@@ -36,6 +40,19 @@ public abstract class TokenSetScorerBase : StrategySensitiveScorerBase
 
 internal static class TokenSetScorerHelpers
 {
+    internal static double PrefixRatio(int prefixLength, int combinedLength)
+    {
+        // DefaultRatioStrategy returns zero when either input is empty.
+        if (prefixLength == 0 || combinedLength == 0)
+            return 0;
+
+        // The intersection is a prefix of each combined string, so the
+        // Indel distance is exactly the difference in their lengths.
+        // Keep the same arithmetic order as the normal Indel ratio.
+        return 100 * (1.0 - (combinedLength - prefixLength) /
+            (double)(combinedLength + prefixLength));
+    }
+
     internal static List<string> GetIntersectionAndExcept(HashSet<string> first, HashSet<string> second)
     {
         var intersection = new List<string>(Math.Min(first.Count, second.Count));
