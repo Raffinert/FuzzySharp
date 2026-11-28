@@ -305,20 +305,29 @@ public class LcsOptimizationTests
             Fuzz.PartialRatio(query, candidate);
 
         const int repetitions = 128;
-        long start = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < repetitions; i++)
+        long vectorBudget = long.MaxValue;
+        long allocated = long.MaxValue;
+        for (int sample = 0; sample < 8; sample++)
         {
-            using (PatternMatchVector.Create<char>(query)) { }
-            using (PatternMatchVector.Create<char>(candidate)) { }
+            long start = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < repetitions; i++)
+            {
+                using (PatternMatchVector.Create<char>(query)) { }
+                using (PatternMatchVector.Create<char>(candidate)) { }
+            }
+            vectorBudget = Math.Min(vectorBudget, GC.GetAllocatedBytesForCurrentThread() - start);
+
+            start = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < repetitions; i++)
+                Fuzz.PartialRatio(query, candidate);
+            allocated = Math.Min(allocated, GC.GetAllocatedBytesForCurrentThread() - start);
         }
-        long queryVectors = GC.GetAllocatedBytesForCurrentThread() - start;
-        start = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < repetitions; i++)
-            Fuzz.PartialRatio(query, candidate);
 
         // Equal non-exact inputs require two directions, each with its own
         // query vector. Neither suffix scan should allocate a second vector.
-        Assert.Equal(queryVectors, GC.GetAllocatedBytesForCurrentThread() - start);
+        // Use the minimum of several batches so a transient pool refill after
+        // a Gen2 trim does not determine the result. Lower allocations are OK.
+        Assert.InRange(allocated, 0, vectorBudget);
     }
 #endif
 
