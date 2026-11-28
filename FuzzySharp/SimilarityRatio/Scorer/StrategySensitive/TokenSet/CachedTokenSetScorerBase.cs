@@ -28,27 +28,15 @@ public abstract class CachedTokenSetScorerBase(string input1) : ICachedRatioScor
                 difference1.Add(token);
         }
 
-        if (intersection.Count != 0 && (difference1.Count == 0 || tokens2.Count == 0) && CanReturnPerfectScore)
-            return 100;
-
-        intersection.Sort();
-
-        var sortedIntersection = string.Join(" ", intersection);
-        var sortedDiff1To2 = TokenSetScorerHelpers.JoinIntersectionAndDifference(sortedIntersection, difference1);
-        var sortedDiff2To1 = TokenSetScorerHelpers.JoinIntersectionAndDifference(sortedIntersection, tokens2);
-
-        var score1 = ScorePrefix(sortedIntersection, sortedDiff1To2);
-        var score2 = ScorePrefix(sortedIntersection, sortedDiff2To1);
-        var score3 = Scorer(sortedDiff1To2, sortedDiff2To1);
-
-        return Math.Max(score1, Math.Max(score2, score3));
+        return TokenSetScorerHelpers.Score(Scorer, UsesBuiltInIndelRatio, intersection, difference1, tokens2);
     }
 
-    // Only the built-in Indel scorer can replace scoring with a length formula.
-    // Custom and partial scorers must continue to call their original strategy.
-    internal virtual double ScorePrefix(string prefix, string combined) => Scorer(prefix, combined);
-
-    internal virtual bool CanReturnPerfectScore => false;
+    /// <summary>
+    /// True only when the scorer strategy is the built-in Indel ratio,
+    /// which lets token-set scoring use exact length-based shortcuts.
+    /// Custom and partial scorers keep calling their own strategy.
+    /// </summary>
+    internal virtual bool UsesBuiltInIndelRatio => false;
 
     public void Dispose()
     {
